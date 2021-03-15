@@ -1,0 +1,19 @@
+baseURL: 'http://www.example.com'
+title: Johnny Metz
+theme: uBlogger
+paginate: 10
+enableEmoji: true
+params:
+  version: 2.0.X
+menu:
+  main:
+    - name: Blog
+      url: blog/
+    - name: Most Popular
+      url: most-popular/
+    - name: About
+      url: about/
+    - name: Tags
+      url: tags/
+taxonomies:
+  tag: tags
