@@ -4,6 +4,6 @@ date: {{ .Date }}
 description: 'Some description'
 type: 'posts'
 tags:
-  - Programming
+  - Python
 draft: true
 ---
