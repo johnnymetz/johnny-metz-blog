@@ -1,7 +1,7 @@
 ---
 title: 'Automatically detect N+1 violations in your Pytest suite'
 date: 2021-03-13T23:10:50-08:00
-description: 'Some description'
+description: 'Automatically detect N+1 violations in your Pytest suite'
 type: 'posts'
 tags:
   - Python
@@ -10,7 +10,7 @@ tags:
 draft: true
 ---
 
-# Automatically detect N+1 violations in your pytest suite
+<!-- # Automatically detect N+1 violations in your Pytest suite -->
 
 <!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->
 
@@ -127,4 +127,4 @@ There may be cases where you want to opt-out of the N+1 check. For example, the 
 
 ## Conclusion
 
-For any project with more than a few unit tests, I'd highly recommend trying out the `_raise_nplusone` fixture. It's a great way to optimize your database performance.
+For any project with more than a few unit tests, I'd highly recommend trying out the `_raise_nplusone` fixture. It's a great way to optimize database performance.
