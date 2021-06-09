@@ -117,7 +117,7 @@ def _raise_nplusone(request):
             yield
 ```
 
-Now an `NPlusOneError` will be raised in any unit test if it contains an N+1 violation. Here's the exception message for our old buggy version of `print_songs`.
+Now an `NPlusOneError` will be raised in any unit test if it contains an N+1 violation. Here's the exception message for our old version of `print_songs` that did NOT use `select_related`.
 
 ```text
 nplusone.core.exceptions.NPlusOneError: Potential n+1 query detected on `Song.artist`
