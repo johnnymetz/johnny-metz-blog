@@ -4,15 +4,20 @@ theme: hugo-coder
 paginate: 10
 enableEmoji: true
 params:
-  author: Johnny Metz
-  description: Johnny Metz's personal website and blog
-  keywords: 'blog,developer,personal'
-  info: Full Stack Software Engineer
-  dateFormat: 'January 2, 2006'
-  hideFooter: true
-  since: 2021
-  colorScheme: auto
-  customCSS: []
+  version: 2.0.X
+  app:
+    title: Johnny Metz
+    noFavicon: true
+  home:
+    rss: 10
+    profile:
+      enable: true
+      avatarURL: https://ui-avatars.com/api/?name=J+M&background=0D8ABC&color=fff
+      title: Johnny Metz
+      subtitle: Johnny Metz's personal website and blog
+      social: true
+    posts:
+      enable: true
   social:
     - name: Github
       icon: fa fa-github
