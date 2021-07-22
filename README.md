@@ -29,3 +29,9 @@ hugo -D  # build static pages
 - DRY Formik fields
 - Python mocking, import from where it’s called not defined
 - git log -S
+
+## Themes
+
+[Hugo Themes Ranked](https://hugoranked.com/)
+
+- Try Papermod
