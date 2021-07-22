@@ -9,6 +9,7 @@ type: 'posts'
 tags:
   - Python
   - Django
+draft: true
 ---
 
 ## Style Demo

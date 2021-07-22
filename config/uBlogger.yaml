@@ -13,7 +13,7 @@ params:
     rss: 10
     profile:
       enable: true
-      avatarURL: https://i.pravatar.cc/300?img=0
+      # avatarURL: https://i.pravatar.cc/300?img=0
       title: Johnny Metz
       subtitle: Johnny Metz's personal website and blog
       social: true

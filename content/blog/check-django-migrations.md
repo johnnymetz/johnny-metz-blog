@@ -7,17 +7,16 @@ tags:
   - Python
   - Django
   - Pre-commit
-draft: true
 ---
 
-Keeping your models in sync with your database is an important part of any Django app. My team and I make changes to our models frequently and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an example using a simple `Product` model.
+Keeping your models in sync with your migrations is an important part of any Django app. My team and I make changes to our models frequently and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an example using a simple `Product` model.
 
 ```python
 class Product(models.Model):
     name = models.CharField(max_length=255)
 ```
 
-Let's say our migrations are in sync and we want to add a `quantity` field.
+Let's say we want to add a `quantity` field.
 
 ```python {hl_lines=[3]}
 class Product(models.Model):
@@ -25,11 +24,11 @@ class Product(models.Model):
     quantity = models.PositiveIntegerField(default=1)
 ```
 
-At this point, we _should_ create a new migration using `python3 manage.py makemigrations`. However, let's say we forget and we attempt to create a new product. This results in an error and the data is never added to the db.
+At this point, we _should_ create a new migration using `python3 manage.py makemigrations`. However, let's say we forget, which is a common mistake, and we attempt to create a new product. This results in an error and the data is never added to the db.
 
 ```python
 In [1]: from core.models import Product
-In [2]: Product.objects.create(name="Headphones")
+In [2]: Product.objects.create(name="Headphones", quantity=3)
 # OperationalError: table core_product has no column named quantity
 ```
 
@@ -46,7 +45,7 @@ $ echo $?
 # 1
 ```
 
-We need `--dry-run` to prevent the migrations from actually being created and `echo $?` to print the exit code of the last run command. As we can see from the output and the non-zero exit code, we're missing migrations.
+`--dry-run` prevents the migrations from actually being created and `echo $?` prints the exit code of the last run command. As we can see from the output and the non-zero exit code, we're missing migrations.
 
 We can automatically run this check before committing using the popular [pre-commit](https://pre-commit.com/) framework.
 

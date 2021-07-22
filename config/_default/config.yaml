@@ -1,39 +1,31 @@
-baseURL: http://www.example.com
+baseURL: 'http://www.example.com'
 title: Johnny Metz
-theme: uBlogger
+theme: hugo-coder
 paginate: 10
 enableEmoji: true
-
 params:
-  version: 2.0.X
-  app:
-    title: Johnny Metz
-    noFavicon: true
-  home:
-    rss: 10
-    profile:
-      enable: true
-      # avatarURL: https://i.pravatar.cc/300?img=0
-      title: Johnny Metz
-      subtitle: Johnny Metz's personal website and blog
-      social: true
-    posts:
-      enable: true
+  author: Johnny Metz
+  description: Johnny Metz's personal website and blog
+  keywords: 'blog,developer,personal'
+  info: Full Stack Software Engineer
+  dateFormat: 'January 2, 2006'
+  hideFooter: true
+  since: 2021
+  colorScheme: auto
+  customCSS: []
   social:
-    GitHub: https://github.com/johnnymetz
-    Linkedin: https://www.linkedin.com/in/jonathancmetz/
-    Youtubechannel: https://www.youtube.com/channel/UCvsoVkN5D3YUqfqRUz_HLcg
-  page:
-    code:
-      maxShownLines: 20
-  section:
-    dateFormat: '01-01'
-  # search:
-  #   enable: true
-  #   type: lunr
-  footer:
-    enable: false
-
+    - name: Github
+      icon: fa fa-github
+      weight: 1
+      url: 'https://github.com/johnnymetz'
+    - name: LinkedIn
+      icon: fa fa-linkedin
+      weight: 4
+      url: 'https://www.linkedin.com/in/jonathancmetz/'
+    - name: LinkedIn
+      icon: fa fa-youtube
+      weight: 4
+      url: 'https://www.youtube.com/channel/UCvsoVkN5D3YUqfqRUz_HLcg'
 menu:
   main:
     - name: Blog
@@ -44,19 +36,19 @@ menu:
       url: about/
     - name: Tags
       url: tags/
-
 taxonomies:
   tag: tags
-
+# permalinks:
+#   blog: '/blog/:year/:slug/'
 markup:
   highlight:
     anchorLineNos: false
     codeFences: true
+    guessSyntax: false
+    # lineAnchors: ''
     lineNoStart: 1
     lineNos: false
-    noClasses: false
+    lineNumbersInTable: true
+    noClasses: true
     style: monokai
     tabWidth: 4
-
-output:
-  home: ['HTML', 'RSS', 'JSON']
