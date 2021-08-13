@@ -9,7 +9,7 @@ hugo new blog/xxx.md
 # managing submodules
 git submodule
 git submodule summary
-git submodule update
+git submodule update --remote --merge
 
 # run / build
 hugo server -D  # run dev server on http://localhost:1313
