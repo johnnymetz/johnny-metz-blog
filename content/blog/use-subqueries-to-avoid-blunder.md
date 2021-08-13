@@ -42,7 +42,7 @@ Book.objects.order_by("name", "-edition")
 
 (TODO: maybe remove this because this isn't what is actually happening)
 
-- Order all books by `name` in ascending order and `edition` is descending order using `order_by`.
+- Order all books by `name` in ascending order and `edition` in descending order using `order_by`.
 - Keep the first row for each group of duplicates using `distinct`.
 - Fetch the objects with a non-null `release_year` using `filter`.
 

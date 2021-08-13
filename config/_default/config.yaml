@@ -12,30 +12,30 @@ params:
   hideFooter: true
   since: 2021
   colorScheme: auto
-  customCSS: []
   social:
     - name: Github
       icon: fa fa-github
-      weight: 1
       url: 'https://github.com/johnnymetz'
     - name: LinkedIn
       icon: fa fa-linkedin
-      weight: 4
       url: 'https://www.linkedin.com/in/jonathancmetz/'
-    - name: LinkedIn
+    - name: YouTube
       icon: fa fa-youtube
-      weight: 4
       url: 'https://www.youtube.com/channel/UCvsoVkN5D3YUqfqRUz_HLcg'
+    - name: StackOverflow
+      icon: fa fa-stack-overflow
+      url: 'https://stackoverflow.com/users/6611672/johnny-metz'
 menu:
   main:
     - name: Blog
       url: blog/
-    - name: Most Popular
-      url: most-popular/
+      weight: 1
     - name: About
       url: about/
+      weight: 2
     - name: Tags
       url: tags/
+      weight: 3
 taxonomies:
   tag: tags
 # permalinks:
