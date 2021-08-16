@@ -1,0 +1,45 @@
+SELECT DISTINCT ON ("core_book"."name") * FROM "core_book" ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC
+<QuerySet [<Book: Book object (3)>, <Book: Book object (5)>]>
+
+SELECT DISTINCT ON ("core_book"."name") * FROM "core_book" WHERE "core_book"."release_year" IS NOT NULL ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC
+<QuerySet [<Book: Book object (2)>, <Book: Book object (5)>]>
+
+SELECT DISTINCT ON ("core_book"."name") * FROM "core_book" WHERE "core_book"."release_year" IS NOT NULL ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC
+<QuerySet [<Book: Book object (2)>, <Book: Book object (5)>]>
+
+
+#####
+
+SELECT * FROM "core_book" WHERE ("core_book"."id" IN (SELECT DISTINCT ON ("core_book"."name") "core_book"."id" FROM "core_book" ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC) AND "core_book"."release_year" IS NOT NULL)
+<QuerySet [<Book: Book object (5)>]>
+
+# easier to read
+SELECT * FROM "core_book"
+WHERE (
+	"core_book"."id" IN (
+		SELECT DISTINCT ON ("core_book"."name") "core_book"."id"
+		FROM "core_book"
+		ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC
+	)
+	AND "core_book"."release_year" IS NOT NULL
+);
+
+#####
+
+SELECT "core_book"."id", "core_book"."name", "core_book"."edition", "core_book"."release_year" FROM "core_book" WHERE ("core_book"."id" IN (SELECT DISTINCT ON (U0."name") U0."id" FROM "core_book" U0 ORDER BY U0."name" ASC, U0."edition" DESC) AND "core_book"."release_year" IS NOT NULL)
+
+# easier to read
+SELECT * FROM "core_book"
+WHERE (
+	"core_book"."id" IN (
+		SELECT DISTINCT ON (U0."name") U0."id"
+		FROM "core_book" U0
+		ORDER BY U0."name" ASC, U0."edition" DESC
+	)
+	AND "core_book"."release_year" IS NOT NULL
+);
+
+#####
+
+
+SELECT DISTINCT ON ("core_book"."name") "core_book"."id" FROM "core_book" ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC;
