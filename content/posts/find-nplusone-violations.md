@@ -1,15 +1,13 @@
 ---
-title: 'Automatically detect N+1 violations in your Pytest suite'
+title: 'Find all N+1 violations in your Django app'
 date: 2021-03-13T23:10:50-08:00
-description: 'Automatically detect N+1 violations in your Pytest suite'
-type: 'posts'
+description: 'Find all N+1 violations in your Django app'
 tags:
   - Python
   - Django
   - Pytest
 # toc:
 #   enable: false
-draft: true
 ---
 
 <!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->
@@ -104,7 +102,7 @@ def test_print_songs(settings, make_data):
 
 ## nplusone
 
-The [nplusone](https://github.com/jmcarp/nplusone) package automatically detects N+1 violations for you. It comes with a [generic profiler](https://github.com/jmcarp/nplusone#generic) which raises an exception when a violation is executed. We can create a fixture in our `conftest.py` file to wrap all of our tests in this profiler.
+The [nplusone](https://github.com/jmcarp/nplusone) package automatically finds N+1 violations for you. It comes with a [generic profiler](https://github.com/jmcarp/nplusone#generic) which raises an exception when a violation is executed. We can create a fixture in our `conftest.py` file to wrap all of our tests in this profiler.
 
 ```python
 # conftest.py

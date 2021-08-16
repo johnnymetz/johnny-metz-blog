@@ -3,12 +3,11 @@
 # Common Django ORM Gotcha: SQL Order of Execution
 title: 'Use Subqueries to avoid a common Django mistake'
 date: 2021-06-21T11:56:09-07:00
-description: 'Avoid a common Django pitfall by remembering SQL order of execution and using Subqueries'
+description: 'Avoid a common Django pitfall by remembering the SQL order of execution and using Subqueries'
 type: 'posts'
 tags:
   - Python
   - Django
-draft: true
 ---
 
 The Django ORM is a powerful tool but I often see developers forget the SQL order of execution, leading to a common mistake. Let's look at an example:
@@ -39,12 +38,6 @@ Book.objects.order_by("name", "-edition")
 .distinct("name")
 .filter(release_year__isnull=False)
 ```
-
-(TODO: maybe remove this because this isn't what is actually happening)
-
-- Order all books by `name` in ascending order and `edition` in descending order using `order_by`.
-- Keep the first row for each group of duplicates using `distinct`.
-- Fetch the objects with a non-null `release_year` using `filter`.
 
 This seems like a sound approach. Let's test this out using the following sample data:
 
@@ -122,4 +115,4 @@ def test_queryset():
 
 The test passes!
 
-In conclusion, subqueries are a great mechanism for writing fast and complex queries. Check out Django's documentation [here](https://docs.djangoproject.com/en/dev/ref/models/expressions/#subquery-expressions) for more use cases.
+In conclusion, subqueries are a great mechanism for writing fast and complex queries. Check out Django's documentation [here](https://docs.djangoproject.com/en/dev/ref/models/expressions/#subquery-expressions) for more examples.
