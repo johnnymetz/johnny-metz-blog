@@ -1,1 +1,8 @@
+/public/
+/resources/_gen/
+
 .vscode/
+.DS_Store
+node_modules
+dist
+tmp

@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.3.2
+    hooks:
+      - id: prettier
+  # - repo: https://github.com/markdownlint/markdownlint
+  #   rev: 'v0.11.0'
+  #   hooks:
+  #     - id: markdownlint
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-merge-conflict # validate no merge conflict strings
+      - id: check-json # validate json
+      - id: check-yaml # validate yaml
+      - id: check-added-large-files # reject giant files (default=500kB)
+      - id: detect-private-key # keep those keys safe
+      - id: end-of-file-fixer # add newline at end of files
+      - id: trailing-whitespace # trim trailing whitespace

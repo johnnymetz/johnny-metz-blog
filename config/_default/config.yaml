@@ -1,54 +1,136 @@
-baseURL: 'http://www.example.com'
+baseURL: https://examplesite.com
 title: Johnny Metz
-theme: hugo-coder
-paginate: 10
-enableEmoji: true
+paginate: 5
+theme: PaperMod
+
+googleAnalytics:
+
 params:
+  # env: production # to enable google analytics, opengraph, twitter-cards and schema.
+  title: Johnny Metz
   author: Johnny Metz
   description: Johnny Metz's personal website and blog
-  keywords: 'blog,developer,personal'
-  info: Full Stack Software Engineer
-  dateFormat: 'January 2, 2006'
-  hideFooter: true
-  since: 2021
-  colorScheme: auto
-  social:
-    - name: Github
-      icon: fa fa-github
-      url: 'https://github.com/johnnymetz'
-    - name: LinkedIn
-      icon: fa fa-linkedin
-      url: 'https://www.linkedin.com/in/jonathancmetz/'
+  keywords: [blog, developer, portfolio]
+  DateFormat: 'January 2, 2006'
+  defaultTheme: auto
+
+  ###################
+  # Site-wide
+  ###################
+
+  label:
+    text: Johnny Metz
+    # icon: /apple-touch-icon.png
+    # iconHeight: 35
+
+  assets:
+    disableHLJS: true # use Hugo's syntax highlighter "Chroma" instead of highlight.js
+    # disableFingerprinting: true
+    # favicon: '<link / abs url>'
+    # favicon16x16: '<link / abs url>'
+    # favicon32x32: '<link / abs url>'
+    # apple_touch_icon: '<link / abs url>'
+    # safari_pinned_tab: '<link / abs url>'
+
+  # analytics:
+  #   google:
+  #     SiteVerificationTag: 'XYZabc'
+
+  # cover:
+  #   hidden: false # hide everywhere but not in structured data
+  #   hiddenInList: true # hide on list pages and home
+  #   hiddenInSingle: true # hide on single page
+
+  ###################
+  # Home
+  ###################
+
+  homeInfoParams:
+    # Title: "Hi there \U0001F44B"
+    Title: Welcome to my blog
+    # Content: Welcome to my blog
+
+  socialIcons:
     - name: YouTube
-      icon: fa fa-youtube
       url: 'https://www.youtube.com/channel/UCvsoVkN5D3YUqfqRUz_HLcg'
-    - name: StackOverflow
-      icon: fa fa-stack-overflow
+    - name: LinkedIn
+      url: 'https://www.linkedin.com/in/jonathancmetz/'
+    - name: Github
+      url: 'https://github.com/johnnymetz'
+    - name: stackoverflow
       url: 'https://stackoverflow.com/users/6611672/johnny-metz'
+
+  # disableSpecial1stPost: false # not applicable in home-info mode
+  # hideSummary: true
+
+  ###################
+  # SINGLE POST
+  ###################
+
+  ShowBreadCrumbs: true
+  # hidemeta: true # post header: date, time, author
+  ShowReadingTime: true
+  # ShowToc: true
+  # TocOpen: true
+
+  # Suggest changes
+  # editPost:
+  #   URL: 'https://github.com/<path_to_repo>/content'
+  #   Text: 'Suggest Changes' # edit text
+  #   appendFilePath: true # to append file path to Edit link
+
+  ShowCodeCopyButtons: true
+  # disableScrollToTop: true
+
+  ShowShareButtons: true
+  ShowPostNavLinks: true
+
+  # for search
+  # https://fusejs.io/api/options.html
+  fuseOpts:
+    isCaseSensitive: false
+    shouldSort: true
+    location: 0
+    distance: 1000
+    threshold: 0.4
+    minMatchCharLength: 0
+    keys: ['title', 'permalink', 'summary', 'content']
+
+# for search
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
 menu:
   main:
     - name: Blog
       url: blog/
-      weight: 1
+      weight: 10
     - name: About
       url: about/
-      weight: 2
+      weight: 20
     - name: Tags
       url: tags/
-      weight: 3
-taxonomies:
-  tag: tags
-# permalinks:
-#   blog: '/blog/:year/:slug/'
+      weight: 30
+    - name: Search
+      url: search/
+      weight: 40
+
+# https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
 markup:
   highlight:
-    anchorLineNos: false
+    # anchorLineNos: true
     codeFences: true
-    guessSyntax: false
-    # lineAnchors: ''
-    lineNoStart: 1
-    lineNos: false
-    lineNumbersInTable: true
-    noClasses: true
+    guessSyntax: true
+    lineNos: true
+    # noClasses: false
     style: monokai
-    tabWidth: 4
+
+minify:
+  disableXML: true
+  minifyOutput: true
+
+enableEmoji: true
+enableRobotsTXT: true

@@ -1,8 +1,11 @@
-baseURL: 'http://www.example.com'
+# baseURL: 'http://www.example.com'
 title: Johnny Metz
 theme: hugo-coder
 paginate: 10
 enableEmoji: true
+
+googleAnalytics:
+
 params:
   author: Johnny Metz
   description: Johnny Metz's personal website and blog
@@ -25,6 +28,7 @@ params:
     - name: StackOverflow
       icon: fa fa-stack-overflow
       url: 'https://stackoverflow.com/users/6611672/johnny-metz'
+
 menu:
   main:
     - name: Blog
@@ -36,10 +40,13 @@ menu:
     - name: Tags
       url: tags/
       weight: 3
+
 taxonomies:
   tag: tags
+
 # permalinks:
 #   blog: '/blog/:year/:slug/'
+
 markup:
   highlight:
     anchorLineNos: false
