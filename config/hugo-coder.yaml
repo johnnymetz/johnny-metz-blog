@@ -4,6 +4,7 @@ theme: hugo-coder
 paginate: 10
 enableEmoji: true
 
+# pass as HUGO_GOOGLEANALYTICS env var
 googleAnalytics:
 
 params:

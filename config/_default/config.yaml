@@ -3,6 +3,7 @@ title: Johnny Metz
 paginate: 5
 theme: PaperMod
 
+# pass as HUGO_GOOGLEANALYTICS env var
 googleAnalytics:
 
 params:
@@ -119,14 +120,10 @@ menu:
       weight: 40
 
 # https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
+# pygmentsUseClasses: true
 markup:
   highlight:
-    # anchorLineNos: true
-    codeFences: true
-    guessSyntax: true
-    lineNos: true
-    # noClasses: false
-    style: monokai
+    # lineNos: true
 
 minify:
   disableXML: true
