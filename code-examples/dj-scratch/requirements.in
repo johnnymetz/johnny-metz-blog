@@ -1,0 +1,11 @@
+pip-tools
+black
+mypy
+isort
+
+Django
+psycopg2
+django-extensions
+
+pytest
+pytest-django

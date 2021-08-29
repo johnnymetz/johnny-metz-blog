@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "scratch.settings"
+python_files = "tests.py test_*.py"
+addopts= ["--verbose", "-s"]
