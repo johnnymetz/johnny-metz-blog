@@ -1,0 +1,10 @@
+[flake8]
+ignore =
+  E266,  # Too many leading '#' for block comment
+  E501,  # Line too long
+  W503,  # Line break occurred before a binary operator
+max-line-length = 88
+max-complexity = 18
+exclude = */migrations/*,venv/*,scripts/*
+per-file-ignores =
+  */settings/*:F403,F405

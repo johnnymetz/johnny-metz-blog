@@ -50,6 +50,8 @@ def test_print_songs(make_data):
 
 However, if we count the number of database queries, we'll see a total of 101. Yikes!
 
+Note, `connection.queries` is only available if `DEBUG=True`. We can set this globally for all tests by setting `django_debug_mode = true` in our pytest configuration file ([docs](https://pytest-django.readthedocs.io/en/latest/usage.html#django-debug-mode-change-how-debug-is-set)).
+
 ```python {hl_lines=[1,"4-5",7]}
 from django.db import connection
 

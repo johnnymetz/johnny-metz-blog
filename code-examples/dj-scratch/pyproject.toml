@@ -1,4 +1,38 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "scratch.settings"
+django_debug_mode = true
 python_files = "tests.py test_*.py"
-addopts= ["--verbose", "-s"]
+norecursedirs = ["subqueries"]
+addopts = ["--verbose", "-s"]
+
+[tool.black]
+target-version = ["py39"]
+include = '\.pyi?$'
+# change to extend-exclude on new release
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | venv
+)/
+'''
+# files in this dir are ignored by pre-commit
+force-exclude = '''
+/(
+  migrations
+)\
+'''
+
+[tool.isort]
+profile = "black"
+default_section = "THIRDPARTY"
+known_django = "django"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+remove_redundant_aliases = true

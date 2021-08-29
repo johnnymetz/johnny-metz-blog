@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-caap$qxjh(bb#rt(ln_iaquhsb+1$%48l2+4l0rw9sktbv$kg!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list = []
 
 
 # Application definition
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     # 3rd party
     "django_extensions",
     # local apps
-    "core.apps.CoreConfig",
+    # "subqueries.apps.SubqueriesConfig",
+    "checkmembers.apps.CheckmembersConfig",
 ]
 
 MIDDLEWARE = [
@@ -77,23 +78,23 @@ WSGI_APPLICATION = "scratch.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "localhost",
-        "PORT": "5433",
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "postgres",
+#         "USER": "postgres",
+#         "PASSWORD": "postgres",
+#         "HOST": "localhost",
+#         "PORT": "5433",
+#     }
+# }
 
 
 # Password validation

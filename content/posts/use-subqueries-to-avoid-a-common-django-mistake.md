@@ -3,7 +3,7 @@
 # Common Django ORM Gotcha: SQL Order of Execution
 title: 'Use Subqueries to avoid a common Django mistake'
 date: 2021-06-21T11:56:09-07:00
-description: 'Avoid a common Django pitfall by remembering the SQL order of execution and using Subqueries'
+description: 'Avoid a common Django pitfall by related to the SQL order of execution and subqueries'
 type: 'posts'
 tags:
   - Python

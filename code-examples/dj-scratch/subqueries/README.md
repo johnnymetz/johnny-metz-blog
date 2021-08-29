@@ -36,6 +36,6 @@ WHERE (
 
 ```
 SELECT DISTINCT ON (name) id, name
-FROM core_book
+FROM subqueries_book
 ORDER BY name ASC, edition DESC;
 ```

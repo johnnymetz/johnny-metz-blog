@@ -1,7 +1,7 @@
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
-from core.models import Book
+from subqueries.models import Book
 
 
 @pytest.mark.django_db()
@@ -13,10 +13,10 @@ def test_x():
     What we're getting:
     Out of the books with a release year, give me the latest ones.
     """
-    book1 = Book.objects.create(name="Django tips", edition=1, release_year=2020)
+    Book.objects.create(name="Django tips", edition=1, release_year=2020)
     book2 = Book.objects.create(name="Django tips", edition=2, release_year=2022)
     book3 = Book.objects.create(name="Django tips", edition=3, release_year=None)
-    book4 = Book.objects.create(name="Golf swings", edition=1, release_year=2018)
+    Book.objects.create(name="Golf swings", edition=1, release_year=2018)
     book5 = Book.objects.create(name="Golf swings", edition=2, release_year=2021)
 
     for qs, expected_result in [
