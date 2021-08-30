@@ -15,3 +15,5 @@ git submodule update --init --recursive
 brew install pre-commit
 pre-commit install
 ```
+
+[How effectively delete a git submodule. · GitHub](https://gist.github.com/myusuf3/7f645819ded92bda6677)
