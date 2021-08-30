@@ -1,7 +1,6 @@
 ---
-title: 'Check Django Migrations'
+title: 'Validate your Django Migrations on every commit'
 date: 2021-04-08T12:10:47-07:00
-description: 'Ensure Django migrations are in sync with models.'
 type: 'posts'
 tags:
   - Python

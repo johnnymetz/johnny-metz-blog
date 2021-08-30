@@ -3,14 +3,13 @@
 # Common Django ORM Gotcha: SQL Order of Execution
 title: 'Use Subqueries to avoid a common Django mistake'
 date: 2021-06-21T11:56:09-07:00
-description: 'Avoid a common Django pitfall by related to the SQL order of execution and subqueries'
 type: 'posts'
 tags:
   - Python
   - Django
 ---
 
-The Django ORM is a powerful tool but I often see developers forget the SQL order of execution, leading to a common mistake. Let's look at an example:
+The Django ORM is a powerful tool but I often see developers forget the SQL order of execution, leading to a common mistake and an undesirable query result. Let's look at an example:
 
 ```python
 class Book(models.Model):
@@ -70,7 +69,7 @@ def test_queryset():
     assertQuerysetEqual(qs, [book5])
 ```
 
-This fails by returning `[book2, book5]`. We can see the raw SQL using `qs.query`, which looks something like this:
+This test fails because the queryset returns `[book2, book5]`. We can see the raw SQL using `qs.query`, which looks something like this:
 
 ```sql
 SELECT DISTINCT ON (name) * FROM core_book
@@ -80,7 +79,7 @@ ORDER BY name ASC, edition DESC;
 
 The `WHERE` clause appears _before_ the `ORDER BY` clause, which produces a completely different query that reads:
 
-> Out of the books with a release year, give me the latest ones.
+> Out of the books with a non-null release year, give me the latest ones.
 
 Unfortunately, we can't just simply swap the clauses. The [SQL Order of Execution](https://www.sisense.com/blog/sql-query-order-of-operations/) guarentees `WHERE` clauses are executed before `ORDER BY` clauses.
 
@@ -98,14 +97,13 @@ Here, we're using two different queries to fetch our result:
 1. Get the latest books.
 2. Out of the latest books, give me the ones with a non-null release year.
 
-Note, you don't actually need `.values_list("id", flat=True)`. Django will automatically return just the `id` field when a queryset is used in a subquery. (TODO: check this, maybe link it in the code)
+Note, you don't actually need `.values_list("id", flat=True)`. Django will automatically return just the `id` field when a queryset is used in a subquery.
 
 Here's our updated test:
 
 ```python
 def test_queryset():
     ...
-
     qs = Book.objects.filter(
         id__in=Book.objects.order_by("name", "-edition").distinct("name"),
         release_year__isnull=False,

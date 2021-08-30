@@ -1,7 +1,6 @@
 ---
 title: 'Find all N+1 violations in your Django app'
 date: 2021-03-13T23:10:50-08:00
-description: 'Find all N+1 violations in your Django app'
 tags:
   - Python
   - Django
@@ -29,7 +28,7 @@ def print_songs():
         print(f"{song.artist.name} - {song.name}")
 ```
 
-Now let's create a unit test to ensure `print_songs` runs successfully. We're using `pytest` and `pytest-django` so we can create the test data using a [pytest fixture](https://docs.pytest.org/en/stable/fixture.html). We must also mark our test with [django_db](https://pytest-django.readthedocs.io/en/latest/helpers.html#pytest-mark-django-db-request-database-access) to setup the database. Run the unit test. Notice it passes and our songs are printed to the terminal. Everything seems fine on the surface.
+Now let's create a unit test to ensure `print_songs` runs successfully. We're using `pytest` and `pytest-django` so we can create the test data using a [pytest fixture](https://docs.pytest.org/en/stable/fixture.html). When we run the unit test, you'll notice it passes and our songs are printed to the terminal. Everything seems fine on the surface.
 
 ```python
 @pytest.fixture()
@@ -38,7 +37,7 @@ def make_data():
     for i in range(100):
         Song.objects.create(artist=artist, name=f"Song {i + 1}")
 
-@pytest.mark.django_db
+@pytest.mark.django_db()  # permits db access
 def test_print_songs(make_data):
     print_songs()
 
@@ -50,14 +49,13 @@ def test_print_songs(make_data):
 
 However, if we count the number of database queries, we'll see a total of 101. Yikes!
 
-Note, `connection.queries` is only available if `DEBUG=True`. We can set this globally for all tests by setting `django_debug_mode = true` in our pytest configuration file ([docs](https://pytest-django.readthedocs.io/en/latest/usage.html#django-debug-mode-change-how-debug-is-set)).
+Note, `connection.queries` is only available if `DEBUG=True`. We can set this globally for all tests by setting `django_debug_mode = true` in our `pytest.ini` configuration file ([docs](https://pytest-django.readthedocs.io/en/latest/usage.html#django-debug-mode-change-how-debug-is-set)).
 
 ```python {hl_lines=[1,"4-5",7]}
 from django.db import connection
 
-@pytest.mark.django_db
-def test_print_songs(settings, make_data):
-    settings.DEBUG = True  # connection.queries is only available if DEBUG=True
+@pytest.mark.django_db()
+def test_print_songs(make_data):
     print_songs()
     print(len(connection.queries))
 
@@ -65,7 +63,7 @@ def test_print_songs(settings, make_data):
 # 101
 ```
 
-Why are we making so many queries? We make one query to fetch all `Song` objects in the database. Then, for every song, we make one query to fetch its `Artist` object.
+Why are we making so many queries? We make a query to fetch all `Song` objects in the database. Then, for every song, we make a query to fetch its `Artist` object.
 
 Django's [select_related](https://docs.djangoproject.com/en/3.1/ref/models/querysets/#select-related) and [prefetch_related](https://docs.djangoproject.com/en/3.1/ref/models/querysets/#prefetch-related) queryset methods can easily fix this. `Song` to `Artist` is a Many-to-One relationship so we use `select_related`.
 
@@ -75,12 +73,11 @@ def print_songs():
         print(f"{song.artist.name} - {song.name}")
 ```
 
-If we run our unit test, we're down to a single db hit.
+If we run the unit test against our refactored function, we're down to a single db hit. Nice!
 
 ```python
-@pytest.mark.django_db
-def test_print_songs(settings, make_data):
-    settings.DEBUG = True
+@pytest.mark.django_db()
+def test_print_songs(make_data):
     print_songs()
     print(len(connection.queries))
 
@@ -92,19 +89,20 @@ Now, how can we write our unit test to catch this blunder? I've traditionally us
 
 ## Assert query count
 
-We can assert the number of db hits at the end of the unit test. This is the simpler approach but doesn't scale very well.
+We can assert the number of db hits at the end of the unit test.
 
 ```python
-@pytest.mark.django_db
-def test_print_songs(settings, make_data):
-    settings.DEBUG = True
+@pytest.mark.django_db()
+def test_print_songs(make_data):
     print_songs()
     assert len(connection.queries) == 1
 ```
 
+This approach works but doesn't scale well. Manually counting the expected number of queries and adding the assertion to every unit test is unreasonable.
+
 ## nplusone
 
-The [nplusone](https://github.com/jmcarp/nplusone) package automatically finds N+1 violations for you. It comes with a [generic profiler](https://github.com/jmcarp/nplusone#generic) which raises an exception when a violation is executed. We can create a fixture in our `conftest.py` file to wrap all of our tests in this profiler.
+The [nplusone](https://github.com/jmcarp/nplusone) package automatically finds N+1 violations for you. It comes with a [generic profiler](https://github.com/jmcarp/nplusone#generic) which raises an `NPlusOneError` when a violation is discovered. We can create a fixture in our `conftest.py` file to wrap all of our tests in this profiler.
 
 ```python
 # conftest.py
@@ -120,13 +118,11 @@ def _raise_nplusone(request):
             yield
 ```
 
-Now an `NPlusOneError` will be raised in any unit test if it contains an N+1 violation. Here's the exception message for our old version of `print_songs` that did NOT use `select_related`.
+Here's the exception message for our old version of `print_songs` that did NOT use `select_related`.
 
-```text
-nplusone.core.exceptions.NPlusOneError: Potential n+1 query detected on `Song.artist`
-```
+> nplusone.core.exceptions.NPlusOneError: Potential n+1 query detected on `Song.artist`
 
-There may be cases where you want to opt-out of the N+1 check. For example, the package may report a false positive or you don't want to fix a specific violation instance. That's where the `skip_nplusone` marker can be used.
+There may be cases where you want to opt-out of the N+1 check. For example, the package may report a false positive or you don't want to fix a specific violation. That's the purpose of the `skip_nplusone` marker.
 
 ## Conclusion
 

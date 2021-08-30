@@ -1,13 +1,6 @@
 # Post Ideas
 
 - Ways to check for Django membership
-
-```
-.annotate(member_count=Count("members")).filter(member_count__gt=0)
-.filter(members__isnull=False)
-Exists subquery
-```
-
 - git merge vs git merge --squash vs git rebase
 - Run cypress tests in docker
 - Dataclass vs namedtuple vs class
