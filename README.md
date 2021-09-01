@@ -18,6 +18,7 @@ hugo -D  # build static pages
 
 ## TODO
 
+- Deploy to netlify (add netlify status badge)
 - Get google analytics working ([here](https://gist.github.com/zjeaton/42246742cdaf2fb46400d04c2eba9a8a#file-analytics-gtag-html) and [here](https://gideonwolfe.com/posts/sysadmin/hugo/hugogoogleanalytics/))
 
 ## Themes
