@@ -1,6 +1,6 @@
 ---
 title: 'Find all N+1 violations in your Django app'
-date: 2021-03-13T23:10:50-08:00
+date: 2021-04-13T23:10:50-08:00
 tags:
   - Python
   - Django
