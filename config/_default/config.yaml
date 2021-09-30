@@ -19,6 +19,8 @@ params:
   # Site-wide
   ###################
 
+  hideFooter: true
+
   label:
     text: Johnny Metz
     # icon: /apple-touch-icon.png
