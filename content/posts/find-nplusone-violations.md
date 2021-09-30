@@ -52,7 +52,7 @@ However, if we count the number of database queries, we'll see a total of 101. Y
 
 Note, `connection.queries` is only available if `DEBUG=True`. We can set this globally for all tests by setting `django_debug_mode = true` in our `pytest.ini` configuration file ([docs](https://pytest-django.readthedocs.io/en/latest/usage.html#django-debug-mode-change-how-debug-is-set)).
 
-```python {hl_lines=[1,"4-5",7]}
+```python {hl_lines=[1,6]}
 from django.db import connection
 
 @pytest.mark.django_db()
@@ -92,7 +92,7 @@ Now, how can we write our unit test to catch this blunder? I've traditionally us
 
 We can assert the number of db hits at the end of the unit test.
 
-```python
+```python {hl_lines=[4]}
 @pytest.mark.django_db()
 def test_print_songs(make_data):
     print_songs()
