@@ -6,6 +6,7 @@ tags:
   - Python
   - Django
   - Pre-commit
+draft: true
 ---
 
 Keeping your models in sync with your migrations is an important part of any Django app. My team and I make changes to our models frequently and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an example using a simple `Product` model.

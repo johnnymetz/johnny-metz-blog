@@ -7,6 +7,7 @@ type: 'posts'
 tags:
   - Python
   - Django
+draft: true
 ---
 
 The Django ORM is a powerful tool but I often see developers forget the SQL order of execution, leading to a common mistake and an undesirable query result. Let's look at an example:
