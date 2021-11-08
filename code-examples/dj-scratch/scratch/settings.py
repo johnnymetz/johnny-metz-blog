@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     "django_extensions",
     # local apps
     # "subqueries.apps.SubqueriesConfig",
-    # "checkmembers.apps.CheckmembersConfig",
-    "query.apps.QueryConfig",
+    "checkmembers.apps.CheckmembersConfig",
+    # "query.apps.QueryConfig",
 ]
 
 MIDDLEWARE = [

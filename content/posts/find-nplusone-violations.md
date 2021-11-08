@@ -5,8 +5,6 @@ tags:
   - Python
   - Django
   - Pytest
-# toc:
-#   enable: false
 draft: true
 ---
 

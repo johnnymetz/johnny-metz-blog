@@ -1,7 +1,6 @@
 ---
 title: 'Check your Django Migrations on every commit'
 date: 2021-05-08T12:10:47-07:00
-type: 'posts'
 tags:
   - Python
   - Django

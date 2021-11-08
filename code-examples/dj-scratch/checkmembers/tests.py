@@ -7,7 +7,7 @@ from pytest_django.asserts import assertQuerysetEqual
 
 
 @pytest.mark.django_db()
-class TestSomething:
+class TestCheckMembers:
     @pytest.fixture()
     def users_with_groups(self):
         group1 = Group.objects.create(name="Group 1")
@@ -46,12 +46,19 @@ class TestSomething:
 
         # Without distinct we get:
         # <QuerySet [<User: user1>, <User: user1>, <User: user2>]>
-        # Each user is returned based on the number of groups it belong to
+        # Each user is returned based on the number of groups it belongs to
 
         assertQuerysetEqual(users, users_with_groups, ordered=False)
         assert len(connection.queries) == 1
 
-    def test_annotate(self, users_with_groups):
+    def test_dunder_count(self, users_with_groups):
+        """Con: couting more objects than we need"""
+        users = User.objects.filter(groups__count__gt=0)
+
+        assertQuerysetEqual(users, users_with_groups, ordered=False)
+        assert len(connection.queries) == 1
+
+    def test_annotate_count(self, users_with_groups):
         """Con: couting more objects than we need"""
         users = User.objects.annotate(group_count=Count("groups")).filter(
             group_count__gt=0
@@ -60,7 +67,7 @@ class TestSomething:
         assertQuerysetEqual(users, users_with_groups, ordered=False)
         assert len(connection.queries) == 1
 
-    def test_exists(self, users_with_groups):
+    def test_annotate_exists(self, users_with_groups):
         users = User.objects.annotate(
             has_group=Exists(Group.objects.filter(user=OuterRef("pk")))
         ).filter(has_group=True)
@@ -68,7 +75,7 @@ class TestSomething:
         assertQuerysetEqual(users, users_with_groups, ordered=False)
         assert len(connection.queries) == 1
 
-    def test_exists_direct(self, users_with_groups):
+    def test_direct_exists(self, users_with_groups):
         """https://docs.djangoproject.com/en/3.2/ref/models/expressions/#filtering-on-a-subquery-or-exists-expressions"""
         users = User.objects.filter(Exists(Group.objects.filter(user=OuterRef("pk"))))
 

@@ -17,7 +17,7 @@ INNER JOIN "auth_user_groups" ON ("auth_user"."id" = "auth_user_groups"."user_id
 WHERE "auth_user_groups"."group_id" IS NOT NULL;
 ```
 
-Using the Exists directly in the querset is better.
+Using the Exists directly in the queryset is better.
 
 ```
 # User.objects.annotate(has_group=Exists(groups)).filter(has_group=True)

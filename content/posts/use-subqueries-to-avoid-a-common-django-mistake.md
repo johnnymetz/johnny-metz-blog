@@ -1,16 +1,17 @@
 ---
 # Use Subqueries to prevent a common Django mistake/pitfall/blunder
 # Common Django ORM Gotcha: SQL Order of Execution
-title: 'Use Subqueries to avoid a common Django mistake'
+title: 'Why you need to use Django Subqueries'
 date: 2021-07-21T11:56:09-07:00
-type: 'posts'
 tags:
   - Python
   - Django
 draft: true
 ---
 
-The Django ORM is a powerful tool but I often see developers forget the SQL order of execution, leading to a common mistake and an undesirable query result. Let's look at an example:
+The Django ORM is a powerful tool but I often see developers forget the SQL order of execution. This leads to a common mistake.
+
+Let's look at an example:
 
 ```python
 class Book(models.Model):
