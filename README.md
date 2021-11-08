@@ -1,26 +1,9 @@
 # Johnny Metz's Blog
 
-## Common commands
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e8388a98-1533-45ac-b67b-e33c2dfc965b/deploy-status)](https://app.netlify.com/sites/johnny-metz/deploys)
 
-```
-# create a new post
-hugo new posts/xxx.md
-
-# managing submodules
-git submodule
-git submodule summary
-git submodule update --remote --merge
-
-# run / build
-hugo server --gc -D  # run dev server on http://localhost:1313
-hugo -D  # build static pages
-```
+Johnny Metz's blog for trying new technology and sharing what I learn.
 
 ## TODO
 
-- Deploy to netlify (add netlify status badge)
 - Get google analytics working ([here](https://gist.github.com/zjeaton/42246742cdaf2fb46400d04c2eba9a8a#file-analytics-gtag-html) and [here](https://gideonwolfe.com/posts/sysadmin/hugo/hugogoogleanalytics/))
-
-## Themes
-
-[Hugo Themes Ranked](https://hugoranked.com/)
