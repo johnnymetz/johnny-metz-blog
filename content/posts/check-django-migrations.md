@@ -5,7 +5,6 @@ tags:
   - Python
   - Django
   - Pre-commit
-draft: true
 ---
 
 Keeping your models in sync with your migrations is an important part of any Django app. My team and I make changes to our models frequently and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an example using a simple `Product` model.
@@ -46,7 +45,7 @@ $ echo $?
 
 `--dry-run` prevents the migrations from actually being created and `echo $?` prints the exit code of the last run command. As we can see from the output and the non-zero exit code, we're missing migrations.
 
-We can automatically run this check before committing using the popular [pre-commit](https://pre-commit.com/) framework.
+We can automatically run this check before committing to version control using the popular [pre-commit](https://pre-commit.com/) framework.
 
 ```yaml
 # .pre-commit-config.yaml
@@ -57,9 +56,8 @@ repos:
         name: Check django migrations
         entry: python3 manage.py makemigrations --dry-run --check
         language: system
-        types: [python]
+        types: [python] # hook only runs if a python file is staged
         pass_filenames: false
-        require_serial: true
 ```
 
 If we try to commit, we'll get an error.
@@ -82,4 +80,4 @@ $ git commit -m "Add quantity field to Product model"
 # Check django migrations..................................................Passed
 ```
 
-<!-- This is a quick and reliable way to make sure your migrations are in sync with our models. -->
+May your models always be in sync with your migrations.

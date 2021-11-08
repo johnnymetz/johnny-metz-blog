@@ -1,17 +1,15 @@
 ---
-# Use Subqueries to prevent a common Django mistake/pitfall/blunder
-# Common Django ORM Gotcha: SQL Order of Execution
-title: 'Why you need to use Django Subqueries'
+title: 'Why you need to use Subqueries in Django'
 date: 2021-07-21T11:56:09-07:00
 tags:
   - Python
   - Django
-draft: true
+  - Pytest
 ---
 
-The Django ORM is a powerful tool but I often see developers forget the SQL order of execution. This leads to a common mistake.
+The Django ORM is a powerful tool but certain aspects of it are counterintuitive, such as the SQL order of execution.
 
-Let's look at an example:
+Let's look at an example of this trap and how we can fix it using subqueries:
 
 ```python
 class Book(models.Model):
@@ -40,17 +38,19 @@ Book.objects.order_by("name", "-edition")
 .filter(release_year__isnull=False)
 ```
 
-This seems like a sound approach. Let's test this out using the following sample data:
+This seems like a sound approach. Note we're PostgreSQL because it's the only database that supports `distinct(*fields)` ([docs](https://docs.djangoproject.com/en/3.2/ref/models/querysets/#distinct)).
 
-| Name        | Edition | Release Year |
-| ----------- | ------- | ------------ |
-| Django tips | 1       | 2020         |
-| Django tips | 2       | 2022         |
-| Django tips | 3       | null         |
-| Golf swings | 1       | 2018         |
-| Golf swings | 2       | 2021         |
+Let's test this out using the following sample data:
 
-We're using `pytest` and `pytest-django`.
+| Name        | Edition | Release Year       |
+| ----------- | ------- | ------------------ |
+| Django tips | 1       | 2020               |
+| Django tips | 2       | 2022               |
+| Django tips | 3       | null (coming soon) |
+| Golf swings | 1       | 2018               |
+| Golf swings | 2       | 2021               |
+
+We're writing our unit test in `pytest` and `pytest-django`. Our query should return just the last record, `book5`.
 
 ```python
 import pytest
@@ -83,9 +83,9 @@ The `WHERE` clause appears _before_ the `ORDER BY` clause, which produces a comp
 
 > Out of the books with a non-null release year, give me the latest ones.
 
-Unfortunately, we can't just simply swap the clauses. The [SQL Order of Execution](https://www.sisense.com/blog/sql-query-order-of-operations/) guarentees `WHERE` clauses are executed before `ORDER BY` clauses.
+Unfortunately, we can't just simply swap the clauses. The [SQL order of execution](https://www.sisense.com/blog/sql-query-order-of-operations/) guarentees `WHERE` clauses are executed before `ORDER BY` clauses.
 
-So how can we fix this? The answer is using SQL Subqueries.
+So how can we fix this? The answer is using SQL subqueries.
 
 ```python
 Book.objects.filter(

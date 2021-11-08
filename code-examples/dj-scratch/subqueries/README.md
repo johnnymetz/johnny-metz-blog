@@ -1,30 +1,34 @@
 # Django ORM Gotcha
 
 ```
+./manage.py runscript debugger
+```
+
+```
 docker compose exec db psql -U postgres
 ```
 
 ```
 # w/o .values_list("pk", flat=True)
-SELECT * FROM "core_book"
+SELECT * FROM "subqueries_book"
 WHERE (
-	"core_book"."id" IN (
-		SELECT DISTINCT ON ("core_book"."name") "core_book"."id"
-		FROM "core_book"
-		ORDER BY "core_book"."name" ASC, "core_book"."edition" DESC
+	"subqueries_book"."id" IN (
+		SELECT DISTINCT ON ("subqueries_book"."name") "subqueries_book"."id"
+		FROM "subqueries_book"
+		ORDER BY "subqueries_book"."name" ASC, "subqueries_book"."edition" DESC
 	)
-	AND "core_book"."release_year" IS NOT NULL
+	AND "subqueries_book"."release_year" IS NOT NULL
 )
 
 # w/ .values_list("pk", flat=True)
-SELECT * FROM "core_book"
+SELECT * FROM "subqueries_book"
 WHERE (
-	"core_book"."id" IN (
+	"subqueries_book"."id" IN (
 		SELECT DISTINCT ON (U0."name") U0."id"
-		FROM "core_book" U0
+		FROM "subqueries_book" U0
 		ORDER BY U0."name" ASC, U0."edition" DESC
 	)
-	AND "core_book"."release_year" IS NOT NULL
+	AND "subqueries_book"."release_year" IS NOT NULL
 )
 ```
 

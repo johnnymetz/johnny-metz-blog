@@ -10,7 +10,7 @@ draft: true
 
 <!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->
 
-The N+1 problem is a common database performance issue. It plagues ORM's, such as Django and SQLAlchemy, because it results in your application making more database queries than necessary.
+The N+1 problem is a common database performance issue. It plagues ORM's, such as Django and SQLAlchemy, because it leads to your application making more database queries than necessary.
 
 Let's look at a basic example in Django.
 
@@ -46,7 +46,7 @@ def test_print_songs(make_data):
 # ...
 ```
 
-However, if we count the number of database queries, we'll see a total of 101. Yikes!
+However, if we count the number of database queries, we'll see a total of **101**. Yikes!
 
 Note, `connection.queries` is only available if `DEBUG=True`. We can set this globally for all tests by setting `django_debug_mode = true` in our `pytest.ini` configuration file ([docs](https://pytest-django.readthedocs.io/en/latest/usage.html#django-debug-mode-change-how-debug-is-set)).
 
@@ -72,7 +72,7 @@ def print_songs():
         print(f"{song.artist.name} - {song.name}")
 ```
 
-If we run the unit test against our refactored function, we're down to a single db hit. Nice!
+If we run the unit test against our refactored function, we're down to a single database hit. Nice!
 
 ```python
 @pytest.mark.django_db()
@@ -123,6 +123,4 @@ Here's the exception message for our old version of `print_songs` that did NOT u
 
 There may be cases where you want to opt-out of the N+1 check. For example, the package may report a false positive or you don't want to fix a specific violation. That's the purpose of the `skip_nplusone` marker.
 
-## Conclusion
-
-For any project with more than a few unit tests, I'd highly recommend trying out the `_raise_nplusone` fixture. It's a great way to optimize database performance.
+May your database access be optimal.

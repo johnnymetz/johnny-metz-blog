@@ -40,6 +40,23 @@ class TestCheckMembers:
         assert users == users_with_groups
         assert len(connection.queries) == 2
 
+    def test_prefetch_query_counts(self, users_with_groups):
+        reset_queries()
+        list(User.objects.all())
+        assert len(connection.queries) == 1
+
+        reset_queries()
+        list(User.objects.prefetch_related("groups"))
+        assert len(connection.queries) == 2
+
+        reset_queries()
+        list(User.objects.prefetch_related("groups__permissions"))
+        assert len(connection.queries) == 3
+
+        reset_queries()
+        list(User.objects.prefetch_related("groups", "user_permissions"))
+        assert len(connection.queries) == 3
+
     def test_isnull(self, users_with_groups):
         """Con: have to remember to use distinct()"""
         users = User.objects.filter(groups__isnull=False).distinct()

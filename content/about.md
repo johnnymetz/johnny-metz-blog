@@ -4,7 +4,7 @@ hidemeta: true
 
 # About Me
 
-Full Stack Software Engineer located in San Francisco, CA. I specialize in web development with Python, Django, React, Kubernetes and AWS.
+Full Stack Software Engineer located in San Francisco, CA. I specialize in web development with Python, Django, React, Docker, Kubernetes and AWS.
 
 ## Popular YouTube Videos
 
