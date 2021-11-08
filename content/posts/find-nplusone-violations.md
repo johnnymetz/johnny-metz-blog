@@ -5,7 +5,6 @@ tags:
   - Python
   - Django
   - Pytest
-draft: true
 ---
 
 <!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->
