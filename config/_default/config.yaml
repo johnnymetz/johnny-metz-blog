@@ -3,11 +3,9 @@ title: Johnny Metz
 paginate: 5
 theme: PaperMod
 
-# pass as HUGO_GOOGLEANALYTICS env var
-googleAnalytics:
+# set HUGO_GOOGLEANALYTICS env var so we're not committing a secret to version control
 
 params:
-  # env: production # to enable google analytics, opengraph, twitter-cards and schema.
   title: Johnny Metz
   author: Johnny Metz
   description: Johnny Metz's personal website and blog
