@@ -4,7 +4,7 @@ command = "hugo --gc --minify"
 
 [context.production.environment]
 HUGO_VERSION = "0.88.1"
-HUGO_ENV = "production"  # enables google analytics
+HUGO_PARAMS_ENV = "production"  # enables google analytics
 
 [context.dev]
 command = "hugo --gc --minify --buildDrafts --buildFuture -b https://dev.johnnymetz.com"
