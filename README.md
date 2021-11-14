@@ -6,4 +6,4 @@ Johnny Metz's blog for trying new technology and sharing what I learn.
 
 ## TODO
 
-- Get google analytics working ([here](https://gist.github.com/zjeaton/42246742cdaf2fb46400d04c2eba9a8a#file-analytics-gtag-html) and [here](https://gideonwolfe.com/posts/sysadmin/hugo/hugogoogleanalytics/))
+- Add subscription list

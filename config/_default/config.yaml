@@ -101,8 +101,8 @@ params:
 outputs:
   home:
     - HTML
-    - RSS
-    - JSON
+    - RSS # /index.xml
+    - JSON # /index.json
 
 menu:
   main:
