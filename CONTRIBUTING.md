@@ -5,12 +5,6 @@ How to contribute to this repository.
 ## Initial setup
 
 ```
-# initial setup
-hugo new site johnny-metz-blog
-
-# add theme
-git submodule add https://github.com/adityatelange/hugo-PaperMod.git themes/PaperMod --depth=1
-
 # setup pre-commit
 brew install pre-commit
 pre-commit install

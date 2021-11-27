@@ -3,11 +3,11 @@ publish = "public"
 command = "hugo --gc --minify"
 
 [context.production.environment]
-HUGO_VERSION = "0.88.1"
+HUGO_VERSION = "0.89.4"
 HUGO_PARAMS_ENV = "production"  # enables google analytics
 
 [context.dev]
 command = "hugo --gc --minify --buildDrafts --buildFuture -b https://dev.johnnymetz.com"
 
 [context.dev.environment]
-HUGO_VERSION = "0.88.1"
+HUGO_VERSION = "0.89.4"
