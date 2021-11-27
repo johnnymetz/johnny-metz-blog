@@ -13,11 +13,10 @@ services:
 
   api:
     build: .
-    command: ./manage.py runserver 0.0.0.0:8000
     ports:
       - '8000:8000'
     volumes:
-      - ./api:/app
+      - .:/app
     depends_on:
       - db
 # volumes:

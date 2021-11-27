@@ -1,8 +1,8 @@
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "scratch.settings"
+DJANGO_SETTINGS_MODULE = "mysite.settings"
 django_debug_mode = true
 python_files = "tests.py test_*.py"
-norecursedirs = ["subqueries"]
+norecursedirs = []
 addopts = ["--verbose", "-s"]
 
 [tool.black]
