@@ -8,14 +8,6 @@ tags:
 draft: true
 ---
 
-<!--
-Hardcode field choices on the frontend:
-- Have to update these choices in multiple places (frontend + backend).
-
-Fetch these choices
-
- -->
-
 In Django, you can define a set of [choices](https://docs.djangoproject.com/en/3.2/ref/models/fields/#choices) for any field.
 If you're using a SPA frontend, such as React or Vue, then you probably need to access these choices in a form. Let's look at two ways to do this.
 
@@ -84,7 +76,7 @@ Now, make an `OPTIONS` request to the devices list endpoint. I'm using the [http
   "name": "Device List",
   "actions": {
     "POST": {
-      ..
+      ...
       "size": {
         "choices": [
           {"display_name": "Small", "value": "S"},
@@ -125,4 +117,4 @@ You can also view these `OPTIONS` responses in DRF's browsable API. Just navigat
 
 ![options button](/options-button-highlight.png)
 
-Read more about this feature in the DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/). One important thing to note is that `OPTIONS` requests are [not cacheable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS).
+Read more about this feature in DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/). One important thing to note is that `OPTIONS` requests are [not cacheable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS).

@@ -1,8 +1,5 @@
 .DEFAULT_GOAL = shell
 
-setup:
-	pre-commit install
-
 updateprecommit:
 	pre-commit autoupdate
 	pre-commit run --all-files
@@ -32,6 +29,3 @@ pipcompile:
 
 pipcompileupgrade:
 	docker compose run api pip-compile --upgrade
-
-clear-silk:
-	docker compose run api ./manage.py silk_clear_request_log
