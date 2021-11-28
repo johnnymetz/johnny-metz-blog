@@ -1,6 +1,7 @@
 # Johnny Metz's Blog
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/e8388a98-1533-45ac-b67b-e33c2dfc965b/deploy-status)](https://app.netlify.com/sites/johnny-metz/deploys)
+
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&style=for-the-badge)](https://github.com/pre-commit/pre-commit)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=for-the-badge)](https://github.com/prettier/prettier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge)](https://github.com/psf/black)
@@ -18,4 +19,4 @@ Johnny Metz's blog for trying new technology and sharing what I learn.
 
 ## TODO
 
-- Add subscription list
+- Add subscription form
