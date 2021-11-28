@@ -1,4 +1,4 @@
-from django.db.utils import IntegrityError
+from django.core.exceptions import ValidationError
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
@@ -17,16 +17,17 @@ class TestDeviceModel:
             Device.objects.all(), [sm_device, md_device, lg_device], ordered=False
         )
 
+    def test_create_device_with_no_size_raises_exception(self):
+        with pytest.raises(ValidationError):
+            Device.objects.create(name="Laptop")
+
     def test_create_device_with_null_size_raises_exception(self):
-        with pytest.raises(IntegrityError):
+        with pytest.raises(ValidationError):
             Device.objects.create(name="Laptop", size=None)
 
-    def test_create_device_with_no_size_defaults_to_empty_string(self):
-        device = Device.objects.create(name="Laptop")
-        assert device.size == ""
-
-    # def test_xxx(self):
-    #     print(Device.Size.choices)
+    def test_create_device_with_invalid_size_raises_exception(self):
+        with pytest.raises(ValidationError):
+            Device.objects.create(name="Laptop", size="xxx")
 
 
 class TestViews:

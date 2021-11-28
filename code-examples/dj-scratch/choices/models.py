@@ -9,3 +9,7 @@ class Device(models.Model):
 
     name = models.CharField(max_length=255)
     size = models.CharField(max_length=255, choices=Size.choices)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

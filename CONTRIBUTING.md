@@ -14,7 +14,7 @@ pre-commit install
 
 ```
 # run / build
-hugo server --gc -D  # run dev server on http://localhost:1313
+hugo server --gc -D -F  # run dev server on http://localhost:1313
 hugo -D  # build static pages
 
 # create a new post
