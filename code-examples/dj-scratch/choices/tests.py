@@ -2,12 +2,13 @@ from django.db.utils import IntegrityError
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
+from rest_framework import status
 
 from choices.models import Device
 
 
 @pytest.mark.django_db()
-class TestChoices:
+class TestDeviceModel:
     def test_create_device(self):
         sm_device = Device.objects.create(name="Laptop 1", size=Device.Size.SMALL)
         md_device = Device.objects.create(name="Laptop 2", size=Device.Size.MEDIUM)
@@ -26,3 +27,11 @@ class TestChoices:
 
     # def test_xxx(self):
     #     print(Device.Size.choices)
+
+
+class TestViews:
+    def test_options_view(self, client):
+        r = client.options("/devices")
+        assert r.status_code == status.HTTP_200_OK
+        data = r.data
+        print(data)

@@ -24,6 +24,9 @@ logs:
 migratedb:
 	docker compose run api ./manage.py migrate
 
+seeddb:
+	docker compose run api ./manage.py shell < choices/seed_db.py
+
 pipcompile:
 	docker compose run api pip-compile
 
