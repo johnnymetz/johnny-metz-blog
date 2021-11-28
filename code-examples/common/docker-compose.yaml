@@ -10,5 +10,14 @@ services:
     #   - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_PASSWORD=postgres
+
+  api:
+    build: .
+    ports:
+      - '8000:8000'
+    volumes:
+      - .:/app
+    depends_on:
+      - db
 # volumes:
 #   postgres_data:

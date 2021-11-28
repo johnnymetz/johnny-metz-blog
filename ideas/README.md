@@ -1,8 +1,7 @@
 # Post Ideas
 
-- DRF api design passing choices to frontend
 - Anonymous volumes in docker and why you should use them [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
-- Ways to check for Django membership
+- Don't use first() with prefetch()
 - Hit host from docker container
 - git merge vs git merge --squash vs git rebase
 - Run cypress tests in docker
