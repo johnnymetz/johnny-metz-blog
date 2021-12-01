@@ -85,6 +85,7 @@ params:
 
   ShowShareButtons: true
   ShowPostNavLinks: true
+  comments: true # hack to show subscribe form at the bottom of every post, see comments.html
 
   # for search
   # https://fusejs.io/api/options.html
@@ -112,12 +113,15 @@ menu:
     - name: About
       url: about/
       weight: 20
+    - name: Subscribe
+      url: subscribe/
+      weight: 30
     - name: Tags
       url: tags/
-      weight: 30
+      weight: 40
     - name: Search
       url: search/
-      weight: 40
+      weight: 50
 
 # https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
 # pygmentsUseClasses: true
