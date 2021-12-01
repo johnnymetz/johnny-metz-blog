@@ -1,3 +1,7 @@
 .first-entry {
   min-height: 0;
 }
+
+#mc-embedded-subscribe {
+  font-weight: bold;
+}

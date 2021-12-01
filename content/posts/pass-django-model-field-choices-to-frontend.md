@@ -115,6 +115,6 @@ DRF builds `OPTIONS` requests for all endpoints out of the box. It includes the 
 
 You can also view these `OPTIONS` responses in DRF's browsable API. Just navigate to the target endpoint and click the blue "OPTIONS" button.
 
-![options button](/options-button-highlight.png)
+![options button](/options-button.png)
 
 Read more about this feature in DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/). One important thing to note is that `OPTIONS` requests are [not cacheable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS).
