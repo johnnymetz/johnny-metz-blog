@@ -85,7 +85,7 @@ params:
 
   ShowShareButtons: true
   ShowPostNavLinks: true
-  comments: true # hack to show subscribe form at the bottom of every post, see comments.html
+  comments: true # hack to show subscription form at the bottom of every post, see comments.html
 
   # for search
   # https://fusejs.io/api/options.html
