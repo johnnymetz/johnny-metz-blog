@@ -8,6 +8,11 @@ How to contribute to this repository.
 # setup pre-commit
 brew install pre-commit
 pre-commit install
+
+# install theme (pretty sure only the second command is needed)
+# https://github.com/adityatelange/hugo-PaperMod/wiki/Installation#method-2
+git submodule add https://github.com/adityatelange/hugo-PaperMod.git themes/PaperMod --depth=1
+git submodule update --init --recursive # needed when you reclone your repo (submodules may not get cloned automatically)  # .git/modules now exists
 ```
 
 ## Common commands

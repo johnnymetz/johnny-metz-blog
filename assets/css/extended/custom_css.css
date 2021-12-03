@@ -2,6 +2,10 @@
   min-height: 0;
 }
 
+#mc_embed_signup form#mc-embedded-subscribe-form {
+  padding: 10px 0 10px 0;
+}
+
 #mc-embedded-subscribe {
   font-weight: bold;
 }
