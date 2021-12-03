@@ -5,7 +5,6 @@ tags:
   - Python
   - Django
   - Django Rest Framework
-draft: true
 ---
 
 In Django, you can define a set of [choices](https://docs.djangoproject.com/en/3.2/ref/models/fields/#choices) for any field.
@@ -36,21 +35,17 @@ The fastest approach is to harcode these choices in the frontend.
 </select>
 ```
 
-This breaks the [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), which isn't ideal. If we want to add a new choice, then we'd have to add it in the backend and frontend.
+This breaks the [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), which isn't ideal. If we want to add a new choice, then we'd have to add it in both the backend and frontend.
 
 ## Pass choices to frontend via API
 
-A better approach is to set these choices only on the backend and pass them around via an API.
+A better approach is to manage these choices only on the backend and pass them around via an API.
 
 Django Rest Framework, the most popular tool for building API's with Django, makes this very easy using `OPTIONS` requests.
 
 Let's start by building our CRUD endpoints:
 
 ```python
-from django.urls import include, path
-from rest_framework import serializers
-from rest_framework.routers import DefaultRouter
-
 # serializers.py
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -96,7 +91,7 @@ Now, make an `OPTIONS` request to the devices list endpoint. I'm using the [http
 
 See all of our `size` choices listed in a clean and strctured format. Our frontend can fetch these choices on page load and dynamically render them.
 
-DRF builds `OPTIONS` requests for all endpoints out of the box. It includes the `actions` objects for `POST` and `PUT` endpoints ([source code](https://github.com/encode/django-rest-framework/blob/335054a5d36b352a58286b303b608b6bf48152f8/rest_framework/metadata.py#L73)). Notice we get the same data in a `PUT` object when we request the options for any specific device:
+DRF builds `OPTIONS` requests for all endpoints out of the box. It includes the `actions` object for `POST` and `PUT` endpoints ([source code](https://github.com/encode/django-rest-framework/blob/335054a5d36b352a58286b303b608b6bf48152f8/rest_framework/metadata.py#L79)). Notice we get the same data for our device instance endpoint:
 
 ```json
 // http OPTIONS http://localhost:8000/api/devices/1/

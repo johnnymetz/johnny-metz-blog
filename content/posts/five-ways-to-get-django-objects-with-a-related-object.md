@@ -84,8 +84,6 @@ Very fast. `Exists()` will stop once a single record is found. Per the [Django d
 ## Exists() subquery
 
 ```python
-from django.db.models import Exists, OuterRef
-
 users = (
     User.objects
     .filter(Exists(Group.objects.filter(user=OuterRef("pk"))))
