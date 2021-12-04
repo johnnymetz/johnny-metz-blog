@@ -5,6 +5,24 @@ python_files = "tests.py test_*.py"
 norecursedirs = []
 addopts = ["--verbose", "-s"]
 
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_unreachable = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "mysite.settings"
+
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
 [tool.black]
 target-version = ["py39"]
 include = '\.pyi?$'

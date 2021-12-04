@@ -1,10 +1,9 @@
 from django.core.exceptions import ValidationError
 
 import pytest
+from choices.models import Device
 from pytest_django.asserts import assertQuerysetEqual
 from rest_framework import status
-
-from choices.models import Device
 
 
 @pytest.mark.django_db()
@@ -32,7 +31,10 @@ class TestDeviceModel:
 
 class TestViews:
     def test_options_view(self, client):
-        r = client.options("/devices")
+        r = client.options("/api/devices/")
         assert r.status_code == status.HTTP_200_OK
         data = r.data
-        print(data)
+        assert data["name"] == "Device List"
+        keys = data["actions"]["POST"].keys()
+        assert "name" in keys
+        assert "size" in keys

@@ -4,9 +4,13 @@ mypy
 isort
 
 Django
-psycopg2
+django-stubs
+django-stubs-ext
 django-extensions
+django-zen-queries
 djangorestframework
+
+psycopg2
 
 pytest
 pytest-django

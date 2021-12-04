@@ -30,17 +30,17 @@ repos:
     rev: 21.11b1
     hooks:
       - id: black
-        args: ['--config=code-examples/dj-scratch/pyproject.toml']
+        args: ['--config=code-examples/common/pyproject.toml']
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
       - id: isort
-        args: ['--settings-file=code-examples/dj-scratch/pyproject.toml']
+        args: ['--settings-file=code-examples/common/pyproject.toml']
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:
       - id: flake8
-        args: ['--config=code-examples/dj-scratch/.flake8']
+        args: ['--config=code-examples/common/.flake8']
         additional_dependencies:
           [
             'flake8-broken-line',
@@ -56,4 +56,4 @@ repos:
     rev: v0.910-1
     hooks:
       - id: mypy
-        args: ['--config-file=code-examples/dj-scratch/mypy.ini']
+        args: ['--config-file=code-examples/common/pyproject.toml']

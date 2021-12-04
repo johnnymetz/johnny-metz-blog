@@ -18,6 +18,9 @@ pytest:
 logs:
 	docker compose logs -f --no-log-prefix api
 
+makemigrations:
+	docker compose run api ./manage.py makemigrations
+
 migratedb:
 	docker compose run api ./manage.py migrate
 

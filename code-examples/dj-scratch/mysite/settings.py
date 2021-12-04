@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # local apps
     "choices.apps.ChoicesConfig",
+    "zen.apps.ZenConfig",
 ]
 
 MIDDLEWARE = [

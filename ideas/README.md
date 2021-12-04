@@ -1,6 +1,7 @@
 # Post Ideas
 
 - Anonymous volumes in docker and why you should use them [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
+- [Conditional view processing](https://docs.djangoproject.com/en/3.2/topics/conditional-view-processing/): ETags + Last-Modified headers
 - Don't use first() with prefetch()
 - Hit host from docker container
 - git merge vs git merge --squash vs git rebase
