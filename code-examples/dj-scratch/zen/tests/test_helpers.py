@@ -3,9 +3,10 @@ from django.db.models import Exists, OuterRef, Prefetch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
+from zen_queries import fetch
+
 from zen.helpers import get_toolbox_to_small_tools_mappings
 from zen.models import Tool, Toolbox
-from zen_queries import fetch
 
 
 @pytest.mark.django_db()

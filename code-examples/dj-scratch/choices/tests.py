@@ -1,9 +1,10 @@
 from django.core.exceptions import ValidationError
 
 import pytest
-from choices.models import Device
 from pytest_django.asserts import assertQuerysetEqual
 from rest_framework import status
+
+from choices.models import Device
 
 
 @pytest.mark.django_db()

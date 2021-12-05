@@ -51,6 +51,7 @@ force-exclude = '''
 [tool.isort]
 profile = "black"
 default_section = "THIRDPARTY"
+known_first_party = ["mysite", "choices", "zen"]
 known_django = "django"
 sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 remove_redundant_aliases = true

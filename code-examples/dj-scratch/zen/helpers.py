@@ -2,10 +2,10 @@
 
 # from django.db.models import QuerySet
 
-from zen.models import Tool, Toolbox
-
 # from django_stubs_ext import WithAnnotations
 from zen_queries import queries_disabled
+
+from zen.models import Tool, Toolbox
 
 # NOTE: none of these options raise a mypy error if the incoming queryset is NOT annotated
 
