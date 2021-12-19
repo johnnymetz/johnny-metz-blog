@@ -8,5 +8,6 @@ RUN npm install
 # copy source code
 COPY . .
 
-# start server
+EXPOSE 3000
+
 CMD ["npm", "run", "dev"]
