@@ -5,7 +5,7 @@ isort
 
 Django
 django-stubs
-django-stubs-ext
+# django-stubs-ext  # automatically installed with django-subs
 django-extensions
 django-zen-queries
 djangorestframework
