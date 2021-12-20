@@ -6,7 +6,6 @@
 - git merge vs git merge --squash vs git rebase
 - Run cypress tests in docker
 - git log -S
-- Use watchman for django in docker
 - DRF serializer field for date field object
 - Dataclass vs namedtuple vs class
 - Python mocking, import from where it’s called not defined
