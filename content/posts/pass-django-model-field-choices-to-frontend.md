@@ -8,7 +8,7 @@ tags:
 ---
 
 In Django, you can define a set of [choices](https://docs.djangoproject.com/en/3.2/ref/models/fields/#choices) for any field.
-If you're using a SPA frontend, such as React or Vue, then you probably need to access these choices in a form. Let's look at two ways to do this.
+If you're using a SPA frontend, such as React or Vue, then you'll need to access these choices in a form. Let's look at two ways to do this.
 
 As an example, we'll use the following `Device` model:
 
@@ -37,7 +37,7 @@ The fastest approach is to harcode these choices in the frontend.
 
 This breaks the [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), which isn't ideal. If we want to add a new choice, then we'd have to add it in both the backend and frontend.
 
-## Pass choices to frontend via API
+## Use an API to send choices to frontend
 
 A better approach is to manage these choices only on the backend and pass them around via an API.
 
@@ -100,7 +100,11 @@ DRF builds `OPTIONS` requests for all endpoints out of the box. It includes the 
   "actions": {
     "PUT": {
       "size": {
-        "choices": [...]
+        "choices": [
+          {"display_name": "Small", "value": "S"},
+          {"display_name": "Medium", "value": "M"},
+          {"display_name": "Large", "value": "L"}
+        ]
       }
     }
   },
@@ -112,4 +116,4 @@ You can also view these `OPTIONS` responses in DRF's browsable API. Just navigat
 
 ![options button](/options-button.png)
 
-Read more about this feature in DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/). One important thing to note is that `OPTIONS` requests are [not cacheable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS).
+Read more about this feature in DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/).

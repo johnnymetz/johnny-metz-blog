@@ -6,11 +6,11 @@
   padding: 10px 0 10px 0;
 }
 
-#mc_embed_signup input {
+input {
   color: var(--secondary);
 }
 
-#mc_embed_signup #subscribe-button {
+#subscribe-button {
   /* copied from .post-tags a */
   display: block;
   padding-inline-start: 14px;

@@ -14,15 +14,15 @@ The tutorial explains how to install watchman on macOS with `brew install watchm
 
 First, visit the [watchman releases page](https://github.com/facebook/watchman/releases) on GitHub. Find the latest release that contains a linux binary. This binary should follow the following format: `watchman-vYYYY.MM.DD.00-linux.zip`. As of the writing of this post, that release is `v2021.12.06.00` (note, not all releases have the linux binary for some reason).
 
-Next, hardcode the release version into your Dockerfile as an `ARG`.
+Next, hardcode the release version into your Dockerfile as an [ARG](https://docs.docker.com/engine/reference/builder/#arg).
 
-```
+```docker
 ARG WM_VERSION=v2021.12.06.00
 ```
 
 Lastly, install the binary. I got the installation instructions from the [watchman docs](https://facebook.github.io/watchman/docs/install.html#linux-and-macos).
 
-```
+```docker
 RUN wget -nv https://github.com/facebook/watchman/releases/download/$WM_VERSION/watchman-$WM_VERSION-linux.zip && \
   unzip watchman-*-linux.zip && \
   cd watchman-*-linux && \

@@ -9,14 +9,14 @@ ShowToc: true
 
 In Django, a [related object](https://docs.djangoproject.com/en/3.2/ref/models/relations/) is a model instance used in the one-to-many or many-to-many context.
 
-Let's look at the built-in `User` and `Group` objects, which have a many-to-many relationship.
+For example, let's look at the built-in `User` model, which has a many-to-many relationship with the `Group` model.
 
 ```python
 class User(models.Model):
     groups = models.ManyToManyField(Group, related_name="groups")
 ```
 
-Here are 5 ways to fetch all `User` objects with at least one related `Group` object.
+For any given `User` object, all linked `Group` objects are called "related objects". Here are 5 ways to fetch all `User` objects with at least one related `Group` object.
 
 ## Iterate over each object in Python
 
@@ -30,7 +30,7 @@ for user in User.objects.prefetch_related("groups"):
 Probably the most popular approach but there are two problems:
 
 - Doesn't return a queryset so we can't do any more work in the database, which isn't [ideal for performance](https://docs.djangoproject.com/en/3.2/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python).
-- Makes a total of two database queries because "prefetch_related does a separate lookup for each relationship, and does the 'joining' in Python" ([docs](https://docs.djangoproject.com/en/dev/ref/models/querysets/#prefetch-related)).
+- Makes a total of two database queries because [prefetch_related does a separate lookup for each relationship](https://docs.djangoproject.com/en/dev/ref/models/querysets/#prefetch-related).
 
 Let's see some other query count examples with `prefetch_related`:
 
