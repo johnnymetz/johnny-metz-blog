@@ -1,9 +1,11 @@
 baseURL: https://johnnymetz.com/
 title: Johnny Metz
-paginate: 5
 theme: PaperMod
+paginate: 5
+disqusShortname: johnnymetz
 
-# set HUGO_GOOGLEANALYTICS env var so we're not committing a secret to version control
+# env vars set on server so we're not committing a secret to version control
+# - HUGO_GOOGLEANALYTICS
 
 params:
   title: Johnny Metz
@@ -85,7 +87,8 @@ params:
 
   ShowShareButtons: true
   ShowPostNavLinks: true
-  comments: true # hack to show subscription form at the bottom of every post, see comments.html
+
+  comments: true
 
   # for search
   # https://fusejs.io/api/options.html

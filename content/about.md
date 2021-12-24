@@ -8,15 +8,11 @@ Full Stack Software Engineer located in San Francisco, CA. I specialize in web d
 
 ## Popular YouTube Videos
 
-<!-- prettier-ignore-start -->
 {{< youtube cdblJqEUDNo >}}
-
 
 {{< youtube yGTGU3IPoWE >}}
 
-
 {{< youtube A20PY5RxdI8 >}}
-<!-- prettier-ignore-end -->
 
 ## Side Projects
 
