@@ -7,25 +7,15 @@
   border-radius: var(--radius);
   background: var(--code-bg);
   border: 1px solid var(--border);
-  /* custom */
-  /* padding: 10px; */
 }
 
 #mc_embed_signup form#mc-embedded-subscribe-form {
-  padding: 10px;
+  padding: 6px 10px 12px;
 }
-
-/* #mc_embed_signup form#mc-embedded-subscribe-form {
-  padding: 10px 0 10px 0;
-} */
 
 #subscribe-form-header {
   text-align: center;
   margin-bottom: 8px;
-}
-
-#mc_embed_signup div.mc-field-group {
-  width: 100%;
 }
 
 input {
@@ -34,13 +24,11 @@ input {
 
 #subscribe-button {
   /* copied from .post-tags a */
-  display: block;
+  display: inline-block;
   padding-inline-start: 14px;
   padding-inline-end: 14px;
-  /* color: var(--secondary); */
-  /* background: var(--code-bg); */
   color: var(--code-bg);
-  background: var(--secondary);
+  background: var(--primary);
   font-size: 14px;
   line-height: 34px;
   /* custom */
@@ -48,8 +36,6 @@ input {
   border-radius: var(--radius);
 }
 
-/* TODO: fix this */
 #subscribe-button:hover {
-  /* copied from .post-tags a:hover */
-  /* background: var(--border); */
+  background: var(--secondary);
 }
