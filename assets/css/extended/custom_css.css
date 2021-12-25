@@ -13,27 +13,22 @@
   padding: 6px 10px 12px;
 }
 
-#subscribe-form-header {
-  text-align: center;
-  margin-bottom: 8px;
-}
-
 input {
   color: var(--secondary);
 }
 
 #subscribe-button {
   /* copied from .post-tags a */
-  display: inline-block;
   padding-inline-start: 14px;
   padding-inline-end: 14px;
-  color: var(--code-bg);
-  background: var(--primary);
   font-size: 14px;
   line-height: 34px;
   /* custom */
+  display: inline-block;
   border-width: 0 !important;
   border-radius: var(--radius);
+  color: var(--code-bg);
+  background: var(--primary);
 }
 
 #subscribe-button:hover {
