@@ -1,11 +1,10 @@
 ---
 title: 'Free up Django CPU usage in Docker with Watchman'
-date: 2021-12-21T23:27:56-08:00
+date: 2022-01-02T23:27:56-08:00
 tags:
   - Python
   - Django
   - Docker
-draft: true
 ---
 
 Adam Johnson's [Efficient Reloading in Django’s Runserver With Watchman - Adam Johnson](https://adamj.eu/tech/2021/01/20/efficient-reloading-in-djangos-runserver-with-watchman/) blog post describes how to use [watchman](https://github.com/facebook/watchman) in your Django project to make auto-reloads more CPU efficient. I highly recommend giving it a read. It's a no-brainer for every Django project to speed up your development process.
