@@ -2,8 +2,15 @@
   min-height: 0;
 }
 
+#mc_embed_signup {
+  /* copied from .share-buttons */
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+}
+
 #mc_embed_signup form#mc-embedded-subscribe-form {
-  padding: 10px 0 10px 0;
+  padding: 6px 10px 12px;
 }
 
 input {
@@ -12,19 +19,18 @@ input {
 
 #subscribe-button {
   /* copied from .post-tags a */
-  display: block;
   padding-inline-start: 14px;
   padding-inline-end: 14px;
-  color: var(--secondary);
-  background: var(--code-bg);
   font-size: 14px;
   line-height: 34px;
   /* custom */
+  display: inline-block;
   border-width: 0 !important;
   border-radius: var(--radius);
+  color: var(--code-bg);
+  background: var(--primary);
 }
 
 #subscribe-button:hover {
-  /* copied from .post-tags a:hover */
-  background: var(--border);
+  background: var(--secondary);
 }
