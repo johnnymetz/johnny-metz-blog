@@ -4,7 +4,6 @@
 - Don't use first() with prefetch()
 - Hit host from docker container
 - git merge vs git merge --squash vs git rebase
-- Run cypress tests in docker
 - git log -S
 - DRF serializer field for date field object
 - Dataclass vs namedtuple vs class
