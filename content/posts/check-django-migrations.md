@@ -7,7 +7,9 @@ tags:
   - Pre-commit
 ---
 
-Keeping your models in sync with your migrations is an important part of any Django app. My team and I make changes to our models frequently and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an example using a simple `Product` model.
+Keeping your models in sync with your migrations is an important part of any Django app. My team and I frequently make changes to our models and we occassionally forget to create new migrations for those changes. This results in errors and data loss. Let's look at an easy way to ensure your models and migrations are **always** in sync:
+
+We'll use a simple `Product` model.
 
 ```python
 class Product(models.Model):
@@ -22,7 +24,7 @@ class Product(models.Model):
     quantity = models.PositiveIntegerField(default=1)
 ```
 
-At this point, we _should_ create a new migration using `python3 manage.py makemigrations`. However, let's say we forget, which is a common mistake, and we attempt to create a new product. This results in an error and the data is never added to the db.
+At this point, we _should_ create a new migration using `python3 manage.py makemigrations`. However, let's say we forget, which is a common mistake, and we attempt to create a new product. This results in an error and the data is never added to the database.
 
 ```python
 In [1]: from core.models import Product
@@ -30,9 +32,7 @@ In [2]: Product.objects.create(name="Headphones", quantity=3)
 # OperationalError: table core_product has no column named quantity
 ```
 
-It would be ideal to catch this bug earlier in the development cycle. We can do this using the `--check` flag on the `makemigrations` command.
-
-> Exit with a non-zero status if model changes are missing migrations.
+It would be ideal to catch this bug earlier in the development cycle. We can do this using the `--check` flag on the `makemigrations` command, which will "Exit with a non-zero status if model changes are missing migrations".
 
 ```bash
 $ python3 manage.py makemigrations --dry-run --check

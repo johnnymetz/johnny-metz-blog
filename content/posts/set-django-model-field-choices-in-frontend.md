@@ -117,3 +117,5 @@ You can also view these `OPTIONS` responses in DRF's browsable API. Just navigat
 ![options button](/options-button.png)
 
 Read more about this feature in DRF's [Metadata documentation](https://www.django-rest-framework.org/api-guide/metadata/).
+
+**Which of these two approaches do you prefer?**

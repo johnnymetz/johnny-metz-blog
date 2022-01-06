@@ -2,7 +2,8 @@
   min-height: 0;
 }
 
-#mc_embed_signup {
+#mc_embed_signup,
+#comments {
   /* copied from .share-buttons */
   border-radius: var(--radius);
   background: var(--code-bg);
@@ -10,6 +11,11 @@
 }
 
 #mc_embed_signup form#mc-embedded-subscribe-form {
+  padding: 6px 10px 12px;
+}
+
+#comments {
+  margin: 10px 0;
   padding: 6px 10px 12px;
 }
 
