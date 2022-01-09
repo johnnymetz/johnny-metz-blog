@@ -138,7 +138,7 @@ The `--abort-on-container-exit` option stops all containers when the Cypress tes
 
 `cypress open` is more involved because it contains the interactive GUI. We have to forward this GUI from the docker container to our host using an [X server](http://www.linfo.org/x_server.html), which is a program that is responsible for drawing GUI's on our screen.
 
-#### Setup the X server
+#### Setup X server
 
 This only describes how to setup X server on MacOS. Comment below if you figure out how to set this up on a different OS.
 
@@ -148,14 +148,14 @@ This only describes how to setup X server on MacOS. Comment below if you figure 
 
 ![xquartz preferences](/xquartz-preferences.png)
 
-- Navigate to your terminal and run the following command to allow our host to connect to the X server.
+- Navigate to your terminal and run the following command to allow our host to connect to X server.
 
 ```
 $ xhost + 127.0.0.1
 127.0.0.1 being added to access control list
 ```
 
-- Set the `DISPLAY` variable, which we're going to pass to our Cypress docker container. This tells the X server to forward the interactive GUI to `host.docker.internal`, which is a special DNS name that points to our host (read more about it [here](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds)).
+- Set the `DISPLAY` variable, which we're going to pass to our Cypress docker container. This tells X server to forward the interactive GUI to `host.docker.internal`, which is a special DNS name that points to our host (read more about it [here](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds)).
 
 ```
 DISPLAY=host.docker.internal:0
