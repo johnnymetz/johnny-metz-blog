@@ -1,5 +1,5 @@
 ---
-title: 'Dockerize cypress run and cypress open'
+title: 'Dockerize cypress open and cypress run'
 date: 2022-01-10T21:08:44-08:00
 tags:
   - Docker
@@ -8,14 +8,12 @@ ShowToc: true
 draft: true
 ---
 
-UI testing is a critical part of any modern web application. My favorite testing framework is [Cypress](https://docs.cypress.io). It's designed for quickly writing clean and reliable tests. I generally use two main commands:
-
-<!-- If you're new to Cypress, check out the [Getting Started guide](https://docs.cypress.io/guides/getting-started/installing-cypress). Once you have a few tests written, continue below. -->
+UI testing is a critical part of any modern web application. My favorite testing framework is [Cypress](https://docs.cypress.io). It's designed for quickly writing clean and reliable tests and consists of two main commands:
 
 - `cypress open`: Opens Cypress in the interactive GUI. Used for local development.
 - `cypress run`: Runs Cypress tests from the CLI without the GUI. Used mostly in CI/CD.
 
-I like to dockerize my entire application so I can run it anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize a Cypress test suite for a Django and Next.js application (check out the source code [here](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
+I like to dockerize my entire application so it can be run anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize the `cypress open` and `cypress run` commands for a Django and Next.js application (check out the source code [here](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
 
 {{< mp4-video src="/videos/cypress-run.mp4" >}}
 
@@ -36,7 +34,11 @@ services:
     ...
 ```
 
-We'll first review how to run Cypress on our host because it's similar to running Cypress in docker. In both cases we need to add npm scripts to our `package.json` file:
+We'll first review how to run Cypress on our host because it's similar to running it in docker. If you're new to Cypress, it may be helpful to review the [Getting Started](https://docs.cypress.io/guides/getting-started/installing-cypress) documentation before reading on.
+
+## Run Cypress on host
+
+Assuming you've [installed Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress), ensure you've added the following npm scripts to the `package.json` file:
 
 ```json
 {
@@ -47,9 +49,7 @@ We'll first review how to run Cypress on our host because it's similar to runnin
 }
 ```
 
-## Run Cypress on host
-
-First, update your `cypress.json` file:
+Update the `cypress.json` file:
 
 ```json
 {
@@ -65,10 +65,10 @@ First, update your `cypress.json` file:
 ```
 
 - `baseUrl` tells Cypress where the frontend is located.
-- `BACKEND_HOST` tells Cypress where the backend is located, which is used for [seeding the database](https://github.com/johnnymetz/cypress-docker-django-nextjs/blob/main/frontend/cypress/support/commands.js#L3).
+- `BACKEND_HOST` tells Cypress where the backend is located, which is a custom environment variable I'm using to [seed the database](https://github.com/johnnymetz/cypress-docker-django-nextjs/blob/main/frontend/cypress/support/commands.js#L3).
 - [`retries`](https://docs.cypress.io/guides/guides/test-retries) reduce test flakiness.
 
-Next, spin up your application:
+Next, spin up our application:
 
 ```
 docker compose up -d
@@ -105,11 +105,11 @@ This looks almost identical to the `cypress.json` file we created earlier. The o
 
 This is how containers talk to each other in docker compose. Read [Networking in Compose](https://docs.docker.com/compose/networking/) if you'd like to learn more.
 
-Next, find the latest tag for the `cypress/included` image on [DockerHub](https://hub.docker.com/r/cypress/included/tags). It doesn't have a `lastest` tag so we need to hardcode the value.
+Next, find the latest tag for the `cypress/included` image on [DockerHub](https://hub.docker.com/r/cypress/included/tags). It doesn't have an actual `lastest` tag so we'll need to hardcode the value.
 
 ### cypress run
 
-Create a new file called `docker-compose.cypress-run.yaml` with our Cypress image tag:
+Create a new file called `docker-compose.cypress-run.yaml` with our image tag:
 
 ```yaml
 services:
@@ -136,7 +136,7 @@ The `--abort-on-container-exit` option stops all containers when the Cypress tes
 
 ### cypress open
 
-`cypress open` is more involved because it contains the interactive GUI. We have to forward this GUI from the docker container to our host using a special server called an X server, which is responsible for drawing GUI's on linux.
+`cypress open` is more involved because it contains the interactive GUI. We have to forward this GUI from the docker container to our host using an [X server](http://www.linfo.org/x_server.html), which is a program that is responsible for drawing GUI's on our screen.
 
 #### Setup the X server
 
@@ -155,7 +155,7 @@ $ xhost + 127.0.0.1
 127.0.0.1 being added to access control list
 ```
 
-- Set the `DISPLAY` variable. This tells the X server to forward the interactive GUI to `host.docker.internal`, which is a special DNS name that points to our host (read more about it [here](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds)).
+- Set the `DISPLAY` variable, which we're going to pass to our Cypress docker container. This tells the X server to forward the interactive GUI to `host.docker.internal`, which is a special DNS name that points to our host (read more about it [here](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds)).
 
 ```
 DISPLAY=host.docker.internal:0
@@ -183,37 +183,16 @@ services:
       - frontend
 ```
 
-The `cypress/included` docker image's entrypoint is `cypress run` so we need to overwrite that with `cypress open`. We also need to append `--project .` so Cypress can find the relevant project files.
+The `cypress/included` docker image's entrypoint is `cypress run` so we need to overwrite that with `cypress open`. We also need to append `--project .` so Cypress can find the project files.
 
-Now we can run our entire stack with one command using docker:
+Now we can run our entire stack with one command:
 
 ```
 docker compose -f docker-compose.yaml -f docker-compose.cypress-open.yaml up --abort-on-container-exit
 ```
 
-## Conclusion
+Cypress is running in docker but we can use the interactive GUI on our host!
 
-Docker is an excellent tool for building an app that can be run anywhere. I execute `cypress run` in docker locally and in CI/CD all the time.
+The GUI performance in docker isn't as good as on the host so I generally stick to the latter but it was fun figuring out how to dockerize it.
 
-With `cypress open`, the GUI performance in docker isn't as good as on the host so I generally stick to the latter. But it was fun figuring out how to dockerize it.
-
-**What's the coolest tool you run in docker?**
-
-<!-- Now navigate to your terminal. First we're going to store our machine's IP address in a variable. You can also get this value in System Preferences > Network if you prefer.
-
-```
-IP=$(ipconfig getifaddr en0)
-```
-
-Let's add our IP to `xhost` so it's allowed to make connections to the X server.
-
-```bash
-$ xhost + $IP
-10.0.0.112 being added to access control list
-```
-
-Now we're going to set a `DISPLAY` variable. This will be used in the next step.
-
-```
-DISPLAY=$IP:0
-``` -->
+**What's your favorite tool to run in docker?**
