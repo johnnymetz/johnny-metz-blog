@@ -13,7 +13,7 @@ UI testing is a critical part of any modern web application. My favorite testing
 - `cypress open`: Opens Cypress in the interactive GUI. Used for local development.
 - `cypress run`: Runs Cypress tests from the CLI without the GUI. Used mostly in CI/CD.
 
-I like to dockerize my entire application so it can be run anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize the `cypress open` and `cypress run` commands for a Django and Next.js application (check out the source code [here](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
+I like to dockerize my entire application so it can be run anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize the `cypress open` and `cypress run` commands for a simple Todo app written in Django and Next.js (check out the source code [here](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
 
 {{< mp4-video src="/videos/cypress-run.mp4" >}}
 
@@ -34,11 +34,11 @@ services:
     ...
 ```
 
-We'll first review how to run Cypress on our host because it's similar to running it in docker. If you're new to Cypress, it may be helpful to review the [Getting Started](https://docs.cypress.io/guides/getting-started/installing-cypress) documentation before reading on.
+We'll first review how to run Cypress on our host because it's similar to running it in docker. If you're new to Cypress, it may be helpful to review the [Getting Started](https://docs.cypress.io/guides/getting-started/installing-cypress) documentation.
 
 ## Run Cypress on host
 
-Assuming you've [installed Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress), ensure you've added the following npm scripts to the `package.json` file:
+Assuming we've [installed Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress), ensure `package.json` contains the following npm scripts:
 
 ```json
 {
@@ -68,13 +68,13 @@ Update the `cypress.json` file:
 - `BACKEND_HOST` tells Cypress where the backend is located, which is a custom environment variable I'm using to [seed the database](https://github.com/johnnymetz/cypress-docker-django-nextjs/blob/main/frontend/cypress/support/commands.js#L3).
 - [`retries`](https://docs.cypress.io/guides/guides/test-retries) reduce test flakiness.
 
-Next, spin up our application:
+Next, spin up the application:
 
 ```
 docker compose up -d
 ```
 
-Now you can run Cypress like so:
+Now we can run Cypress like so:
 
 ```
 npm run cypress:open
@@ -105,7 +105,7 @@ This looks almost identical to the `cypress.json` file we created earlier. The o
 
 This is how containers talk to each other in docker compose. Read [Networking in Compose](https://docs.docker.com/compose/networking/) if you'd like to learn more.
 
-Next, find the latest tag for the `cypress/included` image on [DockerHub](https://hub.docker.com/r/cypress/included/tags). It doesn't have an actual `lastest` tag so we'll need to hardcode the value.
+Next, find the latest tag for the `cypress/included` image on [DockerHub](https://hub.docker.com/r/cypress/included/tags). It doesn't have an actual `lastest` tag so we'll need to hardcode the value. Note, Cypress has [several different docker images](https://github.com/cypress-io/cypress-docker-images) but this one includes everything we need.
 
 ### cypress run
 
@@ -148,7 +148,7 @@ This only describes how to setup X server on MacOS. Comment below if you figure 
 
 ![xquartz preferences](/xquartz-preferences.png)
 
-- Navigate to your terminal and run the following command to allow our host to connect to X server.
+- Run the following command in the terminal to allow our host to connect to X server.
 
 ```
 $ xhost + 127.0.0.1
