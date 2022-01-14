@@ -62,6 +62,8 @@ params:
       url: 'https://github.com/johnnymetz'
     - name: stackoverflow
       url: 'https://stackoverflow.com/users/6611672/johnny-metz'
+    - name: email
+      url: 'mailto:contact@johnnymetz.com'
 
   # disableSpecial1stPost: false # not applicable in home-info mode
   # hideSummary: true
