@@ -16,3 +16,7 @@ Johnny Metz's blog for trying new technology and sharing what I learn.
 ![Kubernetes](https://img.shields.io/badge/-Kubernetes-white?logo=Kubernetes&style=for-the-badge)
 ![PostgreSQL](https://img.shields.io/badge/postgres-black?logo=postgresql&style=for-the-badge)
 ![React](https://img.shields.io/badge/react%20-%2320232a.svg?logo=react&style=for-the-badge)
+
+## Featured on
+
+- [Django Blogs](https://djangoblogs.com/)
