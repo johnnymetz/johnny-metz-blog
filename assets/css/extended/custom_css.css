@@ -2,6 +2,8 @@
   min-height: 0;
 }
 
+/* SUBSCRIBE */
+
 #mc_embed_signup,
 #comments {
   /* copied from .share-buttons */
@@ -39,4 +41,20 @@ input {
 
 #subscribe-button:hover {
   background: var(--secondary);
+}
+
+/* ALERT */
+
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+div.alert-info,
+div.alert-info > a {
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+  color: #31708f !important;
 }

@@ -8,12 +8,14 @@ ShowToc: true
 draft: true
 ---
 
-UI testing is a critical part of any modern web application. My favorite testing framework is [Cypress](https://docs.cypress.io). It's designed for quickly writing clean and reliable tests and consists of two main commands:
+{{< alert theme="info" >}}See the [**source code**](https://github.com/johnnymetz/cypress-docker-django-nextjs) for a working example.{{< /alert >}}
+
+UI testing is a critical part of any modern web application. My favorite testing framework is [**Cypress**](https://docs.cypress.io). It's designed for quickly writing clean and reliable tests and consists of two main commands:
 
 - `cypress open`: Opens Cypress in the interactive GUI. Used for local development.
 - `cypress run`: Runs Cypress tests from the CLI without the GUI. Used mostly in CI/CD.
 
-I like to dockerize my entire application so it can be run anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize the `cypress open` and `cypress run` commands for a simple Todo app written in Django and Next.js (check out the source code [here](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
+I like to dockerize my entire application so it can be run anywhere (my machine, coworker's machine, CI/CD, etc.) and Cypress is no exception. We're going to dockerize the `cypress open` and `cypress run` commands for a simple Todo app written in Django and Next.js (check out the [source code](https://github.com/johnnymetz/cypress-docker-django-nextjs)).
 
 {{< mp4-video src="/videos/cypress-run.mp4" >}}
 

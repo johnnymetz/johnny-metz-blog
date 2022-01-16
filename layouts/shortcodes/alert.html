@@ -1,0 +1,12 @@
+<div
+  class='alert
+{{- " " -}}
+{{- with .Get "theme" -}}
+  alert-{{.}}
+{{- else -}}
+  alert-info
+{{- end -}}'
+  role="alert"
+>
+  {{- .Inner | markdownify -}}
+</div>
