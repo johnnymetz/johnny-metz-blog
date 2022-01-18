@@ -4,6 +4,10 @@ date: 2022-01-10T21:08:44-08:00
 tags:
   - Docker
   - Cypress
+  - Django
+  - Next.js
+cover:
+  image: 'covers/cypress-docker.png'
 ShowToc: true
 draft: true
 ---

@@ -5,6 +5,8 @@ tags:
   - Python
   - Django
 ShowToc: true
+cover:
+  image: 'covers/django.png'
 ---
 
 In Django, a [related object](https://docs.djangoproject.com/en/3.2/ref/models/relations/) is a model instance used in the one-to-many or many-to-many context.

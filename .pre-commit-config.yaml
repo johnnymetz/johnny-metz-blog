@@ -9,6 +9,10 @@ repos:
     rev: v2.5.1
     hooks:
       - id: prettier
+  - repo: https://github.com/shssoichiro/oxipng
+    rev: acdd66b4c5a5fda8b08281ad9b3216327b6847b4
+    hooks:
+      - id: oxipng
   # - repo: https://github.com/markdownlint/markdownlint
   #   rev: 'v0.11.0'
   #   hooks:

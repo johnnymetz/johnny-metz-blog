@@ -5,6 +5,8 @@ tags:
   - Python
   - Django
   - Django Rest Framework
+cover:
+  image: 'covers/django-drf.png'
 ---
 
 In Django, you can define a set of [choices](https://docs.djangoproject.com/en/3.2/ref/models/fields/#choices) for any field.

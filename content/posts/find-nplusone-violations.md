@@ -5,6 +5,8 @@ tags:
   - Python
   - Django
   - Pytest
+cover:
+  image: 'covers/django-nplusone.png'
 ---
 
 <!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->

@@ -5,6 +5,9 @@ tags:
   - Python
   - Django
   - Pytest
+  - SQL
+cover:
+  image: 'covers/django-sql.png'
 ---
 
 The Django ORM is a powerful tool but certain aspects of it are counterintuitive, such as the SQL order of execution.
