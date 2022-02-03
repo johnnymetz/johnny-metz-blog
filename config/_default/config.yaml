@@ -67,19 +67,14 @@ params:
   ###################
 
   ShowBreadCrumbs: true
-  # hidemeta: true # post header: date, time, author
   ShowReadingTime: true
-  # ShowToc: true
-  # TocOpen: true
 
-  # Suggest changes
-  # editPost:
-  #   URL: 'https://github.com/<path_to_repo>/content'
-  #   Text: 'Suggest Changes' # edit text
-  #   appendFilePath: true # to append file path to Edit link
+  editPost:
+    URL: 'https://github.com/johnnymetz/johnny-metz-blog/blob/dev/content'
+    Text: 'Suggest Changes'
+    appendFilePath: true
 
   ShowCodeCopyButtons: true
-  # disableScrollToTop: true
 
   ShowShareButtons: true
   ShowPostNavLinks: true
@@ -124,7 +119,6 @@ menu:
       weight: 50
 
 # https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
-# pygmentsUseClasses: true
 markup:
   highlight:
     # lineNos: true

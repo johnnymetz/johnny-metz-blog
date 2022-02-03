@@ -96,4 +96,4 @@ Same solution as above but slightly better if we don't want to return the `has_g
 
 > When a conditional expression returns a boolean value, it is possible to use it directly in filters. This means that it will not be added to the SELECT columns, but you can still use it to filter results
 
-**Which of these solutions do you prefer?**
+May your Django queries be clean and performant.

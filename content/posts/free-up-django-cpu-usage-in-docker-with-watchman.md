@@ -35,5 +35,3 @@ RUN wget -nv https://github.com/facebook/watchman/releases/download/$WM_VERSION/
 ```
 
 I implemented this in one of my larger Django projects and benchmarked CPU usage with `docker stats`. Before watchman, CPU usage was **3.5%**. After watchman, CPU usage was a mere **0.05%**.
-
-Have you used watchman in any of your Django projects?

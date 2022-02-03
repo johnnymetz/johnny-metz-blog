@@ -192,5 +192,3 @@ docker compose \
 Cypress is running in docker but we can interact with the GUI on our host. Cool! Keep in mind, the Cypress GUI in docker doesn't look as good as it does on host so I generally stick to `cypress open` on host.
 
 I love running as much of my application in docker as possible. It's easier to manage and allows me to spin up entire applications with a single command.
-
-**What's your favorite tool to run in docker?**

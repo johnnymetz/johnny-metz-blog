@@ -119,5 +119,3 @@ def test_queryset():
 The test passes!
 
 In conclusion, subqueries are a great mechanism for writing fast and complex queries. Check out Django's documentation [here](https://docs.djangoproject.com/en/dev/ref/models/expressions/#subquery-expressions) for more examples.
-
-**What do you use subqueries for?**
