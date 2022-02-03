@@ -2,7 +2,6 @@ baseURL: https://johnnymetz.com/
 title: Johnny Metz
 theme: PaperMod
 paginate: 5
-disqusShortname: johnnymetz
 
 # env vars set on server so we're not committing a secret to version control
 # - HUGO_GOOGLEANALYTICS
@@ -85,6 +84,7 @@ params:
   ShowShareButtons: true
   ShowPostNavLinks: true
 
+  # hack to show subscription form at the bottom of every post, see comments.html
   comments: true
 
   # for search
