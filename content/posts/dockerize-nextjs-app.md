@@ -1,5 +1,5 @@
 ---
-title: 'Next.js multi-stage Dockerfile'
+title: 'Dockerize a Next.js app using multi-stage builds'
 date: 2022-02-02T22:14:31-08:00
 tags:
   - Next.js
