@@ -1,6 +1,9 @@
 # Post Ideas
 
-- Anonymous volumes in docker and why you should use them [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
+- Anonymous volumes in docker and why you should use them
+  - [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
+  - [Blog](https://towardsdatascience.com/the-complete-guide-to-docker-volumes-1a06051d2cce)
+- docker system prune -a -f --volumes
 - Don't use first() with prefetch()
 - Hit host from docker container
 - git merge vs git merge --squash vs git rebase

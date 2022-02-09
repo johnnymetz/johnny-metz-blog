@@ -2,23 +2,20 @@
 title: 'Next.js multi-stage Dockerfile'
 date: 2022-02-02T22:14:31-08:00
 tags:
+  - Next.js
   - Docker
   - JavaScript
-  - Next.js
+cover:
+  image: 'covers/nextjs-docker.png'
+ShowToc: true
 draft: true
 ---
-
-<!--
-# https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
-# https://www.nicovak.com/posts/nextjs-docker-multistage
-# https://www.cloudsavvyit.com/9260/what-are-multi-stage-docker-builds/
- -->
 
 {{< alert theme="info" >}}See the [**source code**](https://github.com/johnnymetz/docker-nextjs) for a working example.{{< /alert >}}
 
 [Next.js](https://nextjs.org/) is a popular React Framework. It comes with a lot of great features such as hybrid static & server rendering, smart bundling, file system routing, and much more. I prefer it over vanilla React.
 
-Let's look at how to dockerize a Next.js application using [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/), which is a feature for minimizing the final image size.
+When we dockerize a Next.js application, we want the final image to be small, fast to build and easy to maintain. Let's see how we can use [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) and other image optimization techniques to create the perfect image.
 
 ## Stage 1: Install dependencies
 
@@ -31,9 +28,9 @@ ENV NODE_ENV $NODE_ENV
 RUN npm install
 ```
 
-Start by installing our dependencies into a layer called `deps` using the `package.json` and `package-lock.json` files. As we'll see later, setting `NODE_ENV=production` at image build prevents any `devDependencies` from being installed.
+Start by installing our dependencies into a layer called `deps` using the `package.json` and `package-lock.json` files. We'll inject `NODE_ENV=production` at image build time to prevent any `devDependencies` from being installed.
 
-## Step 2: Build
+## Stage 2: Build
 
 ```dockerfile
 FROM node:17-alpine AS builder
@@ -47,11 +44,11 @@ RUN npm run build
 
 Create a new layer called `builder`. Copy the `node_modules/` directory, which was created in the `deps` stage, plus any other files you need to build your app.
 
-We could copy everything over using `COPY . .` but it's better if we only bring in what we need. This will reduce the final image size. This is why we're using the [Next.js src directory](https://nextjs.org/docs/advanced-features/src-directory) which consists entirely of files we need to build our app.
+We could copy everything using `COPY . .` but it's better if we only bring in what we need. This is why we're using the [Next.js src directory](https://nextjs.org/docs/advanced-features/src-directory) which consists entirely of files we need to build our app and cuts down on the number of files we need to explicitly copy over. As we'll see below, this will dramatically reduce the final image size.
 
-Note, the `jsconfig.json` file allows us to use [absolute imports](https://nextjs.org/docs/advanced-features/module-path-aliases) in our code which are much cleaner than relative imports.
+The `jsconfig.json` file allows us to use [absolute imports](https://nextjs.org/docs/advanced-features/module-path-aliases) in our code which are much cleaner than relative imports.
 
-## Step 3: Run
+## Stage 3: Run
 
 ```dockerfile
 FROM node:17-alpine
@@ -63,7 +60,7 @@ COPY --from=builder /app/package.json ./
 CMD ["npm", "run", "start"]
 ```
 
-At this point, we have everything we need. We just have to copy in the relevant files and run the app. `.next/` contains our build. `public/` is not included in the build so be sure to copy it over.
+At this point, we have everything we need. We just have to copy in the relevant files and run the app. Note, `.next/` contains our build. `public/` is not included in the build so be sure to copy it over.
 
 ## Complete Dockerfile
 
@@ -97,7 +94,7 @@ CMD ["npm", "run", "start"]
 
 ## Build the Docker image
 
-Multi-stage builds allow us to create different images using the same `Dockerfile`. We can build both our production and development images using the following `docker-compose.yaml`:
+Multi-stage builds allow us to create different images using the same `Dockerfile`. We can build both our production and development images using the following `docker-compose.yaml` configuration:
 
 ```yaml
 services:
@@ -124,17 +121,22 @@ services:
       - /app/.next
 ```
 
-The production build includes a `--build-arg NODE_ENV=production` argument because production environment variables have to be set at build time. Setting env vars at runtime only work for the dev server.
+In the production app, we're injecting `NODE_ENV=production` as a [build argument](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg) because environment variables have to be set at build time. Setting them at runtime only works in development. Hopefully this is something the Next.js or React.js teams fix in the future.
 
-The `--target deps` argument tells the development build to stop at the end of the `deps` build stage. This makes sense because the next dev server doesn't use the next build so no need to waste time on stages 2 and 3.
+In the development app, we're using the `--target deps` argument to tell docker to stop at the end of the `deps` build stage. The Next.js dev server doesn't use the Next.js build so there's no need to waste time on stages 2 and 3. This reduces the build time from 90 sec to 50 sec. Once the dependencies are cached on your machine, this drops to less than a second.
+
+One more point is we're passing all our source code into the container as a mounted volume so our local changes are immediately reflected in the running container. The latter two volumes tell docker not to copy the `node_modules/` and `.next/` back to the host because we don't need them there.
 
 ## Image Sizes
 
 Here are some image sizes to illustrate how important some of these factors are on the final result.
 
-| Description                                 | Size   |
-| ------------------------------------------- | ------ |
-| Optimized                                   | 322MB  |
-| one stage instead of three                  | 368MB  |
-| w/o `NODE_ENV=production`                   | 409MB  |
-| using `node:17` instead of `node:17-alpine` | 1.15GB |
+| Description                                        | Size   |
+| -------------------------------------------------- | ------ |
+| Optimized                                          | 322MB  |
+| Single-stage                                       | 368MB  |
+| All dependencies                                   | 409MB  |
+| `COPY` all files instead of only the required ones | 456MB  |
+| Use `node:17` instead of `node:17-alpine`          | 1.15GB |
+
+May your Next.js images be small, fast and maintainable.
