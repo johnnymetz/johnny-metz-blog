@@ -1,0 +1,4 @@
+label-schema:
+  maintainer: text
+  org.website: url
+strict-labels: true

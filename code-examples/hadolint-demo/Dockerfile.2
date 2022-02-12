@@ -1,0 +1,15 @@
+FROM python:3.10
+# TODO: should we use some random containiq labels here
+LABEL maintainer="johndoe@gmail.com"
+LABEL org.website="https://www.containiq.com/"
+
+WORKDIR /app
+
+COPY requirements.txt ./
+# hadolint ignore=DL3013
+RUN pip install --upgrade --no-cache-dir pip && \
+  pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
