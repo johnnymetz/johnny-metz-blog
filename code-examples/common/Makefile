@@ -1,9 +1,5 @@
 .DEFAULT_GOAL = shell
 
-updateprecommit:
-	pre-commit autoupdate
-	pre-commit run --all-files
-
 # BACKEND
 
 shell:

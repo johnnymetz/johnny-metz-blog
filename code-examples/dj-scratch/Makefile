@@ -1,9 +1,5 @@
 .DEFAULT_GOAL = shell
 
-updateprecommit:
-	pre-commit autoupdate
-	pre-commit run --all-files
-
 # BACKEND
 
 shell:
@@ -20,9 +16,6 @@ logs:
 
 migratedb:
 	docker compose run api ./manage.py migrate
-
-seeddb:
-	docker compose run api ./manage.py shell < choices/seed_db.py
 
 pipcompile:
 	docker compose run api pip-compile

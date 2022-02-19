@@ -4,30 +4,28 @@
 #
 #    pip-compile
 #
-asgiref==3.4.1
+
+asgiref==3.5.0
     # via django
-attrs==21.2.0
+attrs==21.4.0
     # via pytest
-black==21.11b1
+black==22.1.0
     # via -r requirements.in
-click==8.0.3
+click==8.0.4
     # via
     #   black
     #   pip-tools
-django==3.2.9
+django==4.0.2
     # via
     #   -r requirements.in
     #   django-extensions
-    #   djangorestframework
 django-extensions==3.1.5
-    # via -r requirements.in
-djangorestframework==3.12.4
     # via -r requirements.in
 iniconfig==1.1.1
     # via pytest
 isort==5.10.1
     # via -r requirements.in
-mypy==0.910
+mypy==0.931
     # via -r requirements.in
 mypy-extensions==0.4.3
     # via
@@ -39,43 +37,35 @@ pathspec==0.9.0
     # via black
 pep517==0.12.0
     # via pip-tools
-pip-tools==6.4.0
+pip-tools==6.5.1
     # via -r requirements.in
-platformdirs==2.4.0
+platformdirs==2.5.0
     # via black
 pluggy==1.0.0
     # via pytest
-psycopg2==2.9.2
+psycopg2==2.9.3
     # via -r requirements.in
 py==1.11.0
     # via pytest
-pyparsing==3.0.6
+pyparsing==3.0.7
     # via packaging
-pytest==6.2.5
+pytest==7.0.1
     # via
     #   -r requirements.in
     #   pytest-django
-pytest-django==4.4.0
+pytest-django==4.5.2
     # via -r requirements.in
-pytz==2021.3
-    # via django
-regex==2021.11.10
-    # via black
 sqlparse==0.4.2
     # via django
-toml==0.10.2
-    # via
-    #   mypy
-    #   pytest
-tomli==1.2.2
+tomli==2.0.1
     # via
     #   black
+    #   mypy
     #   pep517
-typing-extensions==4.0.0
-    # via
-    #   black
-    #   mypy
-wheel==0.37.0
+    #   pytest
+typing-extensions==4.1.1
+    # via mypy
+wheel==0.37.1
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:

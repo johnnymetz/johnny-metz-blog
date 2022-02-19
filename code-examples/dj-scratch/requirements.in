@@ -6,7 +6,6 @@ isort
 Django
 psycopg2
 django-extensions
-djangorestframework
 
 pytest
 pytest-django

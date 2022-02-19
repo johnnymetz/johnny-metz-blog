@@ -2,11 +2,11 @@
 DJANGO_SETTINGS_MODULE = "mysite.settings"
 django_debug_mode = true
 python_files = "tests.py test_*.py"
-norecursedirs = []
+# norecursedirs = []  # apps to exclude from pytest runs
 addopts = ["--verbose", "-s"]
 
 [tool.black]
-target-version = ["py39"]
+target-version = ["py310"]
 include = '\.pyi?$'
 # change to extend-exclude on new release
 exclude = '''
