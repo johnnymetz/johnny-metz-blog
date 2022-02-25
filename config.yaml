@@ -22,17 +22,17 @@ params:
 
   label:
     text: Johnny Metz
-    # icon: /apple-touch-icon.png
-    # iconHeight: 35
+    icon: /logo/logo-green.png # color hex is #41e1b5
+    # iconHeight: 35 # default height is 30
 
   assets:
     disableHLJS: true # use Hugo's syntax highlighter "Chroma" instead of highlight.js
     # disableFingerprinting: true
-    # favicon: '<link / abs url>'
-    # favicon16x16: '<link / abs url>'
-    # favicon32x32: '<link / abs url>'
-    # apple_touch_icon: '<link / abs url>'
-    # safari_pinned_tab: '<link / abs url>'
+    favicon: 'favicon/favicon.ico'
+    favicon16x16: 'favicon/favicon-16x16.ico'
+    favicon32x32: 'favicon/favicon-32x32.ico'
+    apple_touch_icon: 'favicon/apple-touch-icon.png'
+    safari_pinned_tab: 'favicon/safari-pinned-tab.svg'
 
   # analytics:
   #   google:
