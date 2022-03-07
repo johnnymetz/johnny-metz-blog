@@ -18,3 +18,27 @@ For the most part
 
 - Use select_related() and prefetch_related()
   - Use `prefetch_related("field1__field2__field3")`
+
+## Do as much work in the database as possible
+
+```
+with ExitStack() as stack:
+    stack.enter_context(disable_all_validation())
+    stack.enter_context(timer())
+
+    products = fetch(Product.objects.order_by("pk").select_related("contract"))
+
+    stack.enter_context(queries_disabled())
+
+    lst = []
+    for p in products:
+        lst.append({"code": p.code, "contract__kind": p.contract.kind if p.contract else None})
+
+with ExitStack() as stack:
+    stack.enter_context(disable_all_validation())
+    stack.enter_context(timer())
+
+    qs = Product.objects.order_by("pk").values("code", "contract__kind")
+
+print(lst == list(qs))
+```
