@@ -7,6 +7,11 @@ tags:
 draft: true
 ---
 
+<!-- https://www.jooq.org/sakila -->
+<!-- https://docs.djangoproject.com/en/4.0/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python -->
+<!-- https://stackoverflow.com/questions/27116770/prefetch-related-for-multiple-levels -->
+<!-- https://stackoverflow.com/questions/31237042/whats-the-difference-between-select-related-and-prefetch-related-in-django-orm -->
+
 Database access optimization is the most difficult topic in the Django web framework. The [docs](https://docs.djangoproject.com/en/4.0/topics/db/optimization/#database-access-optimization) list many great tips. Here are a few more that are equally as important.
 
 ## Understand select_related vs. prefetch_related
@@ -20,19 +25,21 @@ In summary, use `select_related` to fetch one-to-one or one-to-many (1:n) relati
 Let's look at an example:
 
 ```python
-class Film(models.Model):
-    actors = models.ManyToManyField(Actor)
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+class Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product)
 ```
 
-| QuerySet                                     | Relationship | Relationship description  | DB hits |
-| -------------------------------------------- | ------------ | ------------------------- | ------- |
-| `Film.objects.select_related("language")`    | 1:n          | A film has one language   | 1       |
-| `Language.objects.prefetch_related("films")` | m:n          | A language has many films | 2       |
-| `Film.objects.prefetch_related("actors")`    | m:n          | A film has many actors    | 2       |
-| `Actor.objects.prefetch_related("films")`    | m:n          | An actor has many films   | 2       |
+| QuerySet                                      | Relationship description   | DB hits |
+| --------------------------------------------- | -------------------------- | ------- |
+| `Order.objects.select_related("customer")`    | An order has one customer  | 1       |
+| `Customer.objects.prefetch_related("orders")` | A customer has many orders | 2       |
+| `Order.objects.prefetch_related("products")`  | An order has many products | 2       |
+| `Product.objects.prefetch_related("order")`   | A product has many orders  | 2       |
 
-Note, `prefetch_related` can be used
+Note, `prefetch_related` can be used in place of `selected_related`, e.g. `Order.objects.prefetch_related("customer")`, but this incurs a penalty of an extra db hit.
+
+We can also
 
 ```
 .prefetch_related("field1__field2")
