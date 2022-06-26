@@ -60,4 +60,4 @@ repos:
     rev: v0.961
     hooks:
       - id: mypy
-        args: ['--config-file=code-examples/dj-scratch/mypy.ini']
+        args: ['--config-file=code-examples/dj-scratch/pyproject.toml']
