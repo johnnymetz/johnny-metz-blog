@@ -18,8 +18,15 @@ django==4.0.5
     # via
     #   -r requirements.in
     #   django-extensions
+    #   django-zen-queries
 django-extensions==3.1.5
     # via -r requirements.in
+django-zen-queries==2.1.0
+    # via -r requirements.in
+factory-boy==3.2.1
+    # via -r requirements.in
+faker==13.14.0
+    # via factory-boy
 iniconfig==1.1.1
     # via pytest
 isort==5.10.1
@@ -54,6 +61,10 @@ pytest==7.1.2
     #   pytest-django
 pytest-django==4.5.2
     # via -r requirements.in
+python-dateutil==2.8.2
+    # via faker
+six==1.16.0
+    # via python-dateutil
 sqlparse==0.4.2
     # via django
 tomli==2.0.1
