@@ -6,13 +6,15 @@ class TodoQuerySet(models.QuerySet):
     def order_by_priority(self):
         from customsort.models import Todo
 
-        new_priority = Case(
+        custom_order = Case(
             When(priority=Todo.Priority.HIGH, then=Value(1)),
             When(priority=Todo.Priority.MEDIUM, then=Value(2)),
             When(priority=Todo.Priority.LOW, then=Value(3)),
         )
         # Sort by id also just so it's consistent if there's a tie
-        return self.annotate(new_priority=new_priority).order_by("new_priority", "id")
+        return self.annotate(custom_order=custom_order).order_by(
+            "custom_order", "title"
+        )
 
 
 class TodoManager(models.Manager):
