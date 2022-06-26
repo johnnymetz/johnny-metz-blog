@@ -6,6 +6,7 @@ How to contribute to this repository.
 
 ```
 # setup pre-commit
+# install cargo which required for oxipng - https://doc.rust-lang.org/cargo/getting-started/installation.html
 brew install pre-commit
 pre-commit install
 
