@@ -15,6 +15,10 @@
   padding: 6px 10px 12px;
 }
 
+#mc_embed_signup #mce-EMAIL {
+  margin-right: 5px;
+}
+
 input {
   color: var(--secondary);
 }
