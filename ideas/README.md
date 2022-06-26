@@ -1,5 +1,7 @@
 # Post Ideas
 
+- Recover deleted git branch or file
+- PyCharm find file scope
 - Anonymous volumes in docker and why you should use them
   - [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
   - [Blog](https://towardsdatascience.com/the-complete-guide-to-docker-volumes-1a06051d2cce)
