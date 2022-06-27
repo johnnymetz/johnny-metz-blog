@@ -3,6 +3,8 @@ default_stages: [commit]
 
 ci:
   autofix_prs: false
+  skip:
+    - oxipng
 
 repos:
   - repo: https://github.com/pre-commit/mirrors-prettier
