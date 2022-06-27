@@ -1,5 +1,5 @@
 ---
-title: 'Sort a Django QuerySet with a custom order'
+title: 'Sort a Django queryset with a custom order'
 date: 2022-07-03T12:48:49-07:00
 tags:
   - Python
@@ -8,7 +8,7 @@ ShowToc: true
 draft: true
 ---
 
-I occasionally need to sort a collection of Django objects with a custom order.
+I occasionally need to sort a Django queryset with a custom order.
 
 For example, let's take a simple `Todo` model:
 
@@ -54,14 +54,14 @@ sorted(
 )
 ```
 
-Definitely the most common approach I see in the wild but there are two big problems which make this the slowest solution:
+Definitely the most common approach I see in the wild but there are two big problems, which make this the slowest solution:
 
 - Performs the sort in Python, instead of in the database, which is [bad for performance](https://docs.djangoproject.com/en/3.2/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python).
 - Returns a list, instead of a queryset, so we can’t do any more work in the database, which is also bad for performance.
 
 ## Sort in Database using a Conditional Expression
 
-[Conditional expressions](https://docs.djangoproject.com/en/4.0/ref/models/conditional-expressions/) let you to implement conditional logic into your database queries.
+[Conditional expressions](https://docs.djangoproject.com/en/4.0/ref/models/conditional-expressions/) let you to implement conditional logic into your database queries. This solution is faster than sorting in Python because the sort is done directly in the database.
 
 ```python
 from django.db.models import Case, Value, When
@@ -91,7 +91,7 @@ class Todo(models.Model):
     objects = TodoQuerySet.as_manager()
 ```
 
-This allows us to write clean and compact queries:
+This allows us to write compact and easy to read queries:
 
 ```python
 # sort all todos
@@ -104,7 +104,7 @@ Todo.objects.filter(done=False).order_by_priority()
 Todo.objects.exclude(priority=Todo.Priority.LOW).order_by_priority()
 ```
 
-Conditional expressions are very powerful and allow you to write fast, advanced, easy to read queries. See the [docs](https://docs.djangoproject.com/en/4.0/ref/models/conditional-expressions/) for more examples.
+Conditional expressions are powerful and can be used in queries with very advanced logic. See the [docs](https://docs.djangoproject.com/en/4.0/ref/models/conditional-expressions/) for more examples.
 
 ## Sort in Database using `IntegerChoices`
 
@@ -144,4 +144,4 @@ I took the following benchmarks on my 16GB RAM MacBook Pro.
 | 5,000,000    | 57s            | 87s                    | 114s        |
 | 10,000,000   | 204s           | 252s                   | 404s        |
 
-As we can see, any strategy is fine for small datasets. For large datasets, sorting in the database using `IntegerChoices` is best. Conditional expressions are a good alternative if the sorting logic is too complex for `IntegerChoices`.
+As we can see, any strategy is fine for small datasets. For large datasets, sorting in the database using `IntegerChoices` is best. Conditional expressions are a good alternative if the sorting logic is overly complex.
