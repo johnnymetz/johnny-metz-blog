@@ -6,6 +6,8 @@ isort
 Django
 psycopg2
 django-extensions
+django-zen-queries
 
 pytest
 pytest-django
+factory-boy
