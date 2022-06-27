@@ -4,6 +4,8 @@ date: 2022-03-17T19:32:01-07:00
 tags:
   - Hadolint
   - Docker
+cover:
+  image: 'covers/hadolint-docker.png'
 ---
 
 See the post here: [Using Hadolint, a Dockerfile linter, To Enforce Best Practices](https://www.containiq.com/post/hadolint)
