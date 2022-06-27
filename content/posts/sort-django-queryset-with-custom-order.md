@@ -1,6 +1,6 @@
 ---
 title: 'Sort a Django queryset with a custom order'
-date: 2022-07-03T12:48:49-07:00
+date: 2022-06-26T12:48:49-07:00
 tags:
   - Python
   - Django
