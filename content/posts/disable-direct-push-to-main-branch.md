@@ -1,6 +1,6 @@
 ---
 title: 'Disable a direct push to GitHub main branch'
-date: 2022-03-08T10:36:08-08:00
+date: 2022-06-20T10:36:08-08:00
 tags:
   - Git
   - GitHub
