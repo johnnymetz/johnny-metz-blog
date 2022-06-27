@@ -34,13 +34,6 @@ class TestCustomSort:
 
         # Verify records aren't already sorted in DB
         assert list(Todo.objects.all()) != self.expected
-        # assert (
-        #     sorted(
-        #         Todo.objects.all(),
-        #         key=lambda x: (x.priority, x.id),
-        #     )
-        #     != self.expected
-        # )
 
     def test_sort_list(self):
         preference = {
@@ -48,9 +41,6 @@ class TestCustomSort:
             Todo.Priority.MEDIUM: 2,
             Todo.Priority.LOW: 3,
         }
-
-        for x in Todo.objects.all():
-            print(x.priority, type(x.priority))
 
         preferred = sorted(
             Todo.objects.all(),
