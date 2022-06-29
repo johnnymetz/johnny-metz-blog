@@ -5,6 +5,8 @@ tags:
   - Git
   - GitHub
   - Pre-commit
+cover:
+  image: 'covers/you-shall-not-push.png'
 draft: true
 ---
 
