@@ -1,23 +1,24 @@
 version: '3'
 
 services:
-  # db:
-  #   image: postgres
-  #   ports:
-  #     - '5433:5432'
-  #   # w/o volumes, db is reset on dc down and back up (dc restart has no effect)
-  #   # volumes:
-  #   #   - postgres_data:/var/lib/postgresql/data/
-  #   environment:
-  #     - POSTGRES_PASSWORD=postgres
-
-  api:
-    build: .
+  db:
+    image: postgres
     ports:
-      - '8000:8000'
-    volumes:
-      - .:/app
-    # depends_on:
-    #   - db
-# volumes:
-#   postgres_data:
+      - '5434:5432'
+    # w/o volumes, db is reset on dc down and back up (dc restart has no effect)
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+#   api:
+#     build: .
+#     ports:
+#       - '8000:8000'
+#     volumes:
+#       - .:/app
+#     depends_on:
+#       - db
+
+volumes:
+  postgres_data:

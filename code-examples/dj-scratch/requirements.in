@@ -5,6 +5,7 @@ isort
 
 Django
 psycopg2
+django-environ
 django-extensions
 django-zen-queries
 

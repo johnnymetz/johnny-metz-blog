@@ -21,6 +21,8 @@ django==4.1.4
     #   -r requirements.in
     #   django-extensions
     #   django-zen-queries
+django-environ==0.9.0
+    # via -r requirements.in
 django-extensions==3.2.1
     # via -r requirements.in
 django-zen-queries==2.1.0

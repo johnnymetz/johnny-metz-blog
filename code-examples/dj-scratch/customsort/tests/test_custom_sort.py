@@ -76,7 +76,7 @@ class TestCustomSort:
 
     # @pytest.mark.skip(reason="Slow test")
     def test_benchmark(self):
-        n = 1_000_000
+        n = 5_000_000
 
         with timer(f"build {n:,} objects without saving"):
             todos = TodoFactory.build_batch(n)
