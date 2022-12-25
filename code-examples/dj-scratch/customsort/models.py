@@ -9,6 +9,12 @@ class Todo(models.Model):
     #     HIGH = "HIGH", _("High")
     #     MEDIUM = "MEDIUM", _("Medium")
     #     LOW = "LOW", _("Low")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["priority", "title"]),
+        ]
+
     class Priority(models.IntegerChoices):
         HIGH = 1, _("High")
         MEDIUM = 2, _("Medium")

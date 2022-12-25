@@ -74,10 +74,12 @@ class TestCustomSort:
             Todo.objects.order_by_priority(), self.expected, ordered=False
         )
 
-    @pytest.mark.skip(reason="Slow test")
+    # @pytest.mark.skip(reason="Slow test")
     def test_benchmark(self):
-        with timer("build objects without saving"):
-            todos = TodoFactory.build_batch(1_000_000)
+        n = 1_000_000
+
+        with timer(f"build {n:,} objects without saving"):
+            todos = TodoFactory.build_batch(n)
 
         with timer("bulk create objects"):
             Todo.objects.bulk_create(todos)
