@@ -6,8 +6,8 @@ services:
     ports:
       - '5434:5432'
     # w/o volumes, db is reset on dc down and back up (dc restart has no effect)
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data/
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_PASSWORD=postgres
 

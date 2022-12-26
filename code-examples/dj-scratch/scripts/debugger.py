@@ -11,64 +11,71 @@ from mysite.profilers import timer
 
 logger = logging.getLogger(__name__)
 
-Todo.objects.all().delete()
-call_command("migrate", "customsort")
 
 step = 500_000
-total = 100_000
+total = 1_000_000
+Todo.objects.all().delete()
+call_command("migrate", "customsort")
 with timer(logger, name=f"inserted {total:,} objects"):
-    for i in range(0, total, step):
-        end = min(i + step, total)
-        logger.debug(f"Inserting {i:,} to {end:,}")
-        todos = TodoFactory.build_batch(end)
+    quotient, remainder = divmod(total, step)
+    for i in range(quotient):
+        logger.debug(f"Inserting {i * step:,} to {(i + 1) * step:,}")
+        todos = TodoFactory.build_batch(step)
         Todo.objects.bulk_create(todos)
+    if remainder:
+        logger.debug(f"Inserting {total - remainder:,} to {total:,}")
+        todos = TodoFactory.build_batch(remainder)
+        Todo.objects.bulk_create(todos)
+assert (
+    Todo.objects.count() == total
+), f"Expected {total:,} objects, got {Todo.objects.count():,}"
 
-with timer(logger, name="order in DB with integer choices", decimals=1):
-    qs = Todo.objects.order_by("priority", "title")
-    logger.debug(qs.explain())
-    fetch(qs)
+# with timer(logger, name="order in DB with integer choices", decimals=1):
+#     qs = Todo.objects.order_by("priority", "title")
+#     logger.debug(qs.explain())
+#     fetch(qs)
 
-with timer(logger, name="order in DB with conditional expression", decimals=1):
-    qs = Todo.objects.order_by_priority()
-    logger.debug(qs.explain())
-    fetch(qs)
+# with timer(logger, name="order in DB with conditional expression", decimals=1):
+#     qs = Todo.objects.order_by_priority()
+#     logger.debug(qs.explain())
+#     fetch(qs)
 
-with connection.cursor() as cursor:
-    cursor.execute(
-        "SELECT indexname FROM pg_indexes WHERE tablename='customsort_todo' ORDER BY tablename, indexname"
-    )
-    rows = cursor.fetchall()
-    print(rows)
-call_command("migrate", "customsort", "0001")
-with connection.cursor() as cursor:
-    cursor.execute(
-        "SELECT indexname FROM pg_indexes WHERE tablename='customsort_todo' ORDER BY tablename, indexname"
-    )
-    rows = cursor.fetchall()
-    print(rows)
+# with connection.cursor() as cursor:
+#     cursor.execute(
+#         "SELECT indexname FROM pg_indexes WHERE tablename='customsort_todo' ORDER BY tablename, indexname"
+#     )
+#     rows = cursor.fetchall()
+#     print(rows)
+# call_command("migrate", "customsort", "0001")
+# with connection.cursor() as cursor:
+#     cursor.execute(
+#         "SELECT indexname FROM pg_indexes WHERE tablename='customsort_todo' ORDER BY tablename, indexname"
+#     )
+#     rows = cursor.fetchall()
+#     print(rows)
+#
+# with timer(logger, name="order in DB with integer choices w/o index", decimals=1):
+#     qs = Todo.objects.order_by("priority", "title")
+#     logger.debug(qs.explain())
+#     fetch(qs)
+#
+# with timer(
+#     logger, name="order in DB with conditional expression w/o index", decimals=1
+# ):
+#     qs = Todo.objects.order_by_priority()
+#     logger.debug(qs.explain())
+#     fetch(qs)
 
-with timer(logger, name="order in DB with integer choices w/o index", decimals=1):
-    qs = Todo.objects.order_by("priority", "title")
-    logger.debug(qs.explain())
-    fetch(qs)
-
-with timer(
-    logger, name="order in DB with conditional expression w/o index", decimals=1
-):
-    qs = Todo.objects.order_by_priority()
-    logger.debug(qs.explain())
-    fetch(qs)
-
-with timer(logger, name="order in Python", decimals=1):
-    preference = {
-        Todo.Priority.HIGH: 1,
-        Todo.Priority.MEDIUM: 2,
-        Todo.Priority.LOW: 3,
-    }
-    sorted(
-        Todo.objects.all(),
-        key=lambda x: [preference[x.priority], x.title],
-    )
+# with timer(logger, name="order in Python", decimals=1):
+#     preference = {
+#         Todo.Priority.HIGH: 1,
+#         Todo.Priority.MEDIUM: 2,
+#         Todo.Priority.LOW: 3,
+#     }
+#     sorted(
+#         Todo.objects.all(),
+#         key=lambda x: [preference[x.priority], x.title],
+#     )
 
 
 # PRIORITY_ORDER = {
