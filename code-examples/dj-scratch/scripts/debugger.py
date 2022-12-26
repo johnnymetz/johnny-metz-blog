@@ -26,9 +26,8 @@ with timer(logger, name=f"inserted {total:,} objects"):
         logger.debug(f"Inserting {total - remainder:,} to {total:,}")
         todos = TodoFactory.build_batch(remainder)
         Todo.objects.bulk_create(todos)
-assert (
-    Todo.objects.count() == total
-), f"Expected {total:,} objects, got {Todo.objects.count():,}"
+count = Todo.objects.count()
+assert count == total, f"{count:,} != {total:,}"
 
 # with timer(logger, name="order in DB with integer choices", decimals=1):
 #     qs = Todo.objects.order_by("priority", "title")
