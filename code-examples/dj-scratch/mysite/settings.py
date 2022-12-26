@@ -130,6 +130,10 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+_app_level_config = {
+    "handlers": ["console"],
+    "level": "DEBUG",
+}
 
 LOGGING = {
     "version": 1,
@@ -140,9 +144,11 @@ LOGGING = {
         },
     },
     "loggers": {
-        "mysite.profilers": {
-            "handlers": ["console"],
-            "level": "INFO",
-        },
+        app: _app_level_config
+        for app in [
+            "customsort",
+            "mysite",
+            "scripts",
+        ]
     },
 }
