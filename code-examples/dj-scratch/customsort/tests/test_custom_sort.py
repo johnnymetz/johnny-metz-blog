@@ -1,3 +1,5 @@
+from django.db import connection
+
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 from zen_queries import fetch
@@ -74,9 +76,9 @@ class TestCustomSort:
             Todo.objects.order_by_priority(), self.expected, ordered=False
         )
 
-    # @pytest.mark.skip(reason="Slow test")
+    @pytest.mark.skip(reason="Slow test")
     def test_benchmark(self):
-        n = 5_000_000
+        n = 100_000
 
         with timer(f"build {n:,} objects without saving"):
             todos = TodoFactory.build_batch(n)
@@ -85,10 +87,28 @@ class TestCustomSort:
             Todo.objects.bulk_create(todos)
 
         with timer("order in DB with integer choices", decimals=1):
-            fetch(Todo.objects.order_by("priority", "title"))
+            qs = Todo.objects.order_by("priority", "title")
+            print(qs.explain())
+            fetch(qs)
 
         with timer("order in DB with conditional expression", decimals=1):
-            fetch(Todo.objects.order_by_priority())
+            qs = Todo.objects.order_by_priority()
+            print(qs.explain())
+            fetch(qs)
+
+        # with connection.cursor() as cursor:
+        #     cursor.execute("DROP INDEX priority_title_idx")
+        #     cursor.execute("DROP INDEX priority_order_title_idx")
+        #
+        # with timer("order in DB with integer choices w/o index", decimals=1):
+        #     qs = Todo.objects.order_by("priority", "title")
+        #     print(qs.explain())
+        #     fetch(qs)
+        #
+        # with timer("order in DB with conditional expression w/o index", decimals=1):
+        #     qs = Todo.objects.order_by_priority()
+        #     print(qs.explain())
+        #     fetch(qs)
 
         with timer("order in Python", decimals=1):
             preference = {
@@ -100,3 +120,19 @@ class TestCustomSort:
                 Todo.objects.all(),
                 key=lambda x: [preference[x.priority], x.title],
             )
+
+    @pytest.mark.skip(reason="Debug only")
+    def test_drop_indexes(self):
+        get_indexes = "SELECT indexname FROM pg_indexes WHERE tablename='customsort_todo' ORDER BY tablename, indexname"
+
+        with connection.cursor() as cursor:
+            cursor.execute(get_indexes)
+            rows = cursor.fetchall()
+            print(rows)
+
+            cursor.execute("DROP INDEX priority_title_idx")
+            cursor.execute("DROP INDEX priority_order_title_idx")
+
+            cursor.execute(get_indexes)
+            rows = cursor.fetchall()
+            print(rows)
