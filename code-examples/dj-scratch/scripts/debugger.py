@@ -12,18 +12,25 @@ from mysite.profilers import timer
 logger = logging.getLogger(__name__)
 
 
-step = 500_000
-total = 1_000_000
-Todo.objects.all().delete()
+start = Todo.objects.count()
+total = 350_000
+if start > total:
+    logger.debug(f"Deleting {start} records...")
+    Todo.objects.all().delete()
+    _total = total
+else:
+    _total = total - start
 call_command("migrate", "customsort")
-with timer(logger, name=f"inserted {total:,} objects"):
-    quotient, remainder = divmod(total, step)
+step = 500_000
+logger.debug(f"Creating {_total} records...")
+with timer(logger, name=f"inserted {_total:,} objects"):
+    quotient, remainder = divmod(_total, step)
     for i in range(quotient):
         logger.debug(f"Inserting {i * step:,} to {(i + 1) * step:,}")
         todos = TodoFactory.build_batch(step)
         Todo.objects.bulk_create(todos)
     if remainder:
-        logger.debug(f"Inserting {total - remainder:,} to {total:,}")
+        logger.debug(f"Inserting {_total - remainder:,} to {_total:,}")
         todos = TodoFactory.build_batch(remainder)
         Todo.objects.bulk_create(todos)
 count = Todo.objects.count()
