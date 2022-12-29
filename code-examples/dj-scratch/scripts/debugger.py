@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 step = 500_000
-total = 5_000_000
+total = 1_000_000
 Todo.objects.all().delete()
 call_command("migrate", "customsort")
 with timer(logger, name=f"inserted {total:,} objects"):
@@ -36,7 +36,7 @@ with timer(logger, name="order in Python", decimals=1):
         Todo.Priority.LOW: 3,
     }
     sorted(
-        Todo.objects.all(),
+        Todo.objects.iterator(),
         key=lambda x: [preference[x.priority], x.title],
     )
 
@@ -44,11 +44,11 @@ call_command("migrate", "customsort")
 with timer(logger, name="order in DB with integer choices", decimals=1):
     qs = Todo.objects.order_by("priority", "title")
     logger.debug(qs.explain())
-    fetch(qs)
+    list(qs.iterator())
 with timer(logger, name="order in DB with conditional expression", decimals=1):
     qs = Todo.objects.order_by_priority()
     logger.debug(qs.explain())
-    fetch(qs)
+    list(qs.iterator())
 
 with connection.cursor() as cursor:
     cursor.execute(
@@ -67,13 +67,13 @@ with connection.cursor() as cursor:
 with timer(logger, name="order in DB with integer choices w/o index", decimals=1):
     qs = Todo.objects.order_by("priority", "title")
     logger.debug(qs.explain())
-    fetch(qs)
+    list(qs.iterator())
 with timer(
     logger, name="order in DB with conditional expression w/o index", decimals=1
 ):
     qs = Todo.objects.order_by_priority()
     logger.debug(qs.explain())
-    fetch(qs)
+    list(qs.iterator())
 
 
 def run():
