@@ -1,5 +1,5 @@
 ---
-title: '[Cross-Post] Django performance: sort by a custom order'
+title: '[Cross-Post] Django performance: Sort by a Custom Order'
 date: 2023-01-02T17:00:00-08:00
 tags:
   - Python
