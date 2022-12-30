@@ -8,4 +8,4 @@ cover:
   image: 'covers/django.png'
 ---
 
-See the post here: [Sort a Django queryset by a custom order](https://www.pixiebrix.com/blog/sort-django-queryset-by-custom-order)
+See the post here: [Sort a Django Queryset by a Custom Order](https://www.pixiebrix.com/blog/sort-django-queryset-by-custom-order)
