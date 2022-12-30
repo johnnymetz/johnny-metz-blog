@@ -18,3 +18,11 @@ For the most part
 
 - Use select_related() and prefetch_related()
   - Use `prefetch_related("field1__field2__field3")`
+
+## select_related + prefetch_related
+
+Note about how Django handles select_related and prefetch_related together:
+
+select_related on its own does NOT make an extra DB query.
+prefetch_related on its own makes a new DB query for every field, e.g. prefetch_related("field1**field2**field3\_\_field4") will prefetch fields 1, 2, 3 and 4 which totals 4 extra DB queries.
+select_related takes precedence over prefetch_related so our query above only makes 1 extra DB hit. Without the .select_related("user") it would be 2.

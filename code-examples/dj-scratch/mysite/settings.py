@@ -12,9 +12,18 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 
+import environ
+
+env = environ.Env(
+    # DATABASE_URL=(str, "sqlite:///db.sqlite3"),
+    DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
+    DEBUG=(bool, True),
+)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -23,7 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-nr!p=^9lbp%4z+k&huwxa22+j1rss%6@wzx@yk%)e!qakudxy6"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -77,12 +86,7 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+DATABASES = {"default": env.db()}
 
 
 # Password validation
@@ -126,6 +130,10 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+_app_level_config = {
+    "handlers": ["console"],
+    "level": "DEBUG",
+}
 
 LOGGING = {
     "version": 1,
@@ -136,9 +144,11 @@ LOGGING = {
         },
     },
     "loggers": {
-        "mysite.profilers": {
-            "handlers": ["console"],
-            "level": "INFO",
-        },
+        app: _app_level_config
+        for app in [
+            "customsort",
+            "mysite",
+            "scripts",
+        ]
     },
 }
