@@ -1,18 +1,17 @@
 ---
 title: 'Disable a direct push to GitHub main branch'
-date: 2022-06-20T10:36:08-08:00
+date: 2022-12-29T10:36:08-08:00
 tags:
   - Git
   - GitHub
   - Pre-commit
 cover:
   image: 'covers/you-shall-not-push.png'
-draft: true
 ---
 
 On a development team, you never want to push directly to the `main` branch. Instead, you want to require changes to be made through pull requests so they can be properly reviewed by other developers.
 
-Some developers, including myself, occasionally forget to stuff their changes into a branch so I like to have an automated check to prevent this mistake. Here are two methods to block direct pushes to the GitHub main branch.
+Some developers, including myself, occasionally forget to push to a new branch so I like to have an automated check to prevent this mistake. Here are two methods to block direct pushes to the GitHub `main` branch.
 
 ## Pre-commit hook
 
@@ -23,7 +22,7 @@ You can implement this by adding the following `.pre-commit-config.yaml` file to
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.4.0
     hooks:
       - id: no-commit-to-branch
 ```
@@ -31,7 +30,7 @@ repos:
 Then run `pre-commit install`. Now commits to `main` will result in an error:
 
 ```bash
-$ git commit -m "Update again"
+$ git commit -m "My change"
 don't commit to branch...................................................Failed
 - hook id: no-commit-to-branch
 - exit code: 1
@@ -49,7 +48,7 @@ Enter "main" under **Branch name pattern**. Then check **Require a pull request 
 
 You'll notice some additional features pop up. I generally check **Require approvals** so developers can't sneak a change through without a proper sign-off.
 
-Lastly, you may want to check **Include administrators** so the rule applies to repository admins. Keep in mind, however, that some git tools, such as [Flux](https://fluxcd.io/), need this access or they won't work. So be cognizant of the tools you're using and the privileges they need.
+Lastly, you may want to check **Do not allow bypassing the above settings** so the rule applies to repository admins. Keep in mind, however, that some git tools, such as [Flux](https://fluxcd.io/), need this access or they won't work. So be cognizant of the tools you're using and the privileges they need.
 
 When you're done, your rule should look like this:
 
@@ -67,4 +66,6 @@ To github.com:johnnymetz/my-repo.git
 error: failed to push some refs to 'github.com:johnnymetz/my-repo.git'
 ```
 
-I prefer the second method because it's foolproof and includes additional features.
+## Conclusion
+
+You can utilize both methods at the same time, which is what I do. However, I encourage all teams to implement at least the branch protection rule because it's foolproof and includes additional features.
