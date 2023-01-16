@@ -1,11 +1,16 @@
 # Post Ideas
 
-- Recover deleted git branch or file
+Nice:
+
 - PyCharm find file scope
+- Parallelize Django + Postgres app
+- Recover deleted git branch or file
+
+Maybe:
+
 - Anonymous volumes in docker and why you should use them
   - [SO](https://stackoverflow.com/questions/46166304/docker-compose-volumes-without-colon)
   - [Blog](https://towardsdatascience.com/the-complete-guide-to-docker-volumes-1a06051d2cce)
-- docker system prune -a -f --volumes - [docs](https://docs.docker.com/config/pruning/)
 - Speed up Django queries
 - fluentd or fluent-bit demo
 - Setup hugo site on netlify
