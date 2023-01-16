@@ -9,13 +9,11 @@ ShowToc: true
 draft: true
 ---
 
-Docker is platform for developing, shipping and running applications in isolated, lightweight, portable containers. It is a critical part of a developer's toolbelt. I use it everyday.
+Docker a is platform for developing, shipping and running applications in isolated, lightweight, portable containers. It is a critical part of a developer's toolbelt. I use it everyday.
 
 Unfortunately, Docker consumes an enormous amount of disk space. Per the [Docker documentation](https://docs.docker.com/config/pruning/):
 
 > Docker takes a conservative approach to cleaning up unused objects (often referred to as "garbage collection"), such as images, containers, volumes, and networks: these objects are generally not removed unless you explicitly ask Docker to do so. This can cause Docker to use extra disk space.
-
-For example, a container is not automatically removed when it is stopped, unless it's started with the `--rm` flag.
 
 Use the `docker system df` command to show Docker disk usage. Note, [df](<https://en.wikipedia.org/wiki/Df_(Unix)>) stands for "disk free".
 
@@ -30,7 +28,7 @@ Build Cache     244       0         6.249GB   6.249GB
 
 The "Active" column represents objects that are associated with running containers. You can see detailed information using the `--verbose` flag, such as which objects are active and how long they have been running.
 
-Docker is eating up roughly 23.5 GB of disk space. 23 GB of that is reclaimable or unused. Yikes! Let's free that up.
+Docker is eating up roughly 23.5 GB of storage capacity. 23 GB of that is reclaimable (or unused). Yikes! Let's free that up.
 
 ## Docker prune command
 
@@ -92,19 +90,19 @@ One approach is to activate the object. As demonstrated above, active objects ar
 
 ### Exclude by object name
 
-You can filter objects by the object name. Unfortunately `docker system prune` does not support this filter so you'll need to use other Docker commands. For example, see how to delete all volumes except for one or more:
+You can filter objects by name. Unfortunately `docker system prune` does not support this filter so you'll need to use other Docker commands. For example, the following commands remove all volumes except for one or more:
 
 ```bash
-# Delete all volumes except one
+# Remove all volumes except one
 docker volume rm $(docker volume ls -q | grep --invert-match 'volume-name')
 
-# Delete all volumes except two or more
+# Remove all volumes except two or more
 docker volume rm $(docker volume ls -q | grep --invert-match --extended-regexp 'volume-name1|volume-name2')
 ```
 
 ### Label objects
 
-[Docker object labels](https://docs.docker.com/config/labels-custom-metadata/) are a clever approach to protect volumes from being pruned.
+[Docker object labels](https://docs.docker.com/config/labels-custom-metadata/) are a clever approach to protect objects from being pruned.
 
 Label objects in `docker-compose.yaml`:
 
@@ -137,9 +135,9 @@ Here are some key takeaways for effectively managing your Docker disk space.
 
 ### Clean up unused objects during development
 
-Reduce the rate at which bloat accumulates by deleting unused objects while you're working.
+Reduce the rate at which disk space grows by deleting unused objects while you work.
 
-- Use the `--rm` flag when starting a container, unless you need the container after it has been stopped, which should be rare at best. One of Docker's recommended practices is to [create ephemeral containers](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#create-ephemeral-containers), which means containers should be designed to be stopped and deleted.
+- Use the `--rm` flag when starting a container, unless you need the container after it has been stopped, which should be uncommon. One of Docker's recommended best practices is to [create ephemeral containers](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#create-ephemeral-containers), which means containers should be designed to be stopped and deleted. For example, if your container creates a file, write it to cloud storage (e.g. S3, Google Drive) instead of the container's local file system so the file isn't deleted with the container.
 - Use `docker compose down` instead of `docker compose stop`. Both commands stop running containers. The former also removes any associated networks. You can take `down` one step further and add the `--volumes` flag to prune all linked volumes.
 
 ### Monitor Docker disk usage and prune often
