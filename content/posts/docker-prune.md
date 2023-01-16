@@ -3,6 +3,8 @@ title: 'Free up disk space with Docker prune'
 date: 2023-01-08T14:11:25-05:00
 tags:
   - Docker
+cover:
+  image: 'covers/docker-broom.png'
 ShowToc: true
 draft: true
 ---
