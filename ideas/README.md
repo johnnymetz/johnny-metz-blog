@@ -2,6 +2,10 @@
 
 Nice:
 
+- Choose the right index
+  - https://www.postgresql.org/docs/current/indexes-multicolumn.html
+  - https://www.postgresql.org/docs/current/indexes-ordering.html
+  - https://stackoverflow.com/questions/52033327/multi-column-indexes-and-order-by
 - PyCharm find file scope
 - Parallelize Django + Postgres app
 - Recover deleted git branch or file
