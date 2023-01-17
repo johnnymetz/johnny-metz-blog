@@ -9,11 +9,22 @@ ShowToc: true
 draft: true
 ---
 
-Docker a is platform for developing, shipping and running applications in isolated, lightweight, portable containers. It is a critical part of a developer's toolbelt. I use it everyday.
+[//]: # (elementary question but is there direct coorelation between imaze size and consumed disk?)
 
-Unfortunately, Docker consumes an enormous amount of disk space. Per the [Docker documentation](https://docs.docker.com/config/pruning/):
+Docker is a platform for developing, shipping and running applications in isolated, lightweight and portable containers. It is a critical part of a developer's toolbelt and one I use just about everyday.
+
+Docker can consume a large amount of disk space. Per the [Docker documentation](https://docs.docker.com/config/pruning/):
 
 > Docker takes a conservative approach to cleaning up unused objects (often referred to as "garbage collection"), such as images, containers, volumes, and networks: these objects are generally not removed unless you explicitly ask Docker to do so. This can cause Docker to use extra disk space.
+
+The problems you might encounter with a large docker image include:
+
+* ...
+* ...
+
+One solution for reducing docker image sizes is the `docker prune` command.
+
+## Docker disk free command
 
 Use the `docker system df` command to show Docker disk usage. Note, [df](<https://en.wikipedia.org/wiki/Df_(Unix)>) stands for "disk free".
 
@@ -30,6 +41,8 @@ The "Active" column represents objects that are associated with running containe
 
 Docker is eating up roughly 23.5 GB of storage capacity. 23 GB of that is reclaimable (or unused). Yikes! Let's free that up.
 
+[//]: # (what is a typical size? I heard about 5GB. Any idea based on your experience?)
+
 ## Docker prune command
 
 Docker comes with a `prune` command to remove unused objects. It doesn't touch active objects. I use it with a few options:
@@ -38,11 +51,11 @@ Docker comes with a `prune` command to remove unused objects. It doesn't touch a
 docker system prune --all --force --volumes
 ```
 
-The `--all` option removes all unused images, not just dangling images. A dangling image is one that is not tagged and is not referenced by any container. All images can be rebuilt or pulled from [Docker Hub](https://hub.docker.com/) so deleting them is fine.
+* `--all` option removes all unused images, not just dangling images. A dangling image is one that is not tagged and is not referenced by any container. All images can be rebuilt or pulled from [Docker Hub](https://hub.docker.com/) so deleting them is fine.
 
-The `--force` option bypasses the confirmation prompt.
+* `--force` option bypasses the confirmation prompt.
 
-The `--volumes` option instructs Docker to delete all unused volumes. This is the one option you need to be careful with. If you want to keep some volumes, see the [Exclude objects from pruning](#exclude-objects-from-pruning) section below.
+* `--volumes` option instructs Docker to delete all unused volumes. This is the one option you need to be careful with. If you want to keep some volumes, see the [Exclude objects from pruning](#exclude-objects-from-pruning) section below.
 
 Let's run it:
 
