@@ -1,12 +1,11 @@
 ---
 title: 'Free up disk space with Docker prune'
-date: 2023-01-08T14:11:25-05:00
+date: 2023-01-21T14:11:25-05:00
 tags:
   - Docker
 cover:
   image: 'covers/docker-broom.png'
 ShowToc: true
-draft: true
 ---
 
 Docker is a platform for developing, shipping and running applications in isolated, lightweight and portable containers. It is a critical part of a developer's toolbelt and one I use just about everyday.
