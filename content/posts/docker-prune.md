@@ -20,11 +20,11 @@ The problems you might encounter with high disk usage include:
 - System crashes
 - Inability to install new software, update existing software or download files
 
-One solution for reducing Docker hard drive utilization is the `docker prune` command.
+One solution for reducing Docker hard drive utilization is the `prune` command.
 
 ## Docker disk free command
 
-Use the `docker system df` command to show Docker disk usage. Note, [df](<https://en.wikipedia.org/wiki/Df_(Unix)>) stands for "disk free".
+Use the [`docker system df`](https://docs.docker.com/engine/reference/commandline/system_df/) command to show Docker disk usage. Note, [df](<https://en.wikipedia.org/wiki/Df_(Unix)>) stands for "disk free".
 
 ```bash
 $ docker system df
@@ -41,7 +41,7 @@ Docker is eating up roughly 23.5 GB of storage capacity. 23 GB of that is reclai
 
 ## Docker prune command
 
-Docker comes with a `prune` command to remove unused objects. It doesn't touch active objects. I use it with a few options:
+Docker comes with a [`prune`](https://docs.docker.com/engine/reference/commandline/system_prune/) command to remove unused objects. It doesn't touch active objects. I use it with a few options:
 
 ```bash
 docker system prune --all --force --volumes
