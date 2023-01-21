@@ -41,7 +41,7 @@ Docker is eating up roughly 23.5 GB of storage capacity. 23 GB of that is reclai
 
 ## Docker prune command
 
-Docker comes with a [`prune`](https://docs.docker.com/engine/reference/commandline/system_prune/) command to remove unused objects. It doesn't touch active objects. I use it with a few options:
+Docker comes with a [`system prune`](https://docs.docker.com/engine/reference/commandline/system_prune/) command to remove unused objects. It doesn't touch active objects. I use it with a few options:
 
 ```bash
 docker system prune --all --force --volumes
