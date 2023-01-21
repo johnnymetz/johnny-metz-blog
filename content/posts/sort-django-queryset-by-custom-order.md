@@ -5,7 +5,7 @@ tags:
   - Python
   - Django
 cover:
-  image: 'covers/django.png'
+  image: 'covers/django-sorting.png'
 ---
 
 See the post here: [Sort a Django Queryset by a Custom Order](https://www.pixiebrix.com/blog/sort-django-queryset-by-custom-order)
