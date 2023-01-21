@@ -17,9 +17,9 @@ Docker can consume a large amount of disk space. Per the [Docker documentation](
 
 The problems you might encounter with high disk usage include:
 
-- Inability to install new software, update existing software or download files
 - Poor system performance
 - System crashes
+- Inability to install new software, update existing software or download files
 
 One solution for reducing Docker hard drive utilization is the `docker prune` command.
 
@@ -77,7 +77,7 @@ cwoa38utb7dg9ehcgegaj7p11
 Total reclaimed space: 19.99GB
 ```
 
-We've freed up about 20 GB of disk space! Now let's view Docker's disk usage:
+We've freed up ~20 GB of disk space! Now let's view Docker's disk usage:
 
 ```bash
 $ docker system df
