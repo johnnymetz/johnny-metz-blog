@@ -147,7 +147,7 @@ Here are some key takeaways for effectively managing your Docker disk space.
 Reduce the rate at which disk space grows by deleting unused objects while you work.
 
 - Use the `--rm` flag when starting a container, unless you need the container after it has been stopped, which should be uncommon. One of Docker's recommended best practices is to [create ephemeral containers](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#create-ephemeral-containers), which means containers should be designed to be stopped and deleted. For example, if your container creates a file, write it to cloud storage (e.g. S3, Google Drive) instead of the container's local file system so the file isn't deleted with the container.
-- Use `docker compose down` instead of `docker compose stop`. Both commands stop running containers. The former also removes any associated networks. You can take `down` one step further and add the `--volumes` flag to prune all linked volumes.
+- Use `docker compose down` instead of `docker compose stop`. Both commands stop running containers. The former also removes the containers and any associated network objects. You can take `down` one step further and add the `--volumes` flag to prune all linked volumes.
 
 ### Monitor Docker disk usage and prune often
 

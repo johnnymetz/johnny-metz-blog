@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     # 3rd party apps
     "django_extensions",
     # local apps
-    "customsort.apps.CustomsortConfig",
+    "core.apps.CoreConfig",
 ]
 
 MIDDLEWARE = [
@@ -146,7 +146,6 @@ LOGGING = {
     "loggers": {
         app: _app_level_config
         for app in [
-            "customsort",
             "mysite",
             "scripts",
         ]
