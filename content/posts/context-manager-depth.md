@@ -9,7 +9,6 @@ draft: true
 
 ## Title
 
-- Enable
 - Django Concurrency: Managing context specific data / state
 
 ## Terminology
@@ -46,4 +45,3 @@ If used in the multi threading projects, contextvars and thread local would beha
 - https://superfastpython.com/thread-local-data/
 - https://stackoverflow.com/questions/68856006/is-there-any-reason-to-use-python-threading-local-rather-than-a-contextvar-in
 - https://valarmorghulis.io/tech/201904-contextvars-and-thread-local/
--
