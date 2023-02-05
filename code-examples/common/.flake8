@@ -1,8 +1,11 @@
 [flake8]
 ignore =
-  E266,  # Too many leading '#' for block comment
-  E501,  # Line too long
-  W503,  # Line break occurred before a binary operator
+  # Too many leading '#' for block comment
+  E266,
+  # Line too long, we use black
+  E501,
+  # Line break occurred before a binary operator
+  W503,
 max-line-length = 88
 max-complexity = 18
 exclude = */migrations/*,venv/*,scripts/*
