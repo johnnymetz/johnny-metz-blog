@@ -4,8 +4,6 @@ default_stages: [commit]
 ci:
   autofix_prs: false
   skip:
-    # flake8 plugins are not yet compatible with flake8 v6.0
-    - flake8
     - oxipng
 
 repos:
