@@ -12,6 +12,10 @@ draft: true
 - Django + postgres + gunicorn + gevent
 - Django Concurrency: Managing context specific data / state
 
+## Resources
+
+- https://djangostars.com/blog/asynchronous-programming-in-python-asyncio/
+
 ## Notes
 
 - Parallelize a Django application
