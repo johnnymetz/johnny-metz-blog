@@ -1,12 +1,13 @@
 # Speed up Django queries
 
 ```
-- Multiple prefetches levels: .prefetch_related("field1__field2__field3")
+- Use zen_queries and query_count() decorator
+- Use `assertNumQueries` and `django_assert_num_queries` in tests
 - Use Python to prevent a new query
 	- List comprehension over .values_lists(), filter() or exclude()
   - In a loop, use qs[0] over qs.first()
-- Use zen_queries and query_count() decorator
 - Don't create large Q objects
+- Multiple prefetches levels: .prefetch_related("field1__field2__field3")
 - select related or prefetch related for joint prefetches:
   - prefetch_related: "object__objects"
   - not sure: "objects__object"
