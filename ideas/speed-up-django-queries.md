@@ -1,6 +1,17 @@
 # Speed up Django queries
 
+Write a blog post in markdown with a title about tips and tricks for optimizing Django query performance that are not listed in https://docs.djangoproject.com/en/4.2/topics/db/optimization/. The post should discuss:
+
+- Use `assertNumQueries` in tests to ensure your code is making the expected number of queries. If you're using pytest-django, which I recommend, use `django_assert_num_queries`.
+- Use https://github.com/jmcarp/nplusone to catch N+1 queries. This is a great backstop and have caught tons of N+1 queries. Note the package is orphaned and doesn't catch all N+1 violations. For example, I've noticed it doesn't work with `.only()` or `.defer()`. For example, the following is an N+1 query but nplusone doesn't catch it:
+- Use https://github.com/dabapps/django-zen-queries to gain control over which parts of your code are allowed to run queries, and which aren't. I commonly use this after prefetching objects to ensure I've prefetched everything I need.
+- Use Python to prevent a new query on prefetched objects. For example, use a list complehension instead of .values_lists(), filter() or exclude(). Another example, use qs[0] instead of qs.first()
+- Use `defer()` to prevent fetching large unused fields, such as `JSONField` and `TextField`. Loading these fields into a Django object can consume a lot of memory and be very slow.
+
+## Old
+
 ```
+- Use nplusone package
 - Use zen_queries and query_count() decorator
 - Use `assertNumQueries` and `django_assert_num_queries` in tests
 - Use Python to prevent a new query
