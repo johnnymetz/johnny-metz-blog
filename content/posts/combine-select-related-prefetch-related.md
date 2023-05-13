@@ -22,7 +22,7 @@ My team at [PixieBrix](https://www.pixiebrix.com/) implemented these techniques 
 
 [`select_related`](https://docs.djangoproject.com/en/4.2/ref/models/querysets/#select-related) performs SQL join operations to include the fields of related models in the initial queryset. This method is useful when you have `ForeignKey` or `OneToOneField` relationships in your models. By using `select_related`, you can retrieve related objects in a single database query, rather than issuing separate queries for each related object.
 
-For example, consider the following models for `Author` and `Book`:
+For example, consider the following models:
 
 ```python
 class Author(models.Model):
@@ -39,13 +39,13 @@ To fetch all books along with their authors, you can use `select_related`:
 books = Book.objects.select_related("author")
 ```
 
-In this case, `select_related` performs a SQL join to include the books and their respective authors in a single database query.
+In this case, `select_related` performs a SQL join to include the books and their respective authors in a single `SELECT` statement.
 
 ## Prefetch Related
 
 [`prefetch_related`](https://docs.djangoproject.com/en/4.2/ref/models/querysets/#prefetch-related) reduces the number of queries required to fetch related objects. Unlike `select_related`, `prefetch_related` performs a separate query for each relationship, and does the "joining" in Python. This method is useful for `ManyToManyField` and reverse `ForeignKey` relationships.
 
-For example, consider the following models for `Chapter` and `Book`:
+For example, consider the following models:
 
 ```python
 class Chapter(models.Model):
@@ -70,7 +70,7 @@ In some cases, you may need to optimize queries that involve multiple levels of 
 
 ### Select Related before Prefetch Related
 
-Consider the following models for `Landmark`, `Hometown`, `Author` and `Book`:
+Consider the following models:
 
 ```python
 class Landmark(models.Model):
@@ -105,7 +105,7 @@ In this example, `select_related` performs two SQL joins to include the related 
 
 The [`Prefetch`](https://docs.djangoproject.com/en/4.2/ref/models/querysets/#django.db.models.Prefetch) object allows you to define custom querysets for related objects, providing more control over how related objects are fetched. By using the `Prefetch` object, you can include `select_related` within `prefetch_related` to reduce the number of issued queries.
 
-Consider the following models for `Editor`, `Chapter` and `Book`:
+Consider the following models:
 
 ```python
 class Editor(models.Model):
@@ -134,7 +134,7 @@ You can use the `Prefetch` object to reduce the number of queries to just two:
 from django.db.models import Prefetch
 
 chapters_with_editor_prefetch = Prefetch(
-    lookup="chapters",
+    "chapters",
     queryset=Chapter.objects.select_related("editor"),
 )
 books = Book.objects.prefetch_related(chapters_with_editor_prefetch)
