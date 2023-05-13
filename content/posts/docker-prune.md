@@ -99,13 +99,13 @@ One approach is to activate the object. As demonstrated above, active objects ar
 
 ### Exclude by object name
 
-You can filter objects by name. Unfortunately `docker system prune` does not support this filter so you'll need to use other Docker commands. For example, the following commands remove all volumes except for one or more:
+You can filter objects by name. Unfortunately `docker system prune` does not support this filter so you'll need to use other Docker commands. For example, the following commands remove all volumes except for a select few:
 
 ```bash
-# Remove all volumes except one
+# Remove all volumes except 'volume-name'
 docker volume rm $(docker volume ls -q | grep --invert-match 'volume-name')
 
-# Remove all volumes except two or more
+# Remove all volumes except 'volume-name1' and 'volume-name2'
 docker volume rm $(docker volume ls -q | grep --invert-match --extended-regexp 'volume-name1|volume-name2')
 ```
 
