@@ -1,13 +1,12 @@
 ---
 title: 'Optimize Django Query Performance by combining Select Related and Prefetch Related'
-date: 2023-05-06T15:48:39-04:00
+date: 2023-05-13T15:48:39-04:00
 tags:
   - Python
   - Django
 cover:
   image: 'covers/django-sonic.png'
 ShowToc: true
-draft: true
 ---
 
 ## Introduction
