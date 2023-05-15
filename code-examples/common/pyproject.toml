@@ -6,7 +6,7 @@ python_files = "tests.py test_*.py"
 addopts = ["--verbose", "-s"]
 
 [tool.black]
-target-version = ["py310"]
+target-version = ["py311"]
 include = '\.pyi?$'
 # change to extend-exclude on new release
 exclude = '''
@@ -39,7 +39,7 @@ remove_redundant_aliases = true
 
 # this was ported from mypy.ini and hasn't been tested so may be broken
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
 show_error_codes = true
 warn_redundant_casts = true
