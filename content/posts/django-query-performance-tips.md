@@ -56,6 +56,13 @@ with queries disabled():
         email = user.email
 ```
 
+## Set Statement Timeout in Postgres
+
+- https://stackoverflow.com/questions/19963954/set-transaction-query-timeout-in-psycopg2
+- https://www.crunchydata.com/blog/exposing-postgres-performance-secrets
+- https://postgresqlco.nf/doc/en/param/statement_timeout/
+- https://medium.com/squad-engineering/configure-postgres-statement-timeouts-from-within-django-6ce4cd33678a
+
 ## Use Python to prevent new queries
 
 When working with prefetched objects, it's important to avoid making new queries that could slow down your application. Instead of using Django queryset methods, you can use vanilla Python to optimize your queries and improve performance.

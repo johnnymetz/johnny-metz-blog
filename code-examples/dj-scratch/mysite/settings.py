@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 
+from django.db import DEFAULT_DB_ALIAS
+
 import environ
 
 env = environ.Env(
@@ -86,7 +88,8 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {"default": env.db()}
+DATABASES = {DEFAULT_DB_ALIAS: env.db()}
+DATABASES[DEFAULT_DB_ALIAS]["OPTIONS"] = {"options": "-c statement_timeout=3s"}
 
 
 # Password validation
