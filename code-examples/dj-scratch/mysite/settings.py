@@ -20,6 +20,7 @@ env = environ.Env(
     # DATABASE_URL=(str, "sqlite:///db.sqlite3"),
     DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
     DEBUG=(bool, True),
+    POSTGRES_STATEMENT_TIMEOUT=(bool, "30s"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -89,8 +90,11 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {DEFAULT_DB_ALIAS: env.db()}
-DATABASES[DEFAULT_DB_ALIAS]["OPTIONS"] = {"options": "-c statement_timeout=3s"}
 
+POSTGRES_STATEMENT_TIMEOUT = env("POSTGRES_STATEMENT_TIMEOUT")
+DATABASES[DEFAULT_DB_ALIAS]["OPTIONS"] = {
+    "options": f"-c statement_timeout={POSTGRES_STATEMENT_TIMEOUT}"
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
