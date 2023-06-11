@@ -18,39 +18,42 @@ Optimizing Django query performance is critical for building performant web appl
 PostgreSQL supports a [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT) parameter that allows you to set a maximum time limit per query. This is useful for preventing long-running queries from tying up precious resources and slowing down your application. At [PixieBrix](https://www.pixiebrix.com/), we've seen a few long-running queries cause a full database outage. Setting a statement timeout in your Django settings can help prevent this from happening.
 
 ```python
-# https://stackoverflow.com/a/50843002/6611672
-IN_CELERY_WORKER = sys.argv and sys.argv[0].endswith("celery") and "worker" in sys.argv
-
-if IN_CELERY_WORKER:
-    # Queries can be longer in an asynchronous background worker because the user is not waiting for a response.
-    STATEMENT_TIMEOUT = "1min"
-else:
-    # Queries should be fast in a synchronous web request.
-    STATEMENT_TIMEOUT = "10s"
-
 DATABASES = {
     "default": {
         ...
         "OPTIONS": {
-            "options": f"-c statement_timeout={STATEMENT_TIMEOUT}",
+            "options": f"-c statement_timeout=30s",
         },
     }
 }
 ```
 
-Now any query in a synchronous web request that takes longer than 10 seconds will be terminated.
+Now any query that takes longer than 30 seconds will be terminated.
 
 ```python
 from django.db import connection
 
 with connection.cursor() as cursor:
-    cursor.execute("select pg_sleep(11)")
+    cursor.execute("select pg_sleep(31)")
 # django.db.utils.OperationalError: canceling statement due to statement timeout
 ```
 
-Per the documentation, if `log_min_error_statement` is set to `ERROR` (which is the default), the statement that timed out will also be logged as a [query_canceled](https://www.postgresql.org/docs/current/errcodes-appendix.html#:~:text=57014,query_canceled) error (code `57014`). You can use this to identify slow queries and optimize them.
+A few notes:
 
-Note, PostgreSQL supports setting a database-wide statement timeout, but the docs don't recommend it because it can cause problems with long-running maintenance tasks, such as backups. Instead, it is recommended to set the statement timeout on a per-connection basis as shown above.
+- Per the documentation, if `log_min_error_statement` is set to `ERROR` (which is the default), the statement that timed out will also be logged as a [query_canceled](https://www.postgresql.org/docs/current/errcodes-appendix.html#:~:text=57014,query_canceled) error (code `57014`). You can use this to identify slow queries and optimize them.
+- PostgreSQL supports setting a database-wide statement timeout, but the docs don't recommend it because it can cause problems with long-running maintenance tasks, such as backups. Instead, it is recommended to set the statement timeout on a per-connection basis as shown above.
+- MySQL appears to support a similar [`max_execution_time`](https://dev.mysql.com/doc/refman/8.0/en/optimizer-hints.html#optimizer-hints-execution-time) parameter, but I haven't tested it.
+- Statement timeouts may differ across servers. For example, you probably want to set a higher statement timeout on your celery workers than on your web servers. You can do this by conditionally setting the statement timeout:
+
+```python
+# https://stackoverflow.com/a/50843002/6611672
+IN_CELERY_WORKER = sys.argv and sys.argv[0].endswith("celery") and "worker" in sys.argv
+
+if IN_CELERY_WORKER:
+    STATEMENT_TIMEOUT = "1min"
+else:
+    STATEMENT_TIMEOUT = "30s"
+```
 
 ## Use `assertNumQueries` in unit tests
 
