@@ -6,26 +6,68 @@ tags:
   - Django
   - Pytest
 cover:
-  image: 'covers/django-sonic.png'
+  image: 'covers/django-racecar.png'
 ShowToc: true
 draft: true
 ---
 
 Optimizing Django query performance is critical for building performant web applications. Django provides many tools and methods for optimizing database queries in its [Database access optimization](https://docs.djangoproject.com/en/4.2/topics/db/optimization/) documentation. In this blog post, we will explore some additional tips and tricks I've compiled over the years to help you optimize your Django queries even further.
 
-## Use `assertNumQueries` in unit tests
+## Set a Statement Timeout
 
-When writing unit tests, it's important to ensure that your code is making the expected number of queries. Django provides a convenient method called [`assertNumQueries`](https://docs.djangoproject.com/en/4.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries) that allows you to assert the number of queries made by your code. If you're using `pytest-django`, which I recommend, then you can use [`django_assert_num_queries`](https://pytest-django.readthedocs.io/en/latest/helpers.html#django_assert_num_queries) to achieve the same functionality.
+PostgreSQL supports a [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT) parameter that allows you to set a maximum time limit per query. This is useful for preventing long-running queries from tying up precious resources and slowing down your application. At [PixieBrix](https://www.pixiebrix.com/), we've seen a few long-running queries cause a full database outage. Setting a statement timeout in your Django settings can help prevent this from happening.
 
 ```python
-def test_db_access(django_assert_num_queries):
-    with django_assert_num_queries(3):
-        # code that makes 3 expected queries
+# https://stackoverflow.com/a/50843002/6611672
+IN_CELERY_WORKER = sys.argv and sys.argv[0].endswith("celery") and "worker" in sys.argv
+
+if IN_CELERY_WORKER:
+    # Queries can be longer in an asynchronous background worker because the user is not waiting for a response.
+    STATEMENT_TIMEOUT = "1min"
+else:
+    # Queries should be fast in a synchronous web request.
+    STATEMENT_TIMEOUT = "10s"
+
+DATABASES = {
+    "default": {
+        ...
+        "OPTIONS": {
+            "options": f"-c statement_timeout={STATEMENT_TIMEOUT}",
+        },
+    }
+}
 ```
+
+Now any query in a synchronous web request that takes longer than 10 seconds will be terminated.
+
+```python
+from django.db import connection
+
+with connection.cursor() as cursor:
+    cursor.execute("select pg_sleep(11)")
+# django.db.utils.OperationalError: canceling statement due to statement timeout
+```
+
+Per the documentation, if `log_min_error_statement` is set to `ERROR` (which is the default), the statement that timed out will also be logged as a [query_canceled](https://www.postgresql.org/docs/current/errcodes-appendix.html#:~:text=57014,query_canceled) error (code `57014`). You can use this to identify slow queries and optimize them.
+
+Note, PostgreSQL supports setting a database-wide statement timeout, but the docs don't recommend it because it can cause problems with long-running maintenance tasks, such as backups. Instead, it is recommended to set the statement timeout on a per-connection basis as shown above.
+
+## Use `assertNumQueries` in unit tests
+
+When writing unit tests, it's important to ensure that your code is making the expected number of queries. Django provides a convenient method called [`assertNumQueries`](https://docs.djangoproject.com/en/4.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries) that allows you to assert the number of queries made by your code.
+
+```python
+class MyTestCase(TestCase)
+    def test_something(self):
+        with self.assertNumQueries(5)
+            # code that makes 5 expected queries
+```
+
+If you're using `pytest-django`, then you can use [`django_assert_num_queries`](https://pytest-django.readthedocs.io/en/latest/helpers.html#django_assert_num_queries) to achieve the same functionality.
 
 ## Use `nplusone` to catch N+1 queries
 
-N+1 queries are a common performance issue that can occur when your code makes too many database queries. Learn about it [here](https://johnnymetz.com/posts/find-nplusone-violations/).
+An N+1 query is a common performance issue that can occur when your code makes too many database queries. Learn about it [here](https://johnnymetz.com/posts/find-nplusone-violations/).
 
 The [`nplusone`](https://github.com/jmcarp/nplusone) package detects N+1 queries in your code. It works by raising an `NPlusOneError` where a single query is executed repeatedly in a loop, resulting in unnecessary database access. I recommend using it only in your test suite - read about how to implement that [here](https://johnnymetz.com/posts/find-nplusone-violations/#nplusone).
 
@@ -37,13 +79,13 @@ for user in User.objects.defer("email"):
     email = user.email
 ```
 
-Because of these shortcomings, it is important to use other optimization techniques in conjunction with `nplusone`.
+Because of these shortcomings, it is important to use other optimization techniques alongside `nplusone`.
 
 ## Use `django-zen-queries` to catch N+1 queries
 
 The [`django-zen-queries`](https://github.com/dabapps/django-zen-queries) package allows you to control which parts of your code are allowed to run queries and which aren't. You can use it to prevent unnecessary queries on prefetched objects, or to ensure that queries are only executed when they are needed. I use it on code that the `nplusone` package won't catch.
 
-For example, `nplusone` won't catch the following N+1 query but `django-zen-queries` will.
+For example, as outlined in the previous section, `nplusone` won't catch the following N+1 query, but `django-zen-queries` will.
 
 ```python
 from zen_queries import fetch, queries_disabled
@@ -56,14 +98,7 @@ with queries disabled():
         email = user.email
 ```
 
-## Set Statement Timeout in Postgres
-
-- https://stackoverflow.com/questions/19963954/set-transaction-query-timeout-in-psycopg2
-- https://www.crunchydata.com/blog/exposing-postgres-performance-secrets
-- https://postgresqlco.nf/doc/en/param/statement_timeout/
-- https://medium.com/squad-engineering/configure-postgres-statement-timeouts-from-within-django-6ce4cd33678a
-
-## Use Python to prevent new queries
+## Use vanilla Python to prevent new queries
 
 When working with prefetched objects, it's important to avoid making new queries that could slow down your application. Instead of using Django queryset methods, you can use vanilla Python to optimize your queries and improve performance.
 
@@ -90,9 +125,28 @@ Here are some more examples:
 
 Note, the `nplusone` package should catch all of these N+1 violations so be sure to use it in conjunction with this approach.
 
-## Use `only()` or `defer()` to prevent fetching large, unused fields
+## Use `defer()` to prevent fetching large, unused fields
 
-Some fields, such as `JSONField` and `TextField`, can consume a lot of memory and be very slow to load into a Django object, especially when dealing with querysets containing a few thousand objects or more. You can use `only()` or `defer()` to prevent fetching these fields and improve query performance.
+Some fields, such as `JSONField` and `TextField`, require expensive processing to convert to Python objects. This slows down queries, especially when dealing with querysets containing a few thousand instances or more. You can use `defer()` to prevent fetching these fields and improve query performance.
+
+```python
+class Book(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    pub_date = models.DateField()
+    rating = models.IntegerField()
+    notes = models.JSONField()
+
+books = Book.objects.defer("content", "notes")
+```
+
+Alternatively, you can use the `only()` method to explicitly specify the fields you want to include in the query result.
+
+```python
+books = Book.objects.only("title", "pub_date", "rating")
+```
+
+However, in situations where you want to exclude specific large fields, using `defer()` often results in more concise and efficient code.
 
 ## Conclusion
 
