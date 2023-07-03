@@ -13,7 +13,7 @@ draft: true
 
 Optimizing Django query performance is critical for building performant web applications. Django provides many tools and methods for optimizing database queries in its [Database access optimization](https://docs.djangoproject.com/en/4.2/topics/db/optimization/) documentation. In this blog post, we will explore some additional tips and tricks I've compiled over the years to help you identify and optimize your slow Django queries.
 
-## Set a Statement Timeout to Kill Long-Running Queries
+## Kill Long-Running Queries with a Statement Timeout
 
 PostgreSQL supports a [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT) parameter that allows you to set a maximum time limit per query. This is useful for preventing long-running queries from tying up precious resources and slowing down your application. At [PixieBrix](https://www.pixiebrix.com/), we've seen a few long-running queries cause a full database outage. Setting a statement timeout in your Django settings can help prevent this from happening.
 
@@ -55,7 +55,7 @@ else:
     STATEMENT_TIMEOUT = "30s"
 ```
 
-## Use `assertNumQueries` in unit tests to sanity check query counts
+## Sanity check query counts in units tests with `assertNumQueries`
 
 When writing unit tests, it's important to ensure that your code is making the expected number of queries. Django provides a convenient method called [`assertNumQueries`](https://docs.djangoproject.com/en/4.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries) that allows you to assert the number of queries made by your code.
 
@@ -68,7 +68,7 @@ class MyTestCase(TestCase)
 
 If you're using `pytest-django`, then you can use [`django_assert_num_queries`](https://pytest-django.readthedocs.io/en/latest/helpers.html#django_assert_num_queries) to achieve the same functionality.
 
-## Use `nplusone` to catch N+1 queries
+## Catch N+1 queries with `nplusone`
 
 An N+1 query is a common performance issue that occurs when your code makes too many database queries. The [`nplusone`](https://github.com/jmcarp/nplusone) package detects these bad queries in your code. It works by raising an `NPlusOneError` where a single query is executed repeatedly in a loop. Read more about it in a [previous blog post](https://johnnymetz.com/posts/find-nplusone-violations/).
 
@@ -82,7 +82,7 @@ for user in User.objects.defer("email"):
 
 Because of these shortcomings, it is important to use other optimization techniques alongside `nplusone`.
 
-## Use `django-zen-queries` to catch N+1 queries
+## Catch N+1 queries with `django-zen-queries`
 
 The [`django-zen-queries`](https://github.com/dabapps/django-zen-queries) package allows you to control which parts of your code are permitted to run queries. It includes a `queries_disabled()` context manager / decorator that raises a `QueriesDisabledError` exception when a query is executed inside it. You can use it to prevent unnecessary queries on prefetched objects, or to ensure that queries are only executed when they are needed. I use it to fill in the gaps where `nplusone` falls short.
 
@@ -101,7 +101,7 @@ with queries disabled():
         email = user.email
 ```
 
-## Use vanilla Python to fix N+1 queries
+## Fix N+1 queries with vanilla Python
 
 Most sections above help you pinpoint N+1 queries in your code. But how do you fix them?
 
@@ -132,7 +132,7 @@ Here are some more examples:
 
 Note, the `nplusone` package should catch all of these N+1 violations so be sure to use it to catch these issues.
 
-## Use `defer()` to prevent fetching large, unused fields
+## Prevent fetching large, unused fields with `defer()`
 
 Some fields, such as `JSONField` and `TextField`, require expensive processing to convert to Python objects. This slows down queries, especially when dealing with querysets containing a few thousand instances or more. You can use `defer()` to prevent fetching these fields and improve query performance.
 
