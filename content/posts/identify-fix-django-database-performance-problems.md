@@ -1,5 +1,5 @@
 ---
-title: 'Identify and Fix Django Database Issues'
+title: 'Identify and Fix Django Database Performance Problems'
 date: 2023-06-03T21:15:13-04:00
 tags:
   - Python
