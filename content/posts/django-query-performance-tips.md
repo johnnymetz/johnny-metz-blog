@@ -160,13 +160,13 @@ The `distinct()` method eliminates duplicate objects from a queryset by comparin
 
 To mitigate this issue, you can limit the scope of `distinct()` by applying it to a subset of fields.
 
-The best option is employ the previous tip and use `defer()` to exclude large fields entirely.
+The best option is employ the previous tip and use `defer()` to exclude large fields from the result set entirely:
 
 ```python
 Book.objects.filter(<filter-that-generates-duplicates>).defer("content", "notes").distinct()
 ```
 
-On PostgreSQL only, another option is to pass fields as positional arguments via `distinct(*fields)`. This tells the database to only compare the specified fields. Ideally you should use the primary key field, but any unique field will work.
+On PostgreSQL only, another option is to pass positional arguments to specify the fields to which the `DISTINCT` should apply via `distinct(*fields)`. This tells the database to only compare the designated fields. Ideally you should pass the primary key field, but any unique field will work.
 
 ```python
 Book.objects.filter(<filter-that-generates-duplicates>).distinct("id")
