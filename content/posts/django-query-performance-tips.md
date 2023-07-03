@@ -15,7 +15,7 @@ Optimizing Django query performance is critical for building performant web appl
 
 ## Kill Long-Running Queries with a Statement Timeout
 
-PostgreSQL supports a [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT) parameter that allows you to set a maximum time limit per query. This is useful for preventing long-running queries from tying up precious resources and slowing down your application. At [PixieBrix](https://www.pixiebrix.com/), we've seen a few long-running queries cause a full database outage. Setting a statement timeout in your Django settings can help prevent this from happening.
+PostgreSQL supports a [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT) parameter that allows you to set a maximum time limit per query. This is useful for preventing long-running queries from tying up precious resources and slowing down your application. My team at [PixieBrix](https://www.pixiebrix.com/) experienced an incident where a few long-running queries resulted in a full database outage. Setting a statement timeout in your Django settings can help prevent this from happening.
 
 ```python
 DATABASES = {
@@ -156,7 +156,7 @@ However, in situations where you want to exclude specific large fields, using `d
 
 ## Avoid using `distinct()` on large fields
 
-The `distinct()` method eliminates duplicate objects from a queryset by comparing all values across the result set. When applied to large fields, such as `JSONField` and `TextField`, the database needs to perform expensive comparisons, which can lead to slower query execution times.
+The `distinct()` method eliminates duplicate objects from a queryset by comparing all values across the result set. When applied to large fields, such as `JSONField` and `TextField`, the database needs to perform expensive comparisons, which can lead to slower query execution times. At [PixieBrix](https://www.pixiebrix.com/), a single bad `distinct()` query executed at a relatively high frequency (e.g. tens of calls per minutes) proved detrimental, resulting in a complete database outage.
 
 To mitigate this issue, you can limit the scope of `distinct()` by applying it to a subset of fields.
 
