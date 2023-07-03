@@ -1,5 +1,5 @@
 ---
-title: 'Django Query Performance Tips'
+title: 'Identify and Fix Django Database Issues'
 date: 2023-06-03T21:15:13-04:00
 tags:
   - Python
@@ -11,7 +11,7 @@ ShowToc: true
 draft: true
 ---
 
-Optimizing Django query performance is critical for building performant web applications. Django provides many tools and methods for optimizing database queries in its [Database access optimization](https://docs.djangoproject.com/en/4.2/topics/db/optimization/) documentation. In this blog post, we will explore some additional tips and tricks I've compiled over the years to help you identify and optimize your slow Django queries.
+Optimizing Django query performance is critical for building performant web applications. Django provides many tools and methods for optimizing database queries in its [Database access optimization documentation](https://docs.djangoproject.com/en/4.2/topics/db/optimization/). In this blog post, we will explore a collection of additional and essential tips I've compiled over the years to help you pinpoint and resolve your inefficient Django queries.
 
 ## Kill Long-Running Queries with a Statement Timeout
 
@@ -103,7 +103,7 @@ with queries disabled():
 
 ## Fix N+1 queries with vanilla Python
 
-Most sections above help you pinpoint N+1 queries in your code. But how do you fix them?
+Most sections above help you diagnose N+1 queries in your code. But how do you resolve them?
 
 One approach I frequently employ is to use vanilla Python on prefetched objects, instead of Django queryset methods, to prevent making new and unnecessary database queries.
 
@@ -166,12 +166,10 @@ The best option is employ the previous tip and use `defer()` to exclude large fi
 Book.objects.filter(<filter-that-generates-duplicates>).defer("content", "notes").distinct()
 ```
 
-On PostgreSQL only, another option is to pass positional arguments to specify the fields to which the `DISTINCT` should apply via `distinct(*fields)`. This tells the database to only compare the designated fields. Ideally you should pass the primary key field, but any unique field will work.
+If you need the large fields and you're on PostgreSQL, you can pass positional arguments to specify the fields to which the `DISTINCT` should apply via `distinct(*fields)`. This tells the database to only compare the designated fields. Ideally you should pass the primary key field, but any unique field will work.
 
 ```python
 Book.objects.filter(<filter-that-generates-duplicates>).distinct("id")
 ```
 
-## Conclusion
-
-In conclusion, query performance is the crux of any Django web application. Use these tips and tricks to help you identify and fix slow Django queries and make your applications more efficient.
+May your slow queries be easy to uncover and optimize.
