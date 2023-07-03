@@ -84,7 +84,7 @@ Because of these shortcomings, it is important to use other optimization techniq
 
 ## Catch N+1 queries with `django-zen-queries`
 
-The [`django-zen-queries`](https://github.com/dabapps/django-zen-queries) package allows you to control which parts of your code are permitted to run queries. It includes a `queries_disabled()` context manager / decorator that raises a `QueriesDisabledError` exception when a query is executed inside it. You can use it to prevent unnecessary queries on prefetched objects, or to ensure that queries are only executed when they are needed. I use it to fill in the gaps where `nplusone` falls short.
+The [`django-zen-queries`](https://github.com/dabapps/django-zen-queries) package allows you to control which parts of your code are permitted to run queries. It includes a `queries_disabled()` context manager / decorator that raises a `QueriesDisabledError` exception when a query is executed inside it. You can use it to prevent unnecessary queries on prefetched objects, or to ensure that queries are only called when they are needed. I use it to fill in the gaps where `nplusone` falls short.
 
 For example, as outlined in the previous section, `nplusone` won't catch the following N+1 query, but `django-zen-queries` will.
 
@@ -153,6 +153,24 @@ books = Book.objects.only("title", "pub_date")
 ```
 
 However, in situations where you want to exclude specific large fields, using `defer()` often results in more concise and efficient code.
+
+## Avoid using `distinct()` on large fields
+
+The `distinct()` method eliminates duplicate objects from a queryset by comparing all values across the result set. When applied to large fields, such as `JSONField` and `TextField`, the database needs to perform expensive comparisons, which can lead to slower query execution times.
+
+To mitigate this issue, you can limit the scope of `distinct()` by applying it to a subset of fields.
+
+The best option is employ the previous tip and use `defer()` to exclude large fields entirely.
+
+```python
+Book.objects.filter(<filter-that-generates-duplicates>).defer("content", "notes").distinct()
+```
+
+On PostgreSQL only, another option is to pass fields as positional arguments via `distinct(*fields)`. This tells the database to only compare the specified fields. Ideally you should use the primary key field, but any unique field will work.
+
+```python
+Book.objects.filter(<filter-that-generates-duplicates>).distinct("id")
+```
 
 ## Conclusion
 
