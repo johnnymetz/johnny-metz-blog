@@ -10,5 +10,9 @@ from mysite.profilers import timer
 logger = logging.getLogger(__name__)
 
 
+with connection.cursor() as cursor:
+    cursor.execute("select pg_sleep(3)")
+
+
 def run():
     logger.debug("Done.")

@@ -8,7 +8,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.0-alpha.4
+    rev: v3.0.0
     hooks:
       - id: prettier
   - repo: https://github.com/shssoichiro/oxipng
@@ -32,8 +32,18 @@ repos:
   ####################
   # PYTHON
   ####################
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: '1.14.0'
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, '4.2']
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.9.0
+    hooks:
+      - id: pyupgrade
+        args: ['--py311-plus']
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.7.0
     hooks:
       - id: black
         args: ['--config=code-examples/dj-scratch/pyproject.toml']
@@ -59,7 +69,7 @@ repos:
             'pep8-naming',
           ]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.4.1
     hooks:
       - id: mypy
         args: ['--config-file=code-examples/dj-scratch/pyproject.toml']
