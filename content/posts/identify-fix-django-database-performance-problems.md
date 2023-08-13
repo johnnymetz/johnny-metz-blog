@@ -1,6 +1,6 @@
 ---
 title: 'Identify and Fix Django Database Performance Problems'
-date: 2023-06-03T21:15:13-04:00
+date: 2023-08-13T12:15:13-04:00
 tags:
   - Python
   - Django
@@ -8,7 +8,6 @@ tags:
 cover:
   image: 'covers/django-racecar.png'
 ShowToc: true
-draft: true
 ---
 
 Optimizing Django query performance is critical for building performant web applications. Django provides many tools and methods for optimizing database queries in its [Database access optimization documentation](https://docs.djangoproject.com/en/4.2/topics/db/optimization/). In this blog post, we will explore a collection of additional and essential tips I've compiled over the years to help you pinpoint and resolve your inefficient Django queries.
@@ -101,11 +100,9 @@ with queries disabled():
         email = user.email
 ```
 
-## Fix N+1 queries with vanilla Python
+## Fix N+1 queries by avoiding new queries on prefetched objects
 
-Most sections above help you diagnose N+1 queries in your code. But how do you resolve them?
-
-One approach I frequently employ is to use vanilla Python on prefetched objects, instead of Django queryset methods, to prevent making new and unnecessary database queries.
+The Django ORM lacks the inherent ability to distinguish when it should retrieve data directly from the database versus utilizing data stored in memory due to prior retrieval. When dealing with prefetched objects, the data should always be in memory, assuming the initial fetch acquires all required data. To ensure Django uses in-memory data and avoids extraneous queries, you can use standard Python with Django's `all()` method rather than specific Django queryset methods.
 
 For instance, consider the following code:
 
@@ -130,7 +127,7 @@ Here are some more examples:
 | `qs.filter(x=1)`                 | `[obj for obj in qs.all() if obj.x == 1]` |
 | `qs.exclude(x=1)`                | `[obj for obj in qs.all() if obj.x != 1]` |
 
-Note, the `nplusone` package should catch all of these N+1 violations so be sure to use it to catch these issues.
+Note, the `nplusone` package should catch all of these N+1 violations so be sure to use it. Also, see [this post](https://johnnymetz.com/posts/combine-select-related-prefetch-related/) for optimizing your prefetch queries.
 
 ## Prevent fetching large, unused fields with `defer()`
 
