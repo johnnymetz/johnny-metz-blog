@@ -94,7 +94,7 @@ from zen_queries import fetch, queries_disabled
 # necessary before entering the queries_disabled context
 qs = fetch(User.objects.defer("email"))
 
-with queries disabled():
+with queries_disabled():
     for user in qs:
         # Raises a QueriesDisabledError exception
         email = user.email
