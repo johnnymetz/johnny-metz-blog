@@ -131,7 +131,7 @@ Note, the `nplusone` package should catch all of these N+1 violations so be sure
 
 ## Prevent fetching large, unused fields with `defer()`
 
-Some fields, such as `JSONField` and `TextField`, require expensive processing to load into to a Python object. This slows down queries, especially when dealing with querysets containing a few thousand instances or more. You can use `defer()` to prevent fetching these fields and improve query performance.
+Some fields, such as `JSONField` and `TextField`, require expensive processing to load into to a Python object. This consumes a lot of memory and slows down queries, especially when dealing with querysets containing a few thousand instances or more. You can use `defer()` to prevent fetching these fields and improve query performance.
 
 ```python
 class Book(models.Model):
