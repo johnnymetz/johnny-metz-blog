@@ -1,5 +1,5 @@
 ---
-title: 'Identify and Fix Django Database Performance Problems'
+title: 'Identify and Fix Slow Django Database Queries'
 date: 2023-08-13T12:15:13-04:00
 tags:
   - Python
@@ -69,7 +69,7 @@ If you're using `pytest-django`, then you can use [`django_assert_num_queries`](
 
 ## Catch N+1 queries with `nplusone`
 
-An N+1 query is a common performance issue that occurs when your code makes too many database queries. The [`nplusone`](https://github.com/jmcarp/nplusone) package detects these bad queries in your code. It works by raising an `NPlusOneError` where a single query is executed repeatedly in a loop. Read more about it in a [previous blog post](https://johnnymetz.com/posts/find-nplusone-violations/).
+An N+1 query is a common performance issue that occurs when your code makes more database queries than it should. The [`nplusone`](https://github.com/jmcarp/nplusone) package detects these bad queries in your code. It works by raising an `NPlusOneError` where a single query is executed repeatedly in a loop. Read more about it in a [previous blog post](https://johnnymetz.com/posts/find-nplusone-violations/).
 
 While `nplusone` is an indispensable tool I use in all of my Django projects, it is important to note that the package is orphaned and does not catch all violations. For example, I've noticed it doesn't work with `.only()` or `.defer()`.
 
