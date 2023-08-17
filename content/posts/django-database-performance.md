@@ -21,7 +21,7 @@ DATABASES = {
     "default": {
         ...
         "OPTIONS": {
-            "options": f"-c statement_timeout=30s",
+            "options": "-c statement_timeout=30s",
         },
     }
 }
