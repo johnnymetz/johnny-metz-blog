@@ -119,13 +119,13 @@ for user in User.objects.prefetch_related("groups"):
 
 Here are some more examples:
 
-| Django                           | Python                                    |
-| -------------------------------- | ----------------------------------------- |
-| `qs.values_list("x", flat=True)` | `[obj.x for obj in qs.all()]`             |
-| `qs.values("x")`                 | `[{"x": obj.x} for obj in qs.all()]`      |
-| `qs.order_by("x", "y")`          | `sorted(qs, lambda obj: (obj.x, obj.y))`  |
-| `qs.filter(x=1)`                 | `[obj for obj in qs.all() if obj.x == 1]` |
-| `qs.exclude(x=1)`                | `[obj for obj in qs.all() if obj.x != 1]` |
+| Always executes a query          | Does not execute a query if data was prefetched |
+| -------------------------------- | ----------------------------------------------- |
+| `qs.values_list("x", flat=True)` | `[obj.x for obj in qs.all()]`                   |
+| `qs.values("x")`                 | `[{"x": obj.x} for obj in qs.all()]`            |
+| `qs.order_by("x", "y")`          | `sorted(qs, lambda obj: (obj.x, obj.y))`        |
+| `qs.filter(x=1)`                 | `[obj for obj in qs.all() if obj.x == 1]`       |
+| `qs.exclude(x=1)`                | `[obj for obj in qs.all() if obj.x != 1]`       |
 
 Note, the `nplusone` package should catch all of these N+1 violations so be sure to use it. Also, see [this post](https://johnnymetz.com/posts/combine-select-related-prefetch-related/) for optimizing your prefetch queries.
 
