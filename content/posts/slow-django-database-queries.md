@@ -1,5 +1,5 @@
 ---
-title: 'Identify and Fix Slow Django Database Queries'
+title: 'Identify and Optimize Slow Django Database Queries'
 date: 2023-08-13T12:15:13-04:00
 tags:
   - Python
