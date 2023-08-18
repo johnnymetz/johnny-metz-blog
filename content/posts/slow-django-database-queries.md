@@ -1,5 +1,5 @@
 ---
-title: 'Identify and Optimize Slow Django Database Queries'
+title: 'Supercharge Your Django App: 7 Sneaky Tricks to Crush Slow Database Queries'
 date: 2023-08-13T12:15:13-04:00
 tags:
   - Python
