@@ -123,7 +123,7 @@ Here are some more examples:
 | -------------------------------- | ----------------------------------------------- |
 | `qs.values_list("x", flat=True)` | `[obj.x for obj in qs.all()]`                   |
 | `qs.values("x")`                 | `[{"x": obj.x} for obj in qs.all()]`            |
-| `qs.order_by("x", "y")`          | `sorted(qs, lambda obj: (obj.x, obj.y))`        |
+| `qs.order_by("x", "y")`          | `sorted(qs.all(), lambda obj: (obj.x, obj.y))`  |
 | `qs.filter(x=1)`                 | `[obj for obj in qs.all() if obj.x == 1]`       |
 | `qs.exclude(x=1)`                | `[obj for obj in qs.all() if obj.x != 1]`       |
 
