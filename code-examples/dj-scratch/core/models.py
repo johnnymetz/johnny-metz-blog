@@ -1,5 +1,21 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.functional import cached_property
+
+
+class Team(models.Model):
+    name = models.CharField(max_length=255)
+    users = models.ManyToManyField(User, through="TeamUser")
+
+    @cached_property
+    def total_points(self):
+        return self.teamuser_set.aggregate(models.Sum("points"))["points__sum"] or 0
+
+
+class TeamUser(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    points = models.IntegerField()
 
 
 class Todo(models.Model):
