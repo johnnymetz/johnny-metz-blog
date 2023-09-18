@@ -8,7 +8,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.2
+    rev: v3.0.3
     hooks:
       - id: prettier
   - repo: https://github.com/shssoichiro/oxipng
@@ -38,12 +38,12 @@ repos:
       - id: django-upgrade
         args: [--target-version, '4.2']
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.10.1
+    rev: v3.11.0
     hooks:
       - id: pyupgrade
         args: ['--py311-plus']
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.9.1
     hooks:
       - id: black
         args: ['--config=code-examples/dj-scratch/pyproject.toml']
