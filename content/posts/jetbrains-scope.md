@@ -10,19 +10,19 @@ draft: true
 
 ## Background
 
-As software engineers, one of the most crucial skills we develop is the ability to search through code efficiently. Whether it's finding a specific function, understanding how a certain feature is implemented, or tracing a bug, being able to quickly navigate and search within a codebase is essential for productivity. However, many codebases can be complex and sprawling, leading to noisy search results that hinder rather than aid our progress. JetBrains provides a few tools to help you refine your code search and focus on what's important.
+As software engineers, one of the most crucial skills we develop is the ability to search through code efficiently. Whether it's finding a specific function, understanding how a certain feature is implemented, or tracing a bug, being able to quickly navigate within a codebase is essential for productivity. However, many codebases can be complex and sprawling, leading to noisy search results that hinder rather than aid our progress. JetBrains provides a few tools to help you refine your code search and focus on what's important.
 
 ## JetBrains Excluded Files
 
-JetBrains IDEs provide a feature that allows you to [mark files and folders as permanently excluded](https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders). Excluded files are ignored from code search entirely (and other operations such as code completion and inspection), which can significantly boost IDE performance. Therefore, it's intended for files that you don't care about at all, such external dependency files, caches or generated artifacts (e.g. `venv/`, `node_modules/`, `package-lock.json`).
+JetBrains IDEs allow you to [permanently exclude files and folders](https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders) from code search and other operations. This cleans up search results and can even significantly boost IDE performance.
 
 Note, marking an individual file as permanently excluded is complicated. You can't just right click on a file and select "Mark as Excluded" like you can for folders. The best way I've found is to open the Project Structure settings and manually add the file to the "Excluded files" input, which is one long string that can become difficult to manage.
 
-Do not use this feature for files that you want to exclude only some of the time. Instead, use a JetBrains Scope.
+This feature is intended for files that you don't care about at all, such external dependency files, caches or generated artifacts (e.g. `venv/`, `node_modules/`, `package-lock.json`). Do not use this feature for files that you want to exclude only some of the time. Instead, use a JetBrains Scope.
 
 ## JetBrains Scope
 
-[JetBrains Scope](https://www.jetbrains.com/help/pycharm/scope.html) allows you to define custom search scopes. A scope is a set of files that you want to include or exclude from certain operations, such as code search, refactoring, navigation, and more. By creating a scope, you can tailor your searches to focus only on specific parts of your project, filtering out irrelevant matches and noise.
+A [JetBrains Scope](https://www.jetbrains.com/help/pycharm/scope.html) is a set of files that you want to temporarily include or exclude from certain operations, such as code search, refactoring, navigation, and more. By creating a scope, you can tailor your searches to focus only on specific parts of your project, filtering out irrelevant matches and noise.
 
 ### Custom Scopes
 
@@ -50,11 +50,11 @@ JetBrains also offers a set of [predefined scopes](https://www.jetbrains.com/hel
 
 Some of these scopes need to be managed, which make them error-prone and ineffective. For example, the "Project Test Files" predefined scope is populated by files marked as a "Test Sources Root". I prefer to use a custom scope for test files in most cases because I just need to write a single rule, rather than manually marking each test directory.
 
-The scopes that don't need to be managed are useful, such as "Open Files" and "All Changed Files".
+The scopes that don't need to be managed are useful, such as "All Changed Files" and "Open Files".
 
-### Use a Scope for Code Search
+### Use a Scope in Code Search
 
-In the search dialog, select the "Scope" button and choose the scope you want to use in the dropdown. Notice the number of matches reduces significantly as the scope gets more specific. Note we're searching the [Wagtail](https://github.com/wagtail/wagtail) repository.
+In the search dialog, select the "Scope" tab and choose the scope you want to use in the dropdown. We're searching the [Wagtail](https://github.com/wagtail/wagtail) repository below. Notice the number of matches reduces significantly as the scope gets more specific.
 
 {{< mp4-video src="/videos/jetbrains-scope.mp4" >}}
 
