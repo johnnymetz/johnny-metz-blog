@@ -10,7 +10,7 @@ draft: true
 
 ## Background
 
-As software engineers, one of the most crucial skills we develop is the ability to search through code efficiently. Whether it's finding a specific function, understanding how a certain feature is implemented, or tracing a bug, being able to quickly navigate within a codebase is essential for productivity. However, many codebases can be complex and sprawling, leading to noisy search results that hinder rather than aid our progress. JetBrains provides a few tools to help you refine your code search and focus on what's important.
+As software engineers, one of the most crucial skills we develop is the ability to search through code efficiently. Whether it's finding a specific function, understanding how a certain feature is implemented, or tracing a bug, being able to quickly navigate a codebase is essential for productivity. However, many codebases can be complex and sprawling, leading to noisy search results that hinder rather than aid our progress. JetBrains provides a few tools to help you refine your code search and focus on what's important.
 
 ## JetBrains Excluded Files
 
@@ -18,7 +18,7 @@ JetBrains IDEs allow you to [permanently exclude files and folders](https://www.
 
 Note, marking an individual file as permanently excluded is complicated. You can't just right click on a file and select "Mark as Excluded" like you can for folders. The best way I've found is to open the Project Structure settings and manually add the file to the "Excluded files" input, which is one long string that can become difficult to manage.
 
-This feature is intended for files that you don't care about at all, such external dependency files, caches or generated artifacts (e.g. `venv/`, `node_modules/`, `package-lock.json`). Do not use this feature for files that you want to exclude only some of the time. Instead, use a JetBrains Scope.
+This feature is intended for files that you don't care about at all, such external dependency files, caches or generated artifacts (e.g. `venv/`, `node_modules/`, `package-lock.json`). Do not use this feature for files that you want to exclude only some of the time. Instead, use JetBrains Scope.
 
 ## JetBrains Scope
 
@@ -28,7 +28,7 @@ A [JetBrains Scope](https://www.jetbrains.com/help/pycharm/scope.html) is a set 
 
 Let's take some practical examples of how you can create a custom JetBrains Scope to refine your code search.
 
-In my Django projects, I commonly want to probe Python application code, excluding unit tests and database migrations. Here is the custom scope:
+In my Django projects, I commonly want to search Python application code, excluding unit tests and database migrations. Here is the custom scope:
 
 ```
 file:*.py&&!file:*/tests//*&&!file:*/migrations//*
@@ -36,7 +36,7 @@ file:*.py&&!file:*/tests//*&&!file:*/migrations//*
 
 See the [Scopes Settings](https://www.jetbrains.com/help/pycharm/settings-scopes.html) documentation for syntax details and how to create a scope.
 
-Another custom scope that I employ frequently in Django projects includes only model files:
+Another custom scope that I utilize frequently in Django projects includes only model files:
 
 ```
 file:*/models.py||file:*/models/*.py
@@ -60,4 +60,4 @@ In the search dialog, select the "Scope" tab and choose the scope you want to us
 
 ## Conclusion
 
-JetBrains provides some powerful tools for exploring your source code. Use [JetBrains Excluded Files](#jetbrains-excluded-files) to permanently exclude files. Use [JetBrains Scope](#jetbrains-scope) to exclude files on a per-search basis. May your code searches be fast and fruitful.
+JetBrains provides some powerful tools for exploring your source code quickly and effectively. Use [JetBrains Excluded Files](#jetbrains-excluded-files) to permanently exclude files. Use [JetBrains Scope](#jetbrains-scope) to exclude files on a per-search basis.
