@@ -28,7 +28,7 @@ A [JetBrains Scope](https://www.jetbrains.com/help/pycharm/scope.html) is a set 
 
 Let's take some practical examples of how you can create a custom JetBrains Scope to refine your code search.
 
-In my Django projects, I commonly want to search Python application code, excluding unit tests and database migrations. Here is the custom scope:
+In my Django projects, I commonly want to probe Python application code, excluding unit tests and database migrations. Here is the custom scope:
 
 ```
 file:*.py&&!file:*/tests//*&&!file:*/migrations//*
@@ -42,7 +42,7 @@ Another custom scope that I employ frequently in Django projects includes only m
 file:*/models.py||file:*/models/*.py
 ```
 
-This allows me to quickly search model definitions, whether they are in a `models.py` file or a `models/` directory.
+This allows me to quickly target model definitions, whether they are in a `models.py` file or a `models/` directory.
 
 ### Predefined Scopes
 
@@ -54,10 +54,10 @@ The scopes that don't need to be managed are useful, such as "All Changed Files"
 
 ### Use a Scope in Code Search
 
-In the search dialog, select the "Scope" tab and choose the scope you want to use in the dropdown. We're searching the [Wagtail](https://github.com/wagtail/wagtail) repository below. Notice the number of matches reduces significantly as the scope gets more specific.
+In the search dialog, select the "Scope" tab and choose the scope you want to use in the dropdown. We're browsing the [Wagtail](https://github.com/wagtail/wagtail) repository below. Notice the number of matches reduces significantly as the scope gets more specific.
 
 {{< mp4-video src="/videos/jetbrains-scope.mp4" >}}
 
 ## Conclusion
 
-Use **JetBrains Excluded Files** to permanently exclude files from code search. Use **JetBrains Scope** to exclude files on a per-search basis. May your code searches be fast and fruitful.
+JetBrains provides some powerful tools for exploring your source code. Use [JetBrains Excluded Files](#jetbrains-excluded-files) to permanently exclude files. Use [JetBrains Scope](#jetbrains-scope) to exclude files on a per-search basis. May your code searches be fast and fruitful.
