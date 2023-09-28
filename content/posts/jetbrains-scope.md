@@ -29,10 +29,10 @@ A [JetBrains Scope](https://www.jetbrains.com/help/pycharm/scope.html) is a set 
 
 Let's take some practical examples of how you can create a custom scope to refine your code search.
 
-In my Django projects, I commonly want to search Python application code, excluding unit tests and database migrations. Here is the custom scope:
+In my Django projects, I commonly want to search Python application code, excluding unit tests, database migrations and [Django admin site](https://docs.djangoproject.com/en/4.2/ref/contrib/admin/) code. Here is the custom scope:
 
 ```
-file:*.py&&!file:*/tests//*&&!file:*/migrations//*
+file:*.py&&!file:*/tests//*&&!file:*/migrations//*&&!file:*/admin.py
 ```
 
 See the [Scopes Settings](https://www.jetbrains.com/help/pycharm/settings-scopes.html) documentation for syntax details and how to create a scope.
@@ -61,4 +61,4 @@ Open the "Find in Files" dialog (`Cmd` + `Shift` + `F`). Select the "Scope" tab 
 
 ## Conclusion
 
-JetBrains provides some powerful tools for exploring your source code quickly and effectively. Use [JetBrains Excluded Files](#jetbrains-excluded-files) to permanently exclude files. Use [JetBrains Scope](#jetbrains-scope) to exclude files on a per-search basis.
+JetBrains provides some powerful tools for exploring your source code quickly and effectively. Use [JetBrains Excluded Files](#jetbrains-excluded-files) to permanently exclude files. Use [JetBrains Scope](#jetbrains-scope) to exclude files on a per-search basis. What custom scopes would be useful in your projects?
