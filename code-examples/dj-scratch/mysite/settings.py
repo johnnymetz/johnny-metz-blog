@@ -17,8 +17,8 @@ from django.db import DEFAULT_DB_ALIAS
 import environ
 
 env = environ.Env(
-    # DATABASE_URL=(str, "sqlite:///db.sqlite3"),
-    DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
+    DATABASE_URL=(str, "sqlite:///db.sqlite3"),
+    # DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
     DEBUG=(bool, True),
     POSTGRES_STATEMENT_TIMEOUT=(bool, "30s"),
 )
@@ -91,10 +91,10 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 
 DATABASES = {DEFAULT_DB_ALIAS: env.db()}
 
-POSTGRES_STATEMENT_TIMEOUT = env("POSTGRES_STATEMENT_TIMEOUT")
-DATABASES[DEFAULT_DB_ALIAS]["OPTIONS"] = {
-    "options": f"-c statement_timeout={POSTGRES_STATEMENT_TIMEOUT}"
-}
+# POSTGRES_STATEMENT_TIMEOUT = env("POSTGRES_STATEMENT_TIMEOUT")
+# DATABASES[DEFAULT_DB_ALIAS]["OPTIONS"] = {
+#     "options": f"-c statement_timeout={POSTGRES_STATEMENT_TIMEOUT}"
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
