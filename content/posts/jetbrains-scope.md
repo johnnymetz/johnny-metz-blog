@@ -1,6 +1,6 @@
 ---
 title: 'Mastering Code Search with JetBrains Scope'
-date: 2023-08-13T12:55:29-04:00
+date: 2023-09-29T10:55:29-04:00
 tags:
   - JetBrains
   - Django
