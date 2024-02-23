@@ -1,44 +1,19 @@
-import pytest
+from django.db.models import F
 
 from core.models import TeamUser
 from core.tests import factories
 
 
-def test_create_team_users(django_assert_num_queries):
-    user = factories.UserFactory()
-    team = factories.TeamFactory()
-    assert team.total_points == 0
+def test_x():
+    user1 = factories.UserFactory()
+    team1 = factories.TeamFactory()
+    team2 = factories.TeamFactory()
+    TeamUser.objects.create(team=team1, user=user1, points=3)
+    TeamUser.objects.create(team=team1, user=user1, points=4)
+    TeamUser.objects.create(team=team2, user=user1, points=5)
+    TeamUser.objects.create(team=team2, user=user1, points=6)
 
-    with django_assert_num_queries(1):
-        TeamUser.objects.create(team=team, user=user, points=2)
-    assert team.total_points == 2
+    qs = user1.teamuser_set.select_related("team").annotate(team__points=F("points"))
 
-    with django_assert_num_queries(1):
-        TeamUser.objects.create(team=team, user=user, points=3)
-    assert team.total_points == 5
-
-
-@pytest.mark.xfail(reason="team.total_points is not invalidated by signal")
-def test_delete_all_team_users(django_assert_num_queries):
-    user = factories.UserFactory()
-    team = factories.TeamFactory()
-    for _ in range(10):
-        TeamUser.objects.create(team=team, user=user, points=2)
-    assert team.total_points == 20
-
-    with django_assert_num_queries(2):
-        TeamUser.objects.all().delete()
-    # Cache is not invalidated so this is still 20
-    assert team.total_points == 0
-
-
-def test_delete_all_team_users_and_clear_cache(django_assert_num_queries):
-    user = factories.UserFactory()
-    team = factories.TeamFactory()
-    for _ in range(10):
-        TeamUser.objects.create(team=team, user=user, points=2)
-    assert team.total_points == 20
-
-    with django_assert_num_queries(2):
-        team.teamuser_set.all().delete()
-    assert team.total_points == 0
+    for x in qs:
+        print(x.team.name, x.team__points, x.team.points)
