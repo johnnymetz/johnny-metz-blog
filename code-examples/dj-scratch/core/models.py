@@ -33,4 +33,3 @@ class Todo(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=128)
-    is_retired = models.BooleanField(default=False)

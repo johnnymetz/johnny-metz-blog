@@ -20,5 +20,5 @@ def test_x():
 
 
 def test_product():
-    product = Product.objects.create(name="product1")
-    assert product.name == "product1"
+    product = Product.objects.create(name="Wrench")
+    assert product.name == "Wrench"
