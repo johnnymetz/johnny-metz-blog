@@ -2,12 +2,27 @@
 
 Nice:
 
+- Advanced context managers / Stateful context managers
+
+```
+Context manager / decorator that tracks state.
+
+Use cases:
+
+- Temporarily disable a feature
+  - Block transactions
+  - Stop writing audit events
+- Consolidate to a single action
+  - Fire a signal
+  - Send a notification
+  - Write objects to a table
+```
+
 - Django `is_cached` method
 - Choose the right index
   - https://www.postgresql.org/docs/current/indexes-multicolumn.html
   - https://www.postgresql.org/docs/current/indexes-ordering.html
   - https://stackoverflow.com/questions/52033327/multi-column-indexes-and-order-by
-- PyCharm find file scope
 - Reduce bundle size by serving icons from a CDN
   - https://github.com/pixiebrix/pixiebrix-app/issues/3475
   - https://webpack.js.org/guides/asset-modules/

@@ -56,6 +56,7 @@ params:
       url: 'https://github.com/johnnymetz'
     - name: stackoverflow
       url: 'https://stackoverflow.com/users/6611672/johnny-metz'
+    # Configured on ImprovMX
     - name: email
       url: 'mailto:contact@johnnymetz.com'
 
