@@ -36,19 +36,19 @@ repos:
     rev: '1.15.0'
     hooks:
       - id: django-upgrade
-        args: [--target-version, '4.2']
+        args: [--target-version, '5.0']
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: ['--py311-plus']
   - repo: https://github.com/psf/black
-    rev: 23.11.0
+    rev: 23.12.1
     hooks:
       - id: black
         args: ['--config=code-examples/dj-scratch/pyproject.toml']
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         args: ['--settings-file=code-examples/dj-scratch/pyproject.toml']
@@ -69,7 +69,7 @@ repos:
             'pep8-naming',
           ]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.7.1
+    rev: v1.8.0
     hooks:
       - id: mypy
         args: ['--config-file=code-examples/dj-scratch/pyproject.toml']
