@@ -4,7 +4,7 @@ mypy
 isort
 
 Django
-psycopg2
+psycopg[binary]
 django-environ
 django-extensions
 django-zen-queries
