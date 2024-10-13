@@ -37,7 +37,7 @@ In [2]: Product.objects.create(name="Headphones", quantity=3)
 It would be ideal to catch this bug earlier in the development cycle. We can do this using the `--check` flag on the `makemigrations` command, which will "Exit with a non-zero status if model changes are missing migrations".
 
 ```bash
-$ python3 manage.py makemigrations --dry-run --check
+$ python3 manage.py makemigrations --check
 # Migrations for 'core':
 #   core/migrations/0002_product_quantity.py
 #     - Add field quantity to product
@@ -45,7 +45,9 @@ $ echo $?
 # 1
 ```
 
-`--dry-run` prevents the migrations from actually being created and `echo $?` prints the exit code of the last run command. As we can see from the output and the non-zero exit code, we're missing migrations.
+Before Django 4.2.9, we'd also need the `--dry-run` flag, to prevent the migrations from actually being created (see [Django docs](https://docs.djangoproject.com/en/5.1/ref/django-admin/#makemigrations)).
+
+`echo $?` prints the exit code of the last run command. As we can see from the output and the non-zero exit code, we're missing migrations.
 
 We can automatically run this check before committing to version control using the popular [pre-commit](https://pre-commit.com/) framework.
 
@@ -56,7 +58,7 @@ repos:
     hooks:
       - id: check-django-migrations
         name: Check django migrations
-        entry: python3 manage.py makemigrations --dry-run --check
+        entry: python3 manage.py makemigrations --check
         language: system
         types: [python] # hook only runs if a python file is staged
         pass_filenames: false
