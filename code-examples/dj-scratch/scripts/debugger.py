@@ -5,13 +5,17 @@ from django.db import connection
 
 from zen_queries import fetch
 
+from core.models import *
 from mysite.profilers import timer
 
 logger = logging.getLogger(__name__)
 
 
-with connection.cursor() as cursor:
-    cursor.execute("select pg_sleep(3)")
+qs = Point.objects.all()
+print(qs.query)
+print(qs)
+
+# Point.objects.create(x=1, y=2)
 
 
 def run():

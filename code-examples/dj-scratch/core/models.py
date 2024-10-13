@@ -31,5 +31,7 @@ class Todo(models.Model):
         return super().save(*args, **kwargs)
 
 
-class Product(models.Model):
-    name = models.CharField(max_length=128)
+class Point(models.Model):
+    x = models.IntegerField()
+    y = models.IntegerField()
+    # z = models.IntegerField(null=True)
