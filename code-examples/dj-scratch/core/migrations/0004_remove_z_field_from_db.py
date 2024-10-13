@@ -9,4 +9,13 @@ class Migration(migrations.Migration):
         ("core", "0003_alter_point_z"),
     ]
 
-    operations = []
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            state_operations=[],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE core_point DROP COLUMN z;",
+                ),
+            ],
+        ),
+    ]
