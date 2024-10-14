@@ -7,13 +7,15 @@ ShowToc: true
 draft: true
 ---
 
+<!-- TODO: Rename file -->
+
 In the fast-paced world of software development, minimizing downtime during deployments is crucial. Blue-green deployments have emerged as a popular strategy to achieve this goal. However, they introduce challenges, especially when dealing with database migrations. This article delves into what blue-green deployments are, why database migrations can be tricky in this context, and how to navigate common migration scenarios effectively in Django.
 
 ## Blue-Green Deployments
 
 A blue-green deployment is a release management strategy that utilizes two separate production environments called "blue" and "green". At any given time, only one environment is live, serving all production traffic. Changes are deployed to the "green" environment, and after thorough testing, traffic is switched over from the "blue" to the "green" environment. This approach minimizes downtime and provides a quick rollback option by reverting traffic to the "blue" environment if issues occur.
 
-## Database Migrations Break Blue-Green Deployments
+## Database Migrations Can Break Blue-Green Deployments
 
 While blue-green deployments excel at application code deployments, database migrations introduce complexity because both environments need to be compatible with the shared database. Incompatibilities between versions can lead to errors or data inconsistencies when switching traffic.
 
@@ -27,11 +29,11 @@ class Product(models.Model):
 
 If the green environment removes the field, this will break the blue environment if the blue environment relies on it. This is often the case in Django because "fetch all fields" queries explicitly list the fields (e.g. `SELECT name, rating`), instead of using `SELECT *`. So a simple `Product.objects.all()` query will break in the blue environment because the query will try to fetch the `rating` field, which no longer exists.
 
-To mitigate this, we need to use `SeparateDatabaseAndState` to remove the field in stages to ensure compatibility between the blue and green environments.
+To mitigate this, we need to use `SeparateDatabaseAndState` to remove the field in multiple steps to ensure compatibility between the blue and green environments.
 
 ## Handling Database Migrations in Blue-Green Deployments
 
-The [`SeparateDatabaseAndState`](https://docs.djangoproject.com/en/5.1/ref/migration-operations/#django.db.migrations.operations.SeparateDatabaseAndState) migration operation allows us to separate changes to database and project state. We can use it to remove the `rating` field in two backwards-compatible migrations (instead of removing it in one backwards-incompatible migration):
+The [`SeparateDatabaseAndState`](https://docs.djangoproject.com/en/5.1/ref/migration-operations/#django.db.migrations.operations.SeparateDatabaseAndState) migration operation allows us to separate changes to database and project state. We can use it to remove the `rating` field in two backwards-compatible migrations (instead of removing it in one backwards-incompatible migration). These migrations need to be deployed separately, ensuring that each step is fully applied and stable before proceeding to the next.
 
 - Migration 1: Remove `rating` from the green environment project state without removing it from the database
 - Migration 2: Remove `rating` from the database
@@ -67,7 +69,7 @@ A few notes about creating and verifying the migration:
 
 - Start by removing the `rating` from the model definition and the application code.
 - Create the migration by running the `makemigrations` command. Then move all backward-incompatible changes to the `state_operations` list, which is just the `RemoveField` operation in this case.
-- We need to give `rating` a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default) or make it nullable, otherwise the green environment will break when trying to insert new `Product` rows. Note giving the field a [default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#default) won't work because we need to generate the default at the database level, not the Python level.
+- We need to make `rating` nullable or give it a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default), otherwise the green environment will break when trying to insert new `Product` rows. Making the field nullable is preferred because it consumes less storage. Note giving the field a [default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#default) won't work because we need to generate the default at the database level, not the Python level.
 - Verify the migration issues the expected SQL by running the following command:
 
 ```bash
@@ -123,3 +125,37 @@ python manage.py makemigrations appname --empty -n 0003_remove_product_rating_fr
 - The `database_operations` list takes raw SQL. Run `sqlmigrate` before moving the backward-incompatible changes to the `state_operations` list in the first migration to generate the SQL.
 
 Deploy the changes. Now our production environment is running without the `rating` field in both the project state and the database.
+
+## Common Backward-Incompatible Database Operations
+
+### Add a Field (not nullable and without a default)
+
+- Migration 1: Add the field to the database as nullable or with a db default. Making the field nullable is preferred because it consumes less storage and doesn't require the database to lock the table to update existing rows. This is especially beneficial for large tables where updating every row would be time-consuming and can cause downtime.
+- Migration 2: Make the field non-nullable or remove the db default
+
+### Remove a Field
+
+- Migration 1:
+  - Make the field nullable or give it a db default (if not already)
+  - Remove the field from the project state
+- Migration 2: Remove the field from the database
+
+### Remove a Table
+
+- Deployment 1 (no migration needed): Remove all references to the table in the application code
+- Deployment 2 (Migration 1): Remove the table from the database
+
+## Common Backward-Compatible Database Operations
+
+- Add a field (nullable or with a default)
+- Add a table
+
+## TODO: Other Operations
+
+Not sure about the following operations / not common:
+
+- Rename a field
+- Rename a table
+- Change field type
+- Add / remove index
+- Add / remove constraint
