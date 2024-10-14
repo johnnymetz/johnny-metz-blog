@@ -6,16 +6,17 @@ from django.db import connection
 from zen_queries import fetch
 
 from core.models import *
+from green.models import *
 from mysite.profilers import timer
 
 logger = logging.getLogger(__name__)
 
 
-qs = Point.objects.all()
-print(qs.query)
-print(qs)
+# qs = Product.objects.all()
+# print(qs.query)
+# print(qs)
 
-# Point.objects.create(x=1, y=2)
+Product.objects.create()
 
 
 def run():
