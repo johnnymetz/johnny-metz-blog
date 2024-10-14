@@ -1,5 +1,5 @@
 ---
-title: 'Mastering Django Blue-Green Deployments: Multistep Database Changes'
+title: 'Zero Downtime Django Deployments with Multistep Database Changes'
 date: 2024-10-12T15:58:00-07:00
 tags:
   - Django
@@ -7,8 +7,6 @@ ShowToc: true
 TocOpen: true
 draft: true
 ---
-
-<!-- TODO: Rename file -->
 
 In the fast-paced world of software development, minimizing downtime during deployments is crucial. Blue-green deployments have emerged as a popular strategy to achieve this goal. However, they introduce challenges, especially when dealing with database changes. This article delves into what blue-green deployments are, why database changes can be tricky in this context, and how to navigate common change scenarios effectively in Django.
 
@@ -162,11 +160,3 @@ Popular constraints include check constraints, unique constraints, and `NOT NULL
 - Add a table
 - Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
 - Removing a constraint
-
-## TODO: Other Operations
-
-Not sure about the following operations / not common:
-
-- Rename a field
-- Rename a table
-- Change field type
