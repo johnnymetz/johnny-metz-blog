@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "django_migration_linter",
     # local apps
     "core.apps.CoreConfig",
-    "green.apps.GreenConfig",
 ]
 
 MIDDLEWARE = [
