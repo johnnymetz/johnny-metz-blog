@@ -6,7 +6,6 @@ tags:
 ShowToc: true
 TocOpen: true
 cover:
-  # TODO: Create cover image
   image: 'posts/blue-green-deployment-pass.png'
 draft: true
 ---
@@ -31,7 +30,7 @@ class Product(models.Model):
 
 If we remove the field from the database, we will break the blue environment if that environment still relies on it. In Django, this is particularly common because queries specify fields explicitly (e.g. `SELECT name, rating`) rather than using `SELECT *`. As a result, a simple `Product.objects.all()` query in the blue environment will fail since it attempts to fetch the non-missing `rating` field.
 
-![Blue Green Deployment](/posts/blue-green-deployment7.png)
+![Blue Green Deployment](/posts/blue-green-deployment-fail.png)
 
 To mitigate this, we need to use `SeparateDatabaseAndState` to remove the field in multiple steps to ensure compatibility between the blue and green environments.
 
