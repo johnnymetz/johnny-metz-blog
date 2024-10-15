@@ -3,6 +3,7 @@ title: 'Zero Downtime Django Deployments with Multistep Database Changes'
 date: 2024-10-12T15:58:00-07:00
 tags:
   - Django
+  - DevOps
 ShowToc: true
 TocOpen: true
 cover:
@@ -10,11 +11,11 @@ cover:
 draft: true
 ---
 
-In the fast-paced world of software development, minimizing downtime during deployments is crucial. Blue-green deployments have emerged as a popular strategy to achieve this goal. However, they introduce challenges, especially when dealing with database changes. This article delves into what blue-green deployments are, why database changes can be tricky in this context, and how to navigate common change scenarios effectively in Django.
+Preventing downtime during deployments is crucial for maintaining service availability and ensuring a positive user experience. Blue-green deployments have emerged as a popular strategy to achieve this goal. However, they introduce challenges, especially when dealing with database changes. This article delves into what blue-green deployments are, why database changes can be tricky in this context, and how to navigate common change scenarios effectively in Django.
 
 ## Blue-Green Deployments
 
-A blue-green deployment is a release management strategy that utilizes two separate production environments called "blue" and "green". At any given time, only one environment is live, serving all production traffic. Changes are deployed to the "green" environment, and after thorough testing, traffic is switched over from the "blue" to the "green" environment. This approach minimizes downtime and provides a quick rollback option by reverting traffic to the "blue" environment if issues occur.
+A blue-green deployment is a release management strategy that utilizes two separate production environments called "blue" and "green". At any given time, only one environment is live, serving all production traffic. Changes are deployed to green, and after thorough testing, traffic is switched over from the blue to green. This approach minimizes downtime and provides a quick rollback option by reverting traffic to blue if issues occur.
 
 ## Database Changes Can Break Blue-Green Deployments
 
@@ -28,7 +29,7 @@ class Product(models.Model):
     rating = models.IntegerField()
 ```
 
-If we remove the field from the database, we will break the blue environment if that environment still relies on it. In Django, this is particularly common because queries specify fields explicitly (e.g. `SELECT name, rating`) rather than using `SELECT *`. As a result, a simple `Product.objects.all()` query in the blue environment will fail since it attempts to fetch the non-missing `rating` field.
+If we remove the field from the database, we will break the blue environment if that environment relies on it. In Django, this is particularly common because queries specify fields explicitly (e.g. `SELECT name, rating`) rather than using `SELECT *`. As a result, a simple `Product.objects.all()` query in the blue environment will fail since it attempts to fetch the `rating` field, which no longer exists.
 
 ![Blue Green Deployment](/posts/blue-green-deployment-fail.png)
 
@@ -72,8 +73,8 @@ A few notes about creating and verifying the migration:
 
 - Start by removing the `rating` from the model definition and the application code.
 - Create the migration by running the `makemigrations` command. Then move all backward-incompatible changes to the `state_operations` list, which is just the `RemoveField` operation in this case.
-- We need to make `rating` nullable or give it a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default), otherwise the green environment will break when trying to insert new `Product` rows. Making the field nullable is preferred because it consumes less storage. Note giving the field a [default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#default) won't work because we need to generate the default at the database level, not the Python level.
-- Verify the migration issues the expected SQL by running the following command:
+- We need to make `rating` nullable or give it a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default), otherwise the green environment will break when trying to insert new `Product` rows. Making the field nullable is preferred because it consumes less storage. Note giving the field a [Python default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#default) won't work because we need to generate the default at the database level, not the Python level.
+- Verify the migration generates the expected SQL by running the following command:
 
 ```bash
 python manage.py sqlmigrate appname 0002_remove_product_rating_from_state
@@ -131,16 +132,6 @@ Deploy the changes. Now our production environment is running without the `ratin
 
 ## Common Database Changes
 
-### Backward-Compatible
-
-The following changes can be completed in a single deployment:
-
-- Add a nullable field
-- Add a field with a default: See [above](#add-a-field-not-nullable-and-without-a-default) for considerations when adding a field with a default
-- Add a table
-- Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
-- Removing a constraint
-
 ### Backward-Incompatible
 
 The following changes must be completed in a multiple deployments:
@@ -170,3 +161,13 @@ Popular constraints include check constraints, unique constraints, and `NOT NULL
 - Step 2 (migration):
   - Clean up existing data in the database that violates the new constraint
   - Add the constraint to the database
+
+### Backward-Compatible
+
+The following changes can be completed in a single deployment:
+
+- Add a nullable field
+- Add a field with a default: See [above](#add-a-field-not-nullable-and-without-a-default) for considerations when adding a field with a default
+- Add a table
+- Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
+- Removing a constraint
