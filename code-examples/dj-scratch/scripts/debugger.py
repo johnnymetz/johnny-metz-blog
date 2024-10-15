@@ -12,11 +12,11 @@ from mysite.profilers import timer
 logger = logging.getLogger(__name__)
 
 
-# qs = Product.objects.all()
-# print(qs.query)
-# print(qs)
+qs = Product.objects.all()
+print(qs.query)
+print(qs)
 
-Product.objects.create()
+# Product.objects.create()
 
 
 def run():

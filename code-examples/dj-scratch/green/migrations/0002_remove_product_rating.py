@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="product",
             name="rating",
-            field=models.IntegerField(db_default=0),
+            field=models.IntegerField(null=True),
         ),
         migrations.SeparateDatabaseAndState(
             state_operations=[

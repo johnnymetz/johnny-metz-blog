@@ -5,6 +5,9 @@ tags:
   - Django
 ShowToc: true
 TocOpen: true
+cover:
+  # TODO: Create cover image
+  image: 'posts/blue-green-deployment-pass.png'
 draft: true
 ---
 
@@ -26,7 +29,9 @@ class Product(models.Model):
     rating = models.IntegerField()
 ```
 
-If the green environment removes the field, this will break the blue environment if the blue environment relies on it. This is often the case in Django because "fetch all fields" queries explicitly list the fields (e.g. `SELECT name, rating`), instead of using `SELECT *`. So a simple `Product.objects.all()` query will break in the blue environment because the query will try to fetch the `rating` field, which no longer exists.
+If we remove the field from the database, we will break the blue environment if that environment still relies on it. In Django, this is particularly common because queries specify fields explicitly (e.g. `SELECT name, rating`) rather than using `SELECT *`. As a result, a simple `Product.objects.all()` query in the blue environment will fail since it attempts to fetch the non-missing `rating` field.
+
+![Blue Green Deployment](/posts/blue-green-deployment7.png)
 
 To mitigate this, we need to use `SeparateDatabaseAndState` to remove the field in multiple steps to ensure compatibility between the blue and green environments.
 
@@ -50,7 +55,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="product",
             name="rating",
-            field=models.IntegerField(db_default=0),
+            field=models.IntegerField(null=True),
         ),
         migrations.SeparateDatabaseAndState(
             state_operations=[
@@ -118,33 +123,47 @@ A few notes about creating and verifying the migration:
 - Start by creating an empty migration file:
 
 ```bash
-python manage.py makemigrations appname --empty -n 0003_remove_product_rating_from_db
+python manage.py makemigrations appname --empty -n remove_product_rating_from_db
 ```
 
 - The `database_operations` list takes raw SQL. Run `sqlmigrate` before moving the backward-incompatible changes to the `state_operations` list in the first step to generate the SQL.
 
 Deploy the changes. Now our production environment is running without the `rating` field in both the project state and the database.
 
-## Common Backward-Incompatible Database Changes
+## Common Database Changes
 
-### Add a Field (not nullable and without a default)
+### Backward-Compatible
+
+The following changes can be completed in a single deployment:
+
+- Add a nullable field
+- Add a field with a default: See [above](#add-a-field-not-nullable-and-without-a-default) for considerations when adding a field with a default
+- Add a table
+- Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
+- Removing a constraint
+
+### Backward-Incompatible
+
+The following changes must be completed in a multiple deployments:
+
+#### Add a Field (not nullable and without a default)
 
 - Step 1 (migration): Add the field to the database as nullable or with a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default). Making the field nullable is preferred because it consumes less storage and doesn't require the database to lock the table to update existing rows, which can be slow for large tables and cause downtime. Note, some newer database versions update existing rows without locking the table, such as PostgreSQL 11+ which stores the default in the metadata and updates rows when it's convenient.
 - Step 2 (migration): Make the field non-nullable or remove the db default
 
-### Remove a Field
+#### Remove a Field
 
 - Step 1 (migration):
   - Make the field nullable or give it a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default) (if not already)
   - Remove the field from the project state
 - Step 2 (migration): Remove the field from the database
 
-### Remove a Table
+#### Remove a Table
 
 - Step 1 (no migration): Remove all references to the table in the application code
 - Step 2 (migration): Remove the table from the database
 
-### Add a Constraint
+#### Add a Constraint
 
 Popular constraints include check constraints, unique constraints, and `NOT NULL` constraints.
 
@@ -152,11 +171,3 @@ Popular constraints include check constraints, unique constraints, and `NOT NULL
 - Step 2 (migration):
   - Clean up existing data in the database that violates the new constraint
   - Add the constraint to the database
-
-## Common Backward-Compatible Database Operations
-
-- Add a nullable field
-- Add a field with a default: See [above](#add-a-field-not-nullable-and-without-a-default) for considerations when adding a field with a default
-- Add a table
-- Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
-- Removing a constraint
