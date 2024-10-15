@@ -8,6 +8,7 @@ psycopg[binary]
 django-environ
 django-extensions
 django-zen-queries
+django-migration-linter
 
 pytest
 pytest-django

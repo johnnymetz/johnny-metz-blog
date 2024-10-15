@@ -29,7 +29,3 @@ class Todo(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
-
-
-class Product(models.Model):
-    name = models.CharField(max_length=128)

@@ -1,6 +1,6 @@
 from django.db.models import F
 
-from core.models import Product, TeamUser
+from core.models import TeamUser
 from core.tests import factories
 
 
@@ -17,8 +17,3 @@ def test_x():
 
     for x in qs:
         print(x.team.name, x.team__points, x.team.points)
-
-
-def test_product():
-    product = Product.objects.create(name="Wrench")
-    assert product.name == "Wrench"

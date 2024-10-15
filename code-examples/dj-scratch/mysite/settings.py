@@ -51,8 +51,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd party apps
     "django_extensions",
+    "django_migration_linter",
     # local apps
     "core.apps.CoreConfig",
+    "green.apps.GreenConfig",
 ]
 
 MIDDLEWARE = [
