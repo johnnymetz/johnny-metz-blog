@@ -14,16 +14,13 @@ pre-commit install
 # https://github.com/adityatelange/hugo-PaperMod/wiki/Installation#method-2
 git submodule add https://github.com/adityatelange/hugo-PaperMod.git themes/PaperMod --depth=1
 git submodule update --init --recursive # needed when you reclone your repo (submodules may not get cloned automatically)  # .git/modules now exists
-
-# checkout PR branch
-gh pr checkout <PR number>
 ```
 
 ## Common commands
 
 ```
 # run / build
-hugo server --gc -D -F  # run dev server on http://localhost:1313
+make run  # run dev server
 hugo -D  # build static pages
 
 # create a new post
@@ -31,7 +28,7 @@ hugo new posts/xxx.md
 
 # view/update submodules
 git submodule
-git submodule update --remote --merge
+make updatesubmodules
 ```
 
 ## Resources
