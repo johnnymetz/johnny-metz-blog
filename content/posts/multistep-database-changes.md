@@ -8,7 +8,6 @@ ShowToc: true
 TocOpen: true
 cover:
   image: 'posts/blue-green-deployment-pass.png'
-draft: true
 ---
 
 Preventing downtime during deployments is crucial for maintaining service availability and ensuring a positive user experience. Blue-green deployments have emerged as a popular strategy to achieve this goal. However, they introduce challenges, especially when dealing with database changes. This article delves into what blue-green deployments are, why database changes can be tricky in this context, and how to navigate common change scenarios effectively in Django.
