@@ -36,7 +36,7 @@ To mitigate this, we need to use `SeparateDatabaseAndState` to remove the field 
 
 ## Multistep Database Changes
 
-The [`SeparateDatabaseAndState`](https://docs.djangoproject.com/en/5.1/ref/migration-operations/#django.db.migrations.operations.SeparateDatabaseAndState) migration operation allows us to separate changes to database and project state. We can use it to remove the `rating` field in two backwards-compatible steps (instead of removing it in one backwards-incompatible step). These steps need to be deployed separately to ensure compatibility between the blue and green environments.
+The [`SeparateDatabaseAndState`](https://docs.djangoproject.com/en/5.1/ref/migration-operations/#django.db.migrations.operations.SeparateDatabaseAndState) migration operation allows us to separate changes to database and project state. We can use it to remove the `rating` field in two backwards-compatible steps (instead of removing it in one backwards-incompatible step). These steps need to be deployed separately to be compatible.
 
 - Step 1: Remove `rating` from the green environment project state without removing it from the database
 - Step 2: Remove `rating` from the database
