@@ -79,6 +79,21 @@ A few notes about creating and verifying the migration:
 python manage.py sqlmigrate appname 0002_remove_product_rating_from_state
 ```
 
+Expected output using PostgreSQL (notice there's no statement to remove the `rating` field):
+
+```sql
+BEGIN;
+--
+-- Alter field rating on product
+--
+ALTER TABLE "product" ALTER COLUMN "rating" DROP NOT NULL;
+--
+-- Custom state/database change combination
+--
+-- (no-op)
+COMMIT;
+```
+
 - Verify the `rating` field has been removed from the project state by running the following query in the Django shell:
 
 ```python
