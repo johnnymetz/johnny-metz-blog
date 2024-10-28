@@ -1,6 +1,6 @@
 ---
 title: 'Zero Downtime Django Deployments with Multistep Database Changes'
-date: 2024-10-12T15:58:00-07:00
+date: 2024-10-27T12:00:00-07:00
 tags:
   - Django
   - DevOps
