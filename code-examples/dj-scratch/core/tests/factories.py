@@ -20,7 +20,7 @@ class TodoFactory(DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"Todo {n}")
     priority = FuzzyChoice(Todo.Priority)
-    done = factory.Faker("pybool")
+    # is_done = factory.Faker("pybool")
 
 
 class UserFactory(factory.django.DjangoModelFactory):
