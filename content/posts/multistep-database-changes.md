@@ -122,10 +122,7 @@ class Migration(migrations.Migration):
             state_operations=[],
             database_operations=[
                 migrations.RunSQL(
-                    sql=(
-                        "ALTER TABLE product "
-                        "DROP COLUMN rating;"
-                    ),
+                    "ALTER TABLE product DROP COLUMN rating CASCADE;"
                 ),
             ],
         ),
