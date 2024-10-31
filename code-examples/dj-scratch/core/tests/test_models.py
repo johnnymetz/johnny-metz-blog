@@ -28,18 +28,21 @@ class TestFetchLatestTodo:
 
     @staticmethod
     def _assert_approach_1(expected_todos):
-        latest_todos = []
-        for user in User.objects.prefetch_related("todo_set"):
-            latest_todos.append(
-                max(user.todo_set.all(), key=lambda x: x.updated_at, default=None)
-            )
+        latest_todos = [
+            max(user.todo_set.all(), key=lambda x: x.updated_at, default=None)
+            for user in User.objects.prefetch_related("todo_set")
+        ]
+        assert set(latest_todos) == set(expected_todos)
 
     @staticmethod
     def _assert_approach_2(expected_todos):
-        users = User.objects.prefetch_related(
-            Prefetch("todo_set", queryset=Todo.objects.order_by("-updated_at")),
-        )
-        assert {x.todo_set.first() for x in users} == set(expected_todos)
+        latest_todos = [
+            user.todo_set.first()
+            for user in User.objects.prefetch_related(
+                Prefetch("todo_set", queryset=Todo.objects.order_by("-updated_at")),
+            )
+        ]
+        assert set(latest_todos) == set(expected_todos)
 
     @staticmethod
     def _assert_approach_3(expected_todos):
@@ -53,21 +56,20 @@ class TestFetchLatestTodo:
 
     @staticmethod
     def _assert_approach_4(expected_todos):
-        latest_todos_subquery = Todo.objects.filter(user=OuterRef("id")).order_by(
-            "-updated_at"
-        )
         users = User.objects.annotate(
-            latest_todo_id=Subquery(latest_todos_subquery.values("id")[:1])
+            latest_todo_id=Subquery(
+                Todo.objects.filter(user=OuterRef("id"))
+                .order_by("-updated_at")
+                .values("id")[:1]
+            )
         )
         assert set({x.latest_todo_id for x in users}) == {x.id for x in expected_todos}
 
     @staticmethod
     def _assert_approach_5(expected_todos):
-        assertQuerySetEqual(
-            Todo.objects.order_by("user", "-updated_at").distinct("user"),
-            expected_todos,
-            ordered=False,
-        )
+        qs = Todo.objects.order_by("user", "-updated_at").distinct("user")
+        print(qs.query)
+        assertQuerySetEqual(qs, expected_todos, ordered=False)
 
     def _assert_approaches(self, expected_todos, django_assert_num_queries):
         expected_num_queries_map = {
