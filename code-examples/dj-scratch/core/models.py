@@ -19,9 +19,9 @@ class Todo(models.Model):
         MEDIUM = 2, "Medium"
         LOW = 3, "Low"
 
-    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    done = models.BooleanField(default=False)
+    is_done = models.BooleanField(default=False, db_index=True)
     priority = models.PositiveSmallIntegerField(choices=Priority, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
