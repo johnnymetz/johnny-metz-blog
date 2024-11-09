@@ -9,8 +9,6 @@ cover:
   image: 'covers/django-nplusone.png'
 ---
 
-<!-- https://scoutapm.com/blog/django-and-the-n1-queries-problem -->
-
 The N+1 problem is a common database performance issue. It plagues ORM's, such as Django and SQLAlchemy, because it leads to your application making more database queries than necessary.
 
 Let's look at a basic example in Django.
