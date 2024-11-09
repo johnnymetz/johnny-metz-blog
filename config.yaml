@@ -1,7 +1,8 @@
 baseURL: https://johnnymetz.com/
 title: Johnny Metz
 theme: PaperMod
-paginate: 5
+pagination:
+  pagerSize: 5
 
 # env vars set on server so we're not committing a secret to version control
 # - HUGO_GOOGLEANALYTICS
