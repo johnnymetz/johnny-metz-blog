@@ -46,16 +46,6 @@ class TestFetchLatestTodo:
 
     @staticmethod
     def _assert_approach_3(expected_todos):
-        assertQuerySetEqual(
-            Todo.objects.annotate(
-                latest_updated_at=Max("user__todo__updated_at")
-            ).filter(updated_at=F("latest_updated_at")),
-            expected_todos,
-            ordered=False,
-        )
-
-    @staticmethod
-    def _assert_approach_4(expected_todos):
         users = User.objects.annotate(
             latest_todo_id=Subquery(
                 Todo.objects.filter(user=OuterRef("id"))
@@ -66,9 +56,18 @@ class TestFetchLatestTodo:
         assert set({x.latest_todo_id for x in users}) == {x.id for x in expected_todos}
 
     @staticmethod
+    def _assert_approach_4(expected_todos):
+        assertQuerySetEqual(
+            Todo.objects.alias(latest_updated_at=Max("user__todo__updated_at")).filter(
+                updated_at=F("latest_updated_at")
+            ),
+            expected_todos,
+            ordered=False,
+        )
+
+    @staticmethod
     def _assert_approach_5(expected_todos):
         qs = Todo.objects.order_by("user", "-updated_at").distinct("user")
-        print(qs.query)
         assertQuerySetEqual(qs, expected_todos, ordered=False)
 
     def _assert_approaches(self, expected_todos, django_assert_num_queries):

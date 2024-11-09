@@ -1,92 +1,16 @@
 ---
 title: '5 Ways to Get the Latest Record Per Group in Django'
-date: 2024-10-30T19:04:39-07:00
+date: 2024-11-11T12:00:00-07:00
 tags:
   - Python
   - Django
 ShowToc: true
-draft: true
 ---
 
-When working with Django models, it's common to need the latest record for each group in a queryset. This can be tricky, especially when dealing with large datasets. In this blog post, we'll explore five different approaches to achieve this, using the following `Todo` model as our example:
+In a Django application, querying the latest record for each group is a common requirement. This can be tricky, especially when dealing with large datasets. In this blog post, we'll explore five different solutions to retrieve the latest task per user given the following `Task` model:
 
 ```python
-class Todo(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    updated_at = models.DateTimeField(auto_now=True)
-```
-
-## Approach 1: Python Max with Prefetch
-
-```python
-[
-    max(user.todo_set.all(), key=lambda x: x.updated_at, default=None)
-    for user in User.objects.prefetch_related("todo_set")
-]
-```
-
-- Performs heavy computation in Python rather than leveraging the database, which is [bad for performance](https://docs.djangoproject.com/en/5.1/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python).
-- Makes two database queries: one for users and one for todos.
-
-## Approach 2: Prefetch with Ordered QuerySet
-
-```python
-from django.db.models import Prefetch
-
-[
-    user.todo_set.first()
-    for user in User.objects.prefetch_related(
-        Prefetch("todo_set", queryset=Todo.objects.order_by("-updated_at")),
-    )
-]
-```
-
-- Similar to the first approach but computes the max in the database, which is slightly more efficient.
-
-## Approach 3: Annotate with Max and Filter
-
-```python
-from django.db.models import F, Max
-
-Todo.objects.annotate(
-    latest_updated_at=Max("user__todo__updated_at")
-).filter(updated_at=F("latest_updated_at"))
-```
-
-- Performs the
-
-## Approach 4: Subquery with OuterRef
-
-```python
-from django.db.models import OuterRef, Subquery
-
-User.objects.annotate(
-    latest_todo_id=Subquery(
-        Todo.objects.filter(user=OuterRef("id"))
-        .order_by("-updated_at")
-        .values("id")[:1]
-    )
-)
-```
-
-- Efficient and scalable; performs the computation in the database.
-- Only returns the latest `Todo` id, not the entire `Todo` object.
-
-## Approach 5: Distinct with Order By
-
-```python
-Todo.objects.order_by("user", "-updated_at").distinct("user")
-```
-
-- Leverages PostgreSQL's DISTINCT ON feature to get the latest todo per user.
-- Orders todos by user and -updated_at, then selects the first unique user.
-- Best approach but limited to PostgreSQL.
-
-Now, let's extend our `Todo` model to include `priority` and `is_done` fields:
-
-```python
-class Todo(models.Model):
+class Task(models.Model):
     class Priority(models.IntegerChoices):
         HIGH = 1, "High"
         MEDIUM = 2, "Medium"
@@ -95,14 +19,84 @@ class Todo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     priority = models.PositiveSmallIntegerField(choices=Priority)
-    is_done = models.BooleanField(default=False)
+    is_complete = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 ```
 
-Suppose we want to fetch the latest undone todo per user and priority group. Here's how we can achieve that:
+Solutions are ranked from worse to best in terms of performance and readability.
+
+## Solution 1: Python Max with Prefetch
 
 ```python
-Todo.objects.filter(is_done=False)
+latest_tasks = [
+    max(user.task_set.all(), key=lambda x: x.updated_at, default=None)
+    for user in User.objects.prefetch_related("task_set")
+]
+```
+
+Performs heavy computation in Python rather than leveraging the database, which is [bad for performance](https://docs.djangoproject.com/en/5.1/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python). Also makes two database queries (better solutions do it in one).
+
+## Solution 2: Prefetch with Ordered QuerySet
+
+```python
+from django.db.models import Prefetch
+
+latest_tasks = [
+    user.task_set.first()
+    for user in User.objects.prefetch_related(
+        Prefetch("task_set", queryset=Task.objects.order_by("-updated_at")),
+    )
+]
+```
+
+Similar to the first solution but computes the max in the database, which is slightly more efficient.
+
+## Solution 3: Subquery with OuterRef
+
+```python
+from django.db.models import OuterRef, Subquery
+
+users_with_latest_task = User.objects.annotate(
+    latest_task_id=Subquery(
+        Task.objects.filter(user=OuterRef("id"))
+        .order_by("-updated_at")
+        .values("id")[:1]
+    )
+)
+```
+
+Fetches the latest task per user in a single query. But only returns the task ID, so we'd need to make another query to get the full task object if needed.
+
+## Solution 4: Annotate with Max and Filter
+
+```python
+from django.db.models import F, Max
+
+latest_tasks = (
+    Task.objects
+    .alias(latest_updated_at=Max("user__task__updated_at"))
+    .filter(updated_at=F("latest_updated_at"))
+)
+```
+
+The least intuitive approach. Issues a `GROUP BY ... HAVING ...` query under the hood. Note we're using [`alias`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#alias) instead of [`annotate`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#annotate) because we don't need the `latest_updated_at` field in the result.
+
+## Solution 5: Postgres DISTINCT ON
+
+```python
+latest_tasks = Task.objects.order_by("user", "-updated_at").distinct("user")
+```
+
+The best / most concise approach but only available in Postgres. Leverages its [DISTINCT ON](https://neon.tech/postgresql/postgresql-tutorial/postgresql-distinct-on) clause to get the latest task per user in a single query.
+
+To show how elegant this solution is, let's say we want to fetch the latest uncompleted task per user and priority group:
+
+```python
+latest_tasks = (
+    Task.objects.filter(is_complete=False)
     .order_by("user", "priority", "-updated_at")
     .distinct("user", "priority")
+)
 ```
+
+May your Django queries be fast and clean.
