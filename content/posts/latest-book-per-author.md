@@ -46,9 +46,9 @@ latest_books = [
 ]
 ```
 
-Similar to the first solution but computes the max in the database, which is slightly more efficient.
+Similar to the first solution but performs the sorting in the database, which is more efficient.
 
-## Solution 3: Subquery with OuterRef
+## Solution 3: Subquery
 
 ```python
 from django.db.models import OuterRef, Subquery
@@ -64,7 +64,7 @@ authors_with_latest_book_id = Author.objects.annotate(
 
 Fetches the latest book per author in a single query. But only returns the book ID, so we'd need to make another query to get the full book object if needed.
 
-## Solution 4: Annotate with Max and Filter
+## Solution 4: Alias Max
 
 ```python
 from django.db.models import F, Max
