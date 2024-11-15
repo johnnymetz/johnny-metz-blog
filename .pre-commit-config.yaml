@@ -26,6 +26,7 @@ repos:
       - id: check-json # validate json
       - id: check-yaml # validate yaml
       - id: check-added-large-files # reject giant files (default=500kB)
+        args: ['--maxkb=600']
       - id: detect-private-key # keep those keys safe
       - id: end-of-file-fixer # add newline at end of files
       - id: trailing-whitespace # trim trailing whitespace

@@ -1,13 +1,15 @@
 ---
 title: '5 Ways to Get the Latest Record Per Group in Django'
-date: 2024-11-11T12:00:00-07:00
+date: 2024-11-14T12:00:00-07:00
 tags:
   - Python
   - Django
 ShowToc: true
+cover:
+  image: 'covers/books-stacked.png'
 ---
 
-In a Django application, querying the latest record for each group is a common requirement. This can be tricky, especially when dealing with large datasets. In this blog post, we'll explore five different solutions to retrieve the latest task per user given the following `Task` model:
+In a Django application, querying the latest record for each group is a common requirement. This can be tricky, especially when dealing with large datasets. In this blog post, we'll explore five different solutions to retrieve the latest task per user (ranked from worse to best in terms of performance and readability) given the following `Task` model:
 
 ```python
 class Task(models.Model):
@@ -22,8 +24,6 @@ class Task(models.Model):
     is_complete = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 ```
-
-Solutions are ranked from worse to best in terms of performance and readability.
 
 ## Solution 1: Python Max with Prefetch
 
