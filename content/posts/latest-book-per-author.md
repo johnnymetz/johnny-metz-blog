@@ -33,7 +33,7 @@ latest_books = [
 
 Performs heavy computation in Python rather than leveraging the database, which is [bad for performance](https://docs.djangoproject.com/en/5.1/topics/db/optimization/#do-database-work-in-the-database-rather-than-in-python). Also makes two database queries (better solutions do it in one).
 
-## Solution 2: Prefetch with Ordered QuerySet
+## Solution 2: Custom Prefetch
 
 ```python
 from django.db.models import Prefetch
@@ -76,12 +76,16 @@ latest_books = (
 )
 ```
 
-The least intuitive approach. Issues a `GROUP BY ... HAVING ...` query under the hood. Note we're using [`alias`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#alias) instead of [`annotate`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#annotate) because we don't need the `latest_published_at` field in the result.
+The least intuitive approach. Issues a `GROUP BY ... HAVING ...` query under the hood. Note we're using [`alias`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#alias) instead of [`annotate`](https://docs.djangoproject.com/en/5.1/ref/models/querysets/#annotate) because we don't need the `latest_published_at` field in the result (as it's the same as the `published_at` field).
 
 ## Solution 5: Postgres DISTINCT ON
 
 ```python
-latest_books = Book.objects.order_by("author", "-published_at").distinct("author")
+latest_books = (
+    Book.objects
+    .order_by("author", "-published_at")
+    .distinct("author")
+)
 ```
 
 The best / most concise approach but only available in Postgres. Leverages its [DISTINCT ON](https://neon.tech/postgresql/postgresql-tutorial/postgresql-distinct-on) clause to get the latest book per author in a single query.
