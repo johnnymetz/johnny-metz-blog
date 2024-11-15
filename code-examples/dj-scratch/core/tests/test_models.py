@@ -29,17 +29,17 @@ class TestFetchLatestTodo:
     @staticmethod
     def _assert_approach_1(expected_todos):
         latest_todos = [
-            max(user.todo_set.all(), key=lambda x: x.updated_at, default=None)
-            for user in User.objects.prefetch_related("todo_set")
+            max(user.todos.all(), key=lambda x: x.updated_at, default=None)
+            for user in User.objects.prefetch_related("todos")
         ]
         assert set(latest_todos) == set(expected_todos)
 
     @staticmethod
     def _assert_approach_2(expected_todos):
         latest_todos = [
-            user.todo_set.first()
+            user.todos.first()
             for user in User.objects.prefetch_related(
-                Prefetch("todo_set", queryset=Todo.objects.order_by("-updated_at")),
+                Prefetch("todos", queryset=Todo.objects.order_by("-updated_at")),
             )
         ]
         assert set(latest_todos) == set(expected_todos)
@@ -58,7 +58,7 @@ class TestFetchLatestTodo:
     @staticmethod
     def _assert_approach_4(expected_todos):
         assertQuerySetEqual(
-            Todo.objects.alias(latest_updated_at=Max("user__todo__updated_at")).filter(
+            Todo.objects.alias(latest_updated_at=Max("user__todos__updated_at")).filter(
                 updated_at=F("latest_updated_at")
             ),
             expected_todos,
