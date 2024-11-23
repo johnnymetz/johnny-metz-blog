@@ -9,7 +9,7 @@ cover:
   image: 'covers/django-watchman.png'
 ---
 
-You can use [watchman](https://github.com/facebook/watchman) in your Django project to make auto-reloads more CPU efficient. Adam Johnson's [Efficient Reloading in Django’s Runserver With Watchman](https://adamj.eu/tech/2021/01/20/efficient-reloading-in-djangos-runserver-with-watchman/) blog post does an excellent job describing how to set this up. I highly recommend giving it a read. The tutorial explains how to install watchman on macOS with `brew install watchman` but does not explain how to install it in a Python docker container. Considering all of my Django projects are dockerized, I decided to figure it out.
+You can use [watchman](https://github.com/facebook/watchman) in your Django project to make auto-reloads more CPU efficient. Adam Johnson's [Efficient Reloading in Django's Runserver With Watchman](https://adamj.eu/tech/2021/01/20/efficient-reloading-in-djangos-runserver-with-watchman/) blog post does an excellent job describing how to set this up. I highly recommend giving it a read. The tutorial explains how to install watchman on macOS with `brew install watchman` but does not explain how to install it in a Python docker container. Considering all of my Django projects are dockerized, I decided to figure it out.
 
 First, visit the [watchman releases page](https://github.com/facebook/watchman/releases) on GitHub. Find the latest release that contains a linux binary. This binary should follow the following format: `watchman-vYYYY.MM.DD.00-linux.zip`. As of the writing of this post, that release is `v2022.01.03.00` (note, not all releases have the linux binary for some reason).
 

@@ -42,5 +42,5 @@ Maybe:
 - git log -S
 - DRF serializer field for date field object
 - Dataclass vs namedtuple vs class
-- Python mocking, import from where it’s called not defined
+- Python mocking, import from where it's called not defined
 - Docker + Django + React (docker-compose) and Makefile

@@ -14,15 +14,9 @@ When hosting an application on [Heroku](https://www.heroku.com/), managing logs 
 
 ## Heroku Router Logs: Informative and Unavoidable
 
-Heroku automatically logs all incoming HTTP requests via its router. These logs are always enabled and provide a wealth of data for monitoring system health (see [Heroku Router Log Format](https://devcenter.heroku.com/articles/http-routing#heroku-router-log-format)), including:
+Heroku's router automatically logs all incoming HTTP requests, providing a wealth of data for monitoring and debugging your application. These logs are always enabled and include detailed information, such as the HTTP method and URL path of the request, the response status code, the client's IP address, and the request processing time (see [Heroku Router Log Format](https://devcenter.heroku.com/articles/http-routing#heroku-router-log-format)).
 
-- HTTP method and path
-- Response status code
-- Request timing and latency
-- Dyno handling the request
-- Request ID for tracing
-
-Since Heroku logs cannot be disabled and are incredibly informative, we rely on them for critical observability, making other access logs superfluous.
+Because these logs cannot be disabled and are highly informative, they serve as a robust tool for observability, making other access logs superfluous.
 
 ## Gunicorn Access Logs: Redundant by Default
 
