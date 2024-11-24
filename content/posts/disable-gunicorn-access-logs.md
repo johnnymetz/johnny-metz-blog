@@ -1,6 +1,6 @@
 ---
 title: 'Disable redundant Gunicorn Access Logs on Heroku'
-date: 2024-11-23T12:00:00-08:00
+date: 2024-11-25T12:00:00-08:00
 tags:
   - Python
   - Heroku
