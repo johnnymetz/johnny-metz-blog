@@ -26,7 +26,7 @@ This results in both Heroku router logs and Gunicorn access logs being written t
 
 ## Reducing Log Noise and Costs
 
-We have a few options to remove the excess Gunicorn logs: purge them before they're ingested by your logging service or disable them entirely.
+You have a few options to remove the excess Gunicorn logs: purge them before they're ingested by your logging service or disable them entirely.
 
 ### Filter Logs at the Logging Service Level
 
