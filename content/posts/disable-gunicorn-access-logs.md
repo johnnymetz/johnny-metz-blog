@@ -12,13 +12,13 @@ ShowToc: true
 
 When hosting an application on [Heroku](https://www.heroku.com/), managing logs efficiently is crucial for maintaining system health and keeping costs down. Heroku provides built-in logging for all incoming requests, but by default, [Gunicorn](https://gunicorn.org/), the Python HTTP server often used in Heroku deployments, also logs incoming requests. This duplication can clutter your logs, making them harder to parse and more expensive to store. Let's explore why this redundancy exists and how to fix it.
 
-## Heroku Router Logs: Informative and Unavoidable
+## Heroku Router Logs
 
 Heroku's Router automatically logs all incoming HTTP requests, providing a wealth of data for monitoring and debugging your application. These logs are always enabled and include detailed information, such as the HTTP method and URL path of the request, the response status code, the client's IP address, and the request processing time (see [Heroku Router Log Format](https://devcenter.heroku.com/articles/http-routing#heroku-router-log-format)).
 
-Because these logs cannot be disabled and are highly informative, they serve as a robust tool for observability, making other access logs superfluous.
+Because these logs are highly informative, they serve as a robust tool for observability, making other access logs superfluous.
 
-## Gunicorn Access Logs: Redundant by Default
+## Gunicorn Access Logs
 
 Gunicorn includes an option to log incoming requests using the [`accesslog`](https://docs.gunicorn.org/en/stable/settings.html#accesslog) setting. By default, this is set to `None`, meaning no access logs are generated. However, when deploying on Heroku, the [Python buildpack](https://github.com/heroku/heroku-buildpack-python) explicitly sets it to `'-'` using the `GUNICORN_CMD_ARGS` environment variable (see [source code](https://github.com/heroku/heroku-buildpack-python/blob/1416814a17252e1d656d3f60ee862ae1fa0495bb/spec/hatchet/profile_d_scripts_spec.rb#L19)), which logs to stdout.
 
