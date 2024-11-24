@@ -26,14 +26,16 @@ This results in both Heroku Router logs and Gunicorn access logs being written t
 
 ## Reducing Log Noise and Costs
 
-You have a few options to remove the excess Gunicorn logs: purge them before they're ingested by your logging service or disable them entirely.
+You have a few options to remove the excess Gunicorn logs: discard them before they're ingested by your logging service or disable them entirely.
 
 ### Filter Logs at the Logging Service Level
 
-If you use a logging service like [PaperTrail](https://www.papertrail.com/) or [Sumo Logic](https://www.sumologic.com/), you can filter out logs before they're processed or stored. Most services support filtering based on string or regex patterns:
+If you use a logging service, you can filter out logs before they're processed or stored. Most services support filtering based on string or regex patterns:
 
-- PaperTrail: [Log Filtering Documentation](https://www.papertrail.com/help/log-filtering/)
+- Datadog: [Exclusion Filters](https://docs.datadoghq.com/logs/log_configuration/indexes/#exclusion-filters)
+- New Relic: [Drop Filter Rules](https://docs.newrelic.com/docs/logs/ui-data/drop-data-drop-filter-rules/)
 - Sumo Logic: [Processing Rules](https://help.sumologic.com/docs/send-data/collection/processing-rules/)
+- PaperTrail: [Log Filtering](https://www.papertrail.com/help/log-filtering/)
 
 This approach is useful if you have a specific reason to keep some Gunicorn access logs while excluding others. However, in most cases, you'll want to remove all Gunicorn access logs, which is best done at the source.
 
