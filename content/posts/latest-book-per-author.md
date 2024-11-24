@@ -9,7 +9,7 @@ cover:
   image: 'covers/books-stacked.png'
 ---
 
-In a Django application, fetching the latest record for each group is a common yet challenging task, especially when working with large datasets. Whether you're building an analytics dashboard or managing grouped data, finding an efficient solution is key. In this blog post, we’ll explore five different approaches to tackle this problem, ranked from least to most effective based on performance and readability, using the following `Book` model:
+In a Django application, fetching the latest record for each group is a common yet challenging task, especially when working with large datasets. Whether you're building an analytics dashboard or managing grouped data, finding an efficient solution is key. In this blog post, we'll explore five different approaches to tackle this problem, ranked from least to most effective based on performance and readability, using the following `Book` model:
 
 ```python
 class Book(models.Model):
