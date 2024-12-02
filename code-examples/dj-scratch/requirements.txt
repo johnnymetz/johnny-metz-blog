@@ -10,8 +10,18 @@ asgiref==3.8.1
     # via django
 black==24.10.0
     # via -r requirements.in
+boto3==1.35.71
+    # via -r requirements.in
+botocore==1.35.71
+    # via
+    #   boto3
+    #   s3transfer
 build==1.2.2.post1
     # via pip-tools
+certifi==2024.8.30
+    # via requests
+charset-normalizer==3.4.0
+    # via requests
 click==8.1.7
     # via
     #   black
@@ -21,23 +31,40 @@ django==5.1.2
     #   -r requirements.in
     #   django-extensions
     #   django-migration-linter
+    #   django-storages
     #   django-zen-queries
+    #   djangorestframework
+    #   djangorestframework-dataclasses
 django-environ==0.11.2
     # via -r requirements.in
 django-extensions==3.2.3
     # via -r requirements.in
 django-migration-linter==5.1.0
     # via -r requirements.in
+django-storages==1.14.4
+    # via -r requirements.in
 django-zen-queries==2.1.0
+    # via -r requirements.in
+djangorestframework==3.15.2
+    # via
+    #   -r requirements.in
+    #   djangorestframework-dataclasses
+djangorestframework-dataclasses==1.3.1
     # via -r requirements.in
 factory-boy==3.3.1
     # via -r requirements.in
 faker==30.8.1
     # via factory-boy
+idna==3.10
+    # via requests
 iniconfig==2.0.0
     # via pytest
 isort==5.13.2
     # via -r requirements.in
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
 mypy==1.13.0
     # via -r requirements.in
 mypy-extensions==1.0.0
@@ -72,7 +99,13 @@ pytest==8.3.3
 pytest-django==4.9.0
     # via -r requirements.in
 python-dateutil==2.9.0.post0
-    # via faker
+    # via
+    #   botocore
+    #   faker
+requests==2.32.3
+    # via -r requirements.in
+s3transfer==0.10.4
+    # via boto3
 six==1.16.0
     # via python-dateutil
 sqlparse==0.5.1
@@ -84,6 +117,10 @@ typing-extensions==4.12.2
     #   faker
     #   mypy
     #   psycopg
+urllib3==2.2.3
+    # via
+    #   botocore
+    #   requests
 wheel==0.44.0
     # via pip-tools
 

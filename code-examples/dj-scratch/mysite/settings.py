@@ -51,9 +51,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd party apps
     "django_extensions",
-    # "django_migration_linter",
+    "django_migration_linter",
+    "rest_framework",
+    "rest_framework.authtoken",
     # local apps
     "core.apps.CoreConfig",
+    "files.apps.FilesConfig",
 ]
 
 MIDDLEWARE = [
@@ -133,6 +136,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+STATIC_ROOT = BASE_DIR / "static"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -158,4 +163,10 @@ LOGGING = {
             "scripts",
         ]
     },
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
 }

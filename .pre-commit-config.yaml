@@ -30,6 +30,8 @@ repos:
       - id: detect-private-key # keep those keys safe
       - id: end-of-file-fixer # add newline at end of files
       - id: trailing-whitespace # trim trailing whitespace
+      - id: file-contents-sorter
+        files: ^.*requirements\.in$
   ####################
   # PYTHON
   ####################
@@ -74,3 +76,4 @@ repos:
     hooks:
       - id: mypy
         args: ['--config-file=code-examples/dj-scratch/pyproject.toml']
+        additional_dependencies: ['types-requests']

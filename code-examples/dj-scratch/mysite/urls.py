@@ -17,6 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from files.views import FileView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path(
+        "files/",
+        FileView.as_view({"get": "list", "post": "create"}),
+    ),
+    path(
+        "files/<int:pk>/",
+        FileView.as_view({"get": "retrieve", "patch": "partial_update"}),
+        name="file-detail",
+    ),
 ]
