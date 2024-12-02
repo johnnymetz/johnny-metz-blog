@@ -22,7 +22,7 @@ print("token", token)
 
 print(File.objects.all().delete())
 
-# Create a file
+# Create the file
 filename = "masters.jpeg"
 response = requests.post(
     f"{BASE_URL}/files/",
@@ -34,7 +34,7 @@ response_data = response.json()
 print(response.status_code)
 pp(response_data)
 
-# Upload file to S3
+# Upload the file to S3
 with open(f"./{filename}", "rb") as f:
     data = f.read()
 response = requests.post(

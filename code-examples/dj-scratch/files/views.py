@@ -25,19 +25,6 @@ class FileView(ModelViewSet):
     def get_queryset(self):
         return File.objects.filter(user=self.request.user)
 
-    def retrieve(self, request, *args, **kwargs):
-        if self.request.query_params.get("meta", "").lower() == "true":
-            return super().retrieve(request, *args, **kwargs)
-
-        file = self.get_object()
-
-        from django.http import Http404
-
-        if not file.is_uploaded:
-            raise Http404("File has not been uploaded yet")
-
-        return redirect(file.file.url)
-
     def create(self, request, *args, **kwargs):
         filename = request.data.get("filename")
 
@@ -70,12 +57,22 @@ class FileView(ModelViewSet):
             )
         )
 
-        # Add the file so the client has the download_url
         presigned_response["file"] = file
-
-        # Rename url to upload_url so it doesn't get confused with the download_url
         presigned_response["upload_url"] = presigned_response.pop("url")
 
         serializer = self.get_serializer(presigned_response)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def retrieve(self, request, *args, **kwargs):
+        if self.request.query_params.get("meta", "").lower() == "true":
+            return super().retrieve(request, *args, **kwargs)
+
+        file = self.get_object()
+
+        from django.http import Http404
+
+        if not file.is_uploaded:
+            raise Http404("File has not been uploaded yet")
+
+        return redirect(file.file.url)
