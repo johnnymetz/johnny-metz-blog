@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 
-from .storages import FileStorage
+from storages.backends.s3boto3 import S3Boto3Storage
 
 
 def filename_factory(instance: "File", filename: str) -> str:
@@ -17,7 +16,7 @@ def filename_factory(instance: "File", filename: str) -> str:
 class File(models.Model):
     file = models.FileField(
         upload_to=filename_factory,
-        storage=FileStorage(),
+        storage=S3Boto3Storage(),
         # Don't set null=True because FileField is a varchar field under the hood, and you shouldn't use
         # null=True on varchar fields, see https://docs.djangoproject.com/en/5.1/ref/models/fields/#null
         blank=True,
@@ -31,10 +30,8 @@ class File(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    @property
-    def download_url(self):
-        path = reverse("file-detail", args=[self.pk])
-        return f"{settings.SERVICE_URL}{path}"
+    def get_absolute_url(self):
+        return reverse("file-detail", args=[self.pk])
 
 
 @dataclass

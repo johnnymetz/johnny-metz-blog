@@ -71,7 +71,7 @@ class FileView(ModelViewSet):
         )
 
         # Add the file so the client has the download_url
-        presigned_response["file"] = FileSerializer(file).data
+        presigned_response["file"] = file
 
         # Rename url to upload_url so it doesn't get confused with the download_url
         presigned_response["upload_url"] = presigned_response.pop("url")

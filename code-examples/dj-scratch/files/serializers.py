@@ -5,7 +5,7 @@ from files.models import File, FilePreUpload
 
 
 class FileSerializer(serializers.ModelSerializer):
-    download_url = serializers.URLField(read_only=True)
+    download_url = serializers.SerializerMethodField()
 
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
@@ -20,6 +20,9 @@ class FileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def get_download_url(self, obj):
+        return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
 
 class FilePreUploadSerializer(DataclassSerializer):

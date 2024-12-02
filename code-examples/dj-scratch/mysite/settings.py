@@ -17,6 +17,7 @@ from django.db import DEFAULT_DB_ALIAS
 import environ
 
 env = environ.Env(
+    AWS_ACCESS_KEY_ID=(str, None),
     DATABASE_URL=(str, "sqlite:///db.sqlite3"),
     # DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
     DEBUG=(bool, True),
@@ -165,8 +166,14 @@ LOGGING = {
     },
 }
 
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+if AWS_ACCESS_KEY_ID is not None:
+    AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
 }
