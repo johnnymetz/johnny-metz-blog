@@ -6,6 +6,9 @@ tags:
   - Python
   - Django
   - PostgreSQL
+  - SQL
+cover:
+  image: 'covers/django-postgresql.png'
 ---
 
 A simple insert query turned into a silent performance killer.
