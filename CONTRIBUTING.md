@@ -16,7 +16,7 @@ git submodule add https://github.com/adityatelange/hugo-PaperMod.git themes/Pape
 git submodule update --init --recursive # needed when you reclone your repo (submodules may not get cloned automatically)  # .git/modules now exists
 ```
 
-## Common commands
+## Common commands and tasks
 
 ```
 # run / build
@@ -30,6 +30,8 @@ hugo new posts/xxx.md
 git submodule
 make updatesubmodules
 ```
+
+- Bump `HUGO_VERSION` in `netlify.toml`
 
 ## Resources
 
