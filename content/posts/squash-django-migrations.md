@@ -1,83 +1,96 @@
 ---
 title: "Stop Using Django's squashmigrations: There's a Better Way"
-date: 2025-07-12T21:41:01-07:00
+date: 2025-07-26T17:00:00-07:00
 tags:
   - Python
   - Django
 ShowToc: true
 cover:
   image: 'covers/django.png'
-draft: true
 ---
 
-Squashing migrations merges multiple database migrations into one consolidated schema to speed up database setup and simplify the migration history. Django's [`squashmigrations`](https://docs.djangoproject.com/en/stable/topics/migrations/#squashing-migrations) command promises to do this, but it's fragile and overcomplicated. A clean reset of your migrations is often better.
+Squashing merges multiple database migrations into a single consolidated file to speed up database setup and tidy up history. Django's [`squashmigrations`](https://docs.djangoproject.com/en/stable/topics/migrations/#squashing-migrations) command promises to handle this, but it's error-prone and unnecessarily complex. A clean reset is faster and simpler.
 
-## ⚠️ What's wrong with `squashmigrations`
+## ⚠️ Why `squashmigrations` Falls Short
 
-**Bad results**: In real-world projects, I've found it fails to optimize no-ops (like adding then deleting a field) and produces migrations that trigger `CircularDependencyError` because it can't handle model interdependencies, requiring tedious manual cleanup.
+### Broken in Practice
 
-**Unnecessary complexity for fully controlled environments**: `squashmigrations` is designed to support partially migrated instances, which makes sense for open source projects or self-hosted deployments. But when you fully control all environments, which is the case for most apps, that flexibility adds unnecessary friction. It forces coordinated multi-step rollouts and fragile manual edits to keep migrations in sync.
+In medium-to-large projects, I've consistently seen `squashmigrations` generate poor results, such as failing to optimize basic no-ops (like adding and deleting the same field) and even breaking migrations. The [official docs](https://docs.djangoproject.com/en/stable/topics/migrations/#squashing-migrations) acknowledge this:
 
-## ✅ Resetting Migrations
+> Squashing may result in migrations that do not run; either mis-optimized ... or with a `CircularDependencyError`, in which case you can manually resolve it.
 
-I skip the squash entirely and just reset the migrations from scratch.
+Fixing these issues is tedious and not worth the hassle.
 
-Here are the steps:
+### Unnecessary Overhead
 
-**1️⃣ Delete all existing migration files**
+`squashmigrations` is designed for projects where you can't guarantee every environment is fully migrated — like open-source libraries or self-managed installs. But if you control all environments, which is generally the case, that flexibility becomes a burden. As the [official docs](https://docs.djangoproject.com/en/stable/topics/migrations/#squashing-migrations) outline, it requires a multi-step deployment and finicky migration tweaks to avoid breaking partially migrated environments.
+
+## ✅ Clean Reset Instead
+
+Skip the squash. Reset the migrations from scratch in one easy deployment.
+
+**1️⃣ Ensure all environments are fully migrated**
+
+Every environment must have applied all existing migrations. Unapplied migrations will be lost, which will break your app.
+
+I highly recommend running migrations automatically during deployments. It simplifies this step and keeps environments consistent.
+
+**2️⃣ Delete all migration files**
 
 ```bash
-find . -path "*/migrations/*.py" -not -path "./venv/*" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.py" -not -name "__init__.py" -exec git rm {} \;
 ```
 
-**2️⃣ Recreate fresh migration files**
+**3️⃣ Generate fresh migrations**
 
 ```bash
 python manage.py makemigrations
 ```
 
-This generates a new `0001_initial.py` for each app that reflects the current schema.
+This creates a new `0001_initial.py` for each app. In projects with cross-app dependencies, some apps may get a `0002_initial.py` or higher.
 
-**3️⃣ Re-add any necessary seed data**
+**4️⃣ Manually re-add data seed operations**
 
-Any `RunPython` or `RunSQL` operations won't be auto-recreated. We need to add these back manually so new environments still get the required initial data, such as default groups or permissions.
-
-Any `RunPython` or `RunSQL` operations won't be auto-recreated. This is true for both a clean reset and `squashmigrations` — in both cases, Django requires you to manually copy the functions into the new migration file so they don't get lost.
+Neither `squashmigrations` nor resets preserve `RunPython` or `RunSQL` operations. Manually re-add them:
 
 ```python
 migrations.RunPython(seed_default_groups)
 ```
 
-**4️⃣ Disable automatic migrations on deployment temporarily**
+**5️⃣ Temporarily disable automatic migrations during deployments**
 
-If your deployment script runs migrate automatically (which I recommend it does), disable that step for this deploy. We'll re-enable it after the reset.
+This prevents Django from applying the new migrations before the reset is complete. If you skip this step, you'll hit `django.db.migrations.exceptions.InconsistentMigrationHistory`.
 
-**5️⃣ Reset migration history in all instances**
+**6️⃣ Reset migration history after deployment**
 
-Clear the recorded migration history:
+Create a temporary script that clears the old migration history and fakes the new migrations as applied:
 
-```sql
-TRUNCATE TABLE django_migrations;
+```python
+from django.core.management import call_command
+from django.db import connection
+
+with connection.cursor() as cursor:
+    cursor.execute("TRUNCATE TABLE django_migrations")
+
+call_command("migrate", fake=True)
 ```
 
-Fake-apply the new initial migration, which just marks the new migrations as applied without actually running them:
+Run this script in each environment after deploying the new migrations.
 
-```bash
-python manage.py migrate --fake
-```
+**7️⃣ Re-enable automatic migrations during deployments**
 
-**6️⃣ Re-enable automatic migrations on deployment**
+Once the reset is complete, turn auto-migrations back on to resume normal behavior.
 
-Done. Your DB schema is untouched. Your migration history is clean. Your app continues serving traffic with zero downtime.
+That's it. Schema untouched. History clean. Zero downtime.
 
-## Comparing the Two Approaches
+## 🆚 Comparison
 
-|                                       | `squashmigrations`                                                     | Clean Reset                                 |
-| ------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------- |
-| **Migration cleanup**                 | ⚠️ Poor                                                                | ✅ Excellent                                |
-| **Manual edits required **            | ❌ Many                                                                | ✅ Minimal                                  |
-| **Breakage risk**                     | ❌ High: `CircularDependencyError` is common and required manual edits |
-| **Deployment complexity**             | ❌ Requires 2 coordinated deployments                                  | ✅ Single coordinated deployment            |
-| **Supports out-of-sync environments** | ✅ Yes — built to handle partially migrated environments               | ❌ No — all environments must reset in sync |
-|                                       |
-| **Best for**                          | Projects where you don't control all environments                      | Projects where you control all environments |
+|                                              | `squashmigrations`                                        | Clean Reset                                            |
+| -------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| **Migration cleanup**                        | ❌ Broken                                                 | ✅ Perfect                                             |
+| **Effort required**                          | ❌ High — migration fixes / tweaks, multi-step deployment | ✅ Low — simple one-step deployment                    |
+| **Supports partially migrated environments** | ✅ Yes                                                    | ❌ No — requires all environments to be fully migrated |
+| **Downtime**                                 | ✅ None                                                   | ✅ None                                                |
+| **Best for**                                 | Shared or open-source projects                            | Internal projects with controlled environments         |
+
+When you own the pipeline, skip the squash — a clean reset does it better.
