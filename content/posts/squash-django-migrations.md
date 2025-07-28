@@ -49,12 +49,12 @@ python manage.py makemigrations
 
 This creates a new `0001_initial.py` for each app. In projects with cross-app dependencies, some apps may get a `0002_initial.py` or higher.
 
-**4️⃣ Manually re-add data seed operations**
+**4️⃣ Re-add data migrations**
 
-Neither `squashmigrations` nor resets preserve `RunPython` or `RunSQL` operations. Manually re-add them:
+Neither `squashmigrations` nor resets preserve [data migrations](https://docs.djangoproject.com/en/5.2/topics/migrations/#data-migrations), including `RunPython` and `RunSQL` operations. Re-add them as needed:
 
 ```python
-migrations.RunPython(seed_default_groups)
+migrations.RunPython(create_default_permissions)
 ```
 
 **5️⃣ Temporarily disable automatic migrations during deployments**
