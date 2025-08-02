@@ -29,7 +29,7 @@ Fixing these issues is tedious and not worth the hassle.
 
 Skip the squash. Reset the migrations from scratch in one easy deployment.
 
-**1️⃣ Ensure all environments are fully migrated**
+**1️⃣ Fully migrate all environments**
 
 Every environment must have applied all existing migrations. Unapplied migrations will be lost, which will break your app.
 
