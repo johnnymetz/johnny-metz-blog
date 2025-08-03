@@ -178,7 +178,7 @@ Popular constraints include check constraints, unique constraints, and `NOT NULL
 The following changes can be completed in a single deployment:
 
 - Add a nullable field
-- Add a field with a default: See [above](#add-a-field-not-nullable-and-without-a-default) for considerations when adding a field with a default
+- Add a field with a [db default](https://docs.djangoproject.com/en/5.1/ref/models/fields/#db-default)
 - Add a table
 - Add / remove an index: Be sure to use the `CONCURRENTLY` option to avoid locking the table
 - Removing a constraint
