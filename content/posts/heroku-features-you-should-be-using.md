@@ -55,7 +55,7 @@ If you don't need the data to be perfectly up to date, I recommend adding the [`
 
 ## 6. Postgres Followers
 
-[Postgres followers](https://devcenter.heroku.com/articles/heroku-postgres-follower-databases) are **read-only** copies of your main database. They're ideal for scaling out read-heavy workloads or running analytics/reporting without hitting the main database. In my experience, followers are typically just a few milliseconds behind their leaders. They're a simple way to improve both performance and availability without adding much complexity.
+[Postgres followers](https://devcenter.heroku.com/articles/heroku-postgres-follower-databases) are read-only copies of your primary database. They're ideal for scaling out read-heavy workloads or offloading analytics/reporting queries. In my experience, followers are typically just a few milliseconds behind their leaders. They're a simple way to improve both performance and availability without adding much complexity.
 
 ## 7. Config Vars in JSON
 
