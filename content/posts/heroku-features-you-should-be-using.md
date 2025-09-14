@@ -45,17 +45,17 @@ Skip monitoring memory usage logs directly. Instead, rely on Heroku's automatic 
 
 ## 4. Dyno Metadata
 
-Tired of teammates asking what version is live? [Dyno metadata](https://devcenter.heroku.com/articles/dyno-metadata) adds config vars such as the commit hash and release datetime, so you can surface the deployed version right in your app.
+Tired of teammates asking what version is live? [Dyno metadata](https://devcenter.heroku.com/articles/dyno-metadata) adds config vars such as the commit hash and release datetime, so you can surface deployment info right in your app.
 
 ## 5. Postgres Forks
 
-[Postgres forks](https://devcenter.heroku.com/articles/heroku-postgres-fork) provide a fast, reliable way to copy your database — perfect for reproducing bugs, testing migrations, or experimenting safely. No risky dumps or restores required.
+[Postgres forks](https://devcenter.heroku.com/articles/heroku-postgres-fork) provide a fast, reliable way to copy your database — great for reproducing bugs, testing migrations, or experimenting safely. No risky dumps or restores required.
 
 If you don't need the data to be perfectly up to date, I recommend adding the [`--fast` option](https://devcenter.heroku.com/articles/heroku-postgres-fork#fork-fast-option). It can significantly speed up the creation of the forked database.
 
 ## 6. Postgres Followers
 
-[Postgres followers](https://devcenter.heroku.com/articles/heroku-postgres-follower-databases) are read-only copies of your primary database. They're ideal for scaling out read-heavy workloads or offloading analytics/reporting queries. In my experience, followers are typically just a few milliseconds behind their leaders. They're a simple way to improve both performance and availability without adding much complexity.
+[Postgres followers](https://devcenter.heroku.com/articles/heroku-postgres-follower-databases) are read-only copies of your primary database. They're ideal for scaling out read-heavy workloads or offloading analytics/reporting queries. Heroku states that followers typically trail by "a few seconds or less" — but I've often seen them just a few milliseconds behind. They're a simple way to improve both performance and availability without adding much complexity.
 
 ## 7. Config Vars in JSON
 
