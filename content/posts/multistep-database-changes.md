@@ -162,7 +162,8 @@ The following changes must be completed in a multiple deployments:
 #### Remove a Table
 
 - Step 1 (no migration): Remove all references to the table in the application code
-- Step 2 (migration): Remove the table from the database
+- Step 2 (migration): If the table is referenced by ForeignKeys or ManyToMany relationships, remove those fields first following the steps in the [Remove a Field](#remove-a-field) section. If these relationships cross Django apps, ensure the migration that removes the field from the database runs before the migration that deletes the table by adding an explicit migration dependency.
+- Step 3 (migration): Remove the table from the database. Unlike removing a field, the table can be removed from both the project state and the database in a single migration since all references to it are removed.
 
 #### Add a Constraint
 
