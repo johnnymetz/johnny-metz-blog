@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 
 import factory
 from factory.django import DjangoModelFactory
@@ -35,3 +35,10 @@ class UserFactory(factory.django.DjangoModelFactory):
         manager = cls._get_manager(model_class)
         # The default would use `manager.create(*args, **kwargs)`
         return manager.create_user(*args, **kwargs)
+
+
+class GroupFactory(DjangoModelFactory):
+    class Meta:
+        model = Group
+
+    name = factory.Sequence(lambda n: f"Group {n}")
