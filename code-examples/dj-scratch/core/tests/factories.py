@@ -4,7 +4,7 @@ import factory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyChoice
 
-from core.models import Team, Todo
+from core.models import Author, Book, Team, Todo
 
 
 class TeamFactory(DjangoModelFactory):
@@ -42,3 +42,18 @@ class GroupFactory(DjangoModelFactory):
         model = Group
 
     name = factory.Sequence(lambda n: f"Group {n}")
+
+
+class AuthorFactory(DjangoModelFactory):
+    class Meta:
+        model = Author
+
+    name = factory.Sequence(lambda n: f"Author {n}")
+
+
+class BookFactory(DjangoModelFactory):
+    class Meta:
+        model = Book
+
+    title = factory.Sequence(lambda n: f"Book {n}")
+    author = factory.SubFactory(AuthorFactory)

@@ -1,53 +1,58 @@
 # flake8: noqa F841
 
-from django.contrib.auth.models import Group, User
 from django.db.models import Exists, OuterRef
 from django.db.utils import ProgrammingError
 
 import pytest
 from pytest_django.asserts import assertQuerySetEqual
 
-from core.tests.factories import GroupFactory, UserFactory
+from core.models import Author, Book
+from core.tests.factories import AuthorFactory, BookFactory
 
 
 class TestAvoidDuplicateRecords:
     @pytest.fixture(autouse=True)
     def setup(self):
-        self.user1 = UserFactory(email="z@company.com")
-        self.user2 = UserFactory(email="a@company.com")
+        self.charlie = AuthorFactory(name="Charlie")
+        self.alice = AuthorFactory(name="Alice")
+        self.zoe = AuthorFactory(name="Zoe")
 
-        # Set self.groups to a queryset instead of a list because that's what we have in practice
-        GroupFactory.create_batch(2)
-        self.groups = Group.objects.all()
-
-        self.user1.groups.add(*self.groups)
-        self.user2.groups.add(self.groups[0])
+        BookFactory(title="Book A", author=self.charlie)
+        BookFactory(title="Book B", author=self.alice)
+        BookFactory(title="Book C", author=self.alice)
+        BookFactory(title="Novel D", author=self.zoe)
 
     def test_avoid_duplicates(self):
-        users = User.objects.filter(groups__in=self.groups)
-        assertQuerySetEqual(users, [self.user1, self.user1, self.user2], ordered=False)
-        assertQuerySetEqual(users.distinct(), [self.user1, self.user2], ordered=False)
+        authors = Author.objects.filter(books__title__startswith="Book")
         assertQuerySetEqual(
-            users.distinct("id"), [self.user1, self.user2], ordered=False
+            authors, [self.charlie, self.alice, self.alice], ordered=False
         )
         assertQuerySetEqual(
-            User.objects.filter(id__in=users.distinct("id")).order_by("email"),
-            [self.user2, self.user1],
+            authors.distinct(), [self.charlie, self.alice], ordered=False
         )
         assertQuerySetEqual(
-            users.order_by("email").distinct("email"), [self.user2, self.user1]
+            authors.distinct("id"), [self.charlie, self.alice], ordered=False
+        )
+        assertQuerySetEqual(
+            Author.objects.filter(id__in=authors.distinct("id")).order_by("name"),
+            [self.alice, self.charlie],
         )
 
         assertQuerySetEqual(
-            User.objects.filter(
-                Exists(Group.objects.filter(user=OuterRef("id"), id__in=self.groups))
-            ).order_by("email"),
-            [self.user2, self.user1],
+            authors.order_by("name").distinct("name"), [self.alice, self.charlie]
         )
-        print(users)
+
+        assertQuerySetEqual(
+            Author.objects.filter(
+                Exists(
+                    Book.objects.filter(author=OuterRef("id"), title__startswith="Book")
+                )
+            ).order_by("name"),
+            [self.alice, self.charlie],
+        )
 
         with pytest.raises(
             ProgrammingError,
             match="SELECT DISTINCT ON expressions must match initial ORDER BY expressions",
         ):
-            list(users.order_by("email").distinct("id"))
+            list(authors.order_by("name").distinct("id"))
