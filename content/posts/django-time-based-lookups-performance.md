@@ -1,5 +1,5 @@
 ---
-title: Django Time-Based Lookups Can Kill Query Performance
+title: 'Django Time-Based Lookups: A Performance Trap'
 date: 2026-01-19T00:00:00-07:00
 tags:
   - Python
