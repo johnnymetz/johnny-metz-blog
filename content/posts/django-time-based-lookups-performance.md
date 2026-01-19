@@ -11,7 +11,7 @@ cover:
   image: 'covers/django-postgresql.png'
 ---
 
-[`Field lookups`](https://docs.djangoproject.com/en/6.0/topics/db/queries/#field-lookups-intro) are one of the best parts of Django's ORM, but time-based lookups can have an unexpected and severe performance impact by preventing your database from using an existing index and forcing a full table scan.
+Django's [`field lookups`](https://docs.djangoproject.com/en/6.0/topics/db/queries/#field-lookups-intro) are one of the ORM's best features, but time-based lookups can quietly bypass database indexes, turning fast queries into expensive full table scans.
 
 ## A Slow Production Query
 
