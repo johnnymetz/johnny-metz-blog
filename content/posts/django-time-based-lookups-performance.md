@@ -85,12 +85,12 @@ WHERE timestamp>='2026-01-05 00:00:00+00:00'
   and timestamp<'2026-01-06 00:00:00+00:00';
 ```
 
-This turns the query into an index only scan and dropped runtime from 30 seconds to under 1 second.
+This turns the query into an index only scan and dropped runtime from 30 seconds to less than 1 second.
 
 A few important details:
 
 - **Timezone awareness**: If your project has `USE_TZ=True`, your boundary values must be timezone-aware or Django will warn.
-- **Avoid `__range`**: Django's [`range`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#range) lookup is inclusive on both ends, which can cause subtle boundary bugs.
+- **Avoid `__range`**: Django's [`range`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#range) lookup is inclusive on both ends, which can cause boundary bugs.
 
 The same issue shows up with aggregates. This query took 40 seconds:
 
@@ -105,7 +105,7 @@ Event.objects.aggregate(Min('timestamp__date'))
 SELECT MIN(timestamp::date) FROM event;
 ```
 
-Rewrite it to aggregate on the original field and convert in Python:
+The fix is to aggregate on the original field, then convert the result to a date in Python:
 
 ```python
 result = Event.objects.aggregate(Min('timestamp'))
