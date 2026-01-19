@@ -27,7 +27,8 @@ Event.objects.filter(timestamp__date="2026-01-05").count()
 It generates SQL like this:
 
 ```sql
-SELECT COUNT(*) FROM event WHERE timestamp::date='2026-01-05';
+SELECT COUNT(*) FROM event
+WHERE timestamp::date='2026-01-05';
 ```
 
 At first glance, it looked totally reasonable — a simple filter on an indexed field. But after checking the query plan, I discovered the issue: the database can't use the index and falls back to a full table scan because the query casts the field to a date.
@@ -58,7 +59,8 @@ Event.objects.filter(name__iexact="My Event").count()
 
 ```sql
 -- SQL
-SELECT COUNT(*) FROM event WHERE UPPER(name) = UPPER('My Event');
+SELECT COUNT(*) FROM event
+WHERE UPPER(name) = UPPER('My Event');
 ```
 
 Time-based lookups don't require an expression index. There's a simpler and more efficient solution.
@@ -78,7 +80,9 @@ Event.objects.filter(timestamp__gte=start, timestamp__lt=end).count()
 
 ```sql
 -- SQL
-SELECT COUNT(*) FROM event WHERE timestamp>='2026-01-05 00:00:00+00:00' and timestamp<'2026-01-06 00:00:00+00:00';
+SELECT COUNT(*) FROM event
+WHERE timestamp>='2026-01-05 00:00:00+00:00'
+  and timestamp<'2026-01-06 00:00:00+00:00';
 ```
 
 This turns the query into an index only scan and dropped runtime from 30 seconds to under 1 second.
