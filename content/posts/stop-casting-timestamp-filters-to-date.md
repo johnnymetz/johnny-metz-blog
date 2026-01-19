@@ -65,13 +65,14 @@ Time-based lookups are different. They don't require an expression index. There'
 
 ## The Better Fix: Rewrite the Query to Use the Existing Index
 
-Instead of adding another index, we can rewrite the lookup so the database uses the existing `timestamp` index. Compute the date boundaries in Python and filter on the original `DateTimeField`:
+Instead of adding another index, rewrite the lookup so the database uses the existing `timestamp` index. Compute the date boundaries in Python and filter on the `DateTimeField`:
 
 ```python
 import datetime
 
 start = datetime.datetime(2026, 1, 5, tzinfo=datetime.UTC)
 end = start + datetime.timedelta(days=1)
+
 Event.objects.filter(timestamp__gte=start, timestamp__lt=end)
 ```
 
@@ -80,17 +81,14 @@ Event.objects.filter(timestamp__gte=start, timestamp__lt=end)
 SELECT * FROM event WHERE timestamp>='2026-01-05 00:00:00+00:00' and timestamp<'2026-01-06 00:00:00+00:00';
 ```
 
-After rewriting the query this way, the result took less than a second.
+This turns the query into an index only scan and dropped runtime from 10 seconds to under a second.
 
-Some notes about this Django query:
+A few important details:
 
-- **Timezone matters**: if your project has `USE_TZ=True`, you need timezone-aware datetimes, otherwise Django will warn:
+- **Timezone awareness**: if your project has `USE_TZ=True`, your boundary values must be timezone-aware or Django will warn.
+- **Avoid `__range`**: Django's [`range` lookup](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#range) is inclusive on both ends, which can cause subtle boundary bugs.
 
-  `RuntimeWarning: DateTimeField Event.timestamp received a naive datetime (2026-01-05 00:00:00) while time zone support is active.)`
-
-- **Avoid `__range` for this**: Django's [`range` lookup](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#range) is inclusive on both ends, and for datetimes you typically want an inclusive lower bound and exclusive upper bound (`>= start` and `< end`) to avoid off-by-one and boundary bugs.
-
-This also happens with aggregates. This Django query took ~30 seconds:
+The same issue shows up with aggregates. This query took ~30 seconds:
 
 ```python
 from django.db.models import Min
@@ -103,11 +101,9 @@ Event.objects.aggregate(Min('timestamp__date'))
 SELECT MIN(timestamp::date) FROM event;
 ```
 
-The fix is the same idea: query using the original type, then convert in Python:
+Rewrite it to aggregate on the original field and convert in Python:
 
 ```python
-from django.db.models import Min
-
 result = Event.objects.aggregate(Min('timestamp'))
 min_date = result['timestamp__min'].date()
 ```
@@ -117,6 +113,8 @@ min_date = result['timestamp__min'].date()
 SELECT MIN(timestamp) FROM event;
 ```
 
-This change dropped the runtime to less than a second.
+Again, this allows the database to use the index and brings execution time down to under a second.
 
-This isn't just `DateTimeField`. The same general issue can apply to other time-based fields, like `DateField` and `TimeField`, when a lookup requires the database to extract or transform part of the value and it can't use your existing index efficiently.
+This pattern isn’t limited to `DateTimeField`. Any lookup that forces the database to extract or transform part of a time-based column, such as `DateField` or `TimeField`, can prevent index usage unless the query is rewritten to operate on the raw column.
+
+May your time-based queries stay index-friendly.
