@@ -21,7 +21,7 @@ I ran into this while debugging a 30 second query on a large table (~25 million 
 class Event(models.Model):
     timestamp = models.DateTimeField(db_index=True)
 
-Event.objects.filter(timestamp__date="2026-01-05").count()
+Event.objects.filter(timestamp__date=datetime.date(2026, 1, 5)).count()
 ```
 
 It generates SQL like this:
@@ -31,11 +31,11 @@ SELECT COUNT(*) FROM event
 WHERE timestamp::date='2026-01-05';
 ```
 
-At first glance, it looked totally reasonable — a simple filter on an indexed field. But after checking the query plan, I discovered the issue: the database can't use the index and falls back to a full table scan because the query casts the field to a date.
+At first glance, it looked totally reasonable — a simple filter on an indexed field. But after checking the query plan, I discovered the issue: the query can't use the index and falls back to a full table scan because it casts the field to a date.
 
 ## A Tempting Fix: Add an Expression Index
 
-One option is to add an index that matches the query itself, known as an [expression index](https://www.postgresql.org/docs/current/indexes-expressional.html), which means indexing the `timestamp::date` expression.
+One option is to create an [expression index](https://www.postgresql.org/docs/current/indexes-expressional.html) on `timestamp::date`, so the query can use an index.
 
 ```python
 from django.db.models.functions import TruncDate
@@ -49,7 +49,7 @@ class Event(models.Model):
         ]
 ```
 
-This works, but it comes with real downsides. Extra indexes increase storage usage, slow down writes, and add operational complexity, especially on large tables.
+However, each new index increases storage usage, slows down writes, and adds operational complexity, especially on large tables.
 
 Expression indexes are sometimes unavoidable. For example, case-insensitive lookups wrap the column in `UPPER()` on PostgreSQL, making the normal index unusable:
 
@@ -67,7 +67,7 @@ Time-based lookups don't require an expression index. There's a simpler and more
 
 ## The Better Fix: Rewrite the Query to Use the Existing Index
 
-Instead of adding another index, rewrite the lookup so the database uses the existing `timestamp` index. Compute the date boundaries in Python and filter on the `DateTimeField`:
+Instead of adding another index, rewrite the lookup so it uses the existing `timestamp` index. Compute the date boundaries in Python and filter on the `DateTimeField`:
 
 ```python
 import datetime
@@ -117,8 +117,8 @@ min_date = result['timestamp__min'].date()
 SELECT MIN(timestamp) FROM event;
 ```
 
-Again, this allows the database to use an index only scan and brings execution time down to under 1 second.
+Again, this allows the query to use an index only scan and brings execution time down to under 1 second.
 
-This pattern isn't limited to `DateTimeField`. Any lookup that forces the database to extract or transform part of a time-based column can prevent index usage unless the query is rewritten to operate on the raw column.
+This pattern isn't limited to `DateTimeField`. Any lookup that extracts or transforms part of a time-based column can prevent index usage unless it's rewritten to operate on the raw column.
 
 May your time-based queries stay index-friendly.
