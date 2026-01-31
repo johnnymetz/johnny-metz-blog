@@ -11,8 +11,12 @@ extend-exclude = [
 select = ["ALL"]
 ignore = [
     "ANN",
+    "COM812",
     "D",
+    "ERA001",
     "EM101",
+    "RUF012",
+    "S101",
     "TRY003",
 ]
 
