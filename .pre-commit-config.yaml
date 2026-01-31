@@ -12,7 +12,7 @@ repos:
     hooks:
       - id: prettier
   - repo: https://github.com/shssoichiro/oxipng
-    rev: v10.0.0
+    rev: v10.1.0
     hooks:
       - id: oxipng
   # - repo: https://github.com/markdownlint/markdownlint
@@ -38,38 +38,12 @@ repos:
     hooks:
       - id: django-upgrade
         args: [--target-version, '5.0']
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.21.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
     hooks:
-      - id: pyupgrade
-        args: ['--py311-plus']
-  - repo: https://github.com/psf/black
-    rev: 25.12.0
-    hooks:
-      - id: black
-        args: ['--config=code-examples/dj-scratch/pyproject.toml']
-  - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
-    hooks:
-      - id: isort
-        args: ['--settings-file=code-examples/dj-scratch/pyproject.toml']
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.3.0
-    hooks:
-      - id: flake8
-        args: ['--config=code-examples/dj-scratch/.flake8']
-        language_version: python3.13
-        additional_dependencies:
-          [
-            'flake8-broken-line',
-            'flake8-bugbear',
-            'flake8-builtins',
-            'flake8-comprehensions',
-            'flake8-pytest-style',
-            'flake8-return',
-            'flake8-tuple',
-            'pep8-naming',
-          ]
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
     hooks:

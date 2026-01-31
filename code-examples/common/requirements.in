@@ -1,7 +1,5 @@
 pip-tools
-black
-mypy
-isort
+ruff
 
 Django
 psycopg[binary]
