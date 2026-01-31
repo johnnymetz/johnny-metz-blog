@@ -1,9 +1,6 @@
 [project]
 requires-python = "~=3.13.0"
 
-[tool.black]
-target-version = ["py313"]
-
 [tool.ruff]
 extend-exclude = [
     "*/migrations/*.py",
@@ -12,6 +9,12 @@ extend-exclude = [
 
 [tool.ruff.lint]
 select = ["ALL"]
+ignore = [
+    "ANN",
+    "D",
+    "EM101",
+    "TRY003",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
@@ -20,7 +23,6 @@ convention = "pep257"
 DJANGO_SETTINGS_MODULE = "mysite.settings"
 django_debug_mode = true
 python_files = "tests.py test_*.py"
-# norecursedirs = []  # apps to exclude from pytest runs
 addopts = ["--verbose", "-s"]
 
 # this was ported from mypy.ini and hasn't been tested so may be broken
