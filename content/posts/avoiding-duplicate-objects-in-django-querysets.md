@@ -138,3 +138,5 @@ Author.objects.filter(
 4. **Works everywhere**: This solution works with all databases, not just PostgreSQL.
 
 May your Django querysets be duplicate-free and fast.
+
+Discuss: [Reddit](https://www.reddit.com/r/django/comments/1qkvtiu/avoiding_duplicate_objects_in_django_querysets/) · [Hacker News](https://news.ycombinator.com/item?id=46734608)
