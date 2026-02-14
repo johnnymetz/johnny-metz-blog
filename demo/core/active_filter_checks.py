@@ -1,32 +1,52 @@
-import re
-from collections import Counter
 from contextlib import contextmanager
 from contextvars import ContextVar
 
 from django.core.exceptions import EmptyResultSet
+from django.db.models.expressions import Col
 from django.db.models.query import QuerySet
+
+from core.models import StoreProduct
 
 _original_fetch_all = QuerySet._fetch_all  # noqa: SLF001
 
 _active_filter_check_enabled = ContextVar("_active_filter_check_enabled", default=True)
 
-# StoreProduct table (core app). JOIN/FROM with optional Django alias (e.g. U0, V1).
-STORE_PRODUCT_JOIN_PATTERN = re.compile(
-    r"\b(?:FROM|JOIN)\s+core_storeproduct(?:\s+(?:AS\s+)?(?P<alias>[A-Z]+[0-9]+))?",
-    re.IGNORECASE,
-)
+
+def _get_model_aliases_in_query(query, model) -> set:
+    """Return aliases that reference a model."""
+    return {
+        alias
+        for alias, obj in query.alias_map.items()
+        if obj.table_name == model._meta.db_table  # noqa: SLF001
+    }
 
 
-def _active_filter_pattern(ref: str):
-    """
-    Regex: ref.active in filter context
-    (= true, IS true, = 1, or bare after WHERE/AND/OR/().
-    """
-    return re.compile(
-        rf"(?:\b{re.escape(ref)}\.active\s*(?:=\s*(?:true|1)|IS\s+true)|"
-        rf"(?:WHERE|AND|OR|\()\s*{re.escape(ref)}\.active)\b",
-        re.IGNORECASE,
-    )
+def _collect_active_filter_aliases(node, result: set) -> None:
+    """Recursively find (alias, "active") column refs in the WHERE clause."""
+    for child in getattr(node, "children", None) or []:
+        _collect_active_filter_aliases(child, result)
+    if lhs := getattr(node, "lhs", None):
+        _collect_active_filter_aliases(lhs, result)
+    if rhs := getattr(node, "rhs", None):
+        _collect_active_filter_aliases(rhs, result)
+    if (
+        isinstance(node, Col)
+        and getattr(node.target, "column", None) == "active"
+        and (alias := getattr(node, "alias", None))
+    ):
+        result.add(alias)
+
+
+def _query_has_active_filter_for_all_store_product_aliases(query) -> bool:
+    """Return True if every StoreProduct alias in the query has an active filter."""
+    store_product_aliases = _get_model_aliases_in_query(query, StoreProduct)
+    if not store_product_aliases:
+        return True
+
+    active_filter_aliases: set[str] = set()
+    _collect_active_filter_aliases(query.where, active_filter_aliases)
+
+    return store_product_aliases <= active_filter_aliases
 
 
 class ActiveFilterMissingError(AssertionError):
@@ -60,21 +80,12 @@ def enable_active_filter_query_check():
             return _original_fetch_all(self)
 
         try:
-            # Remove all quotes to simplify regex matching
-            sql = str(self.query).replace('"', "").replace("'", "")
+            sql = str(self.query)
         except EmptyResultSet:
             return _original_fetch_all(self)
 
-        matches = list(STORE_PRODUCT_JOIN_PATTERN.finditer(sql))
-        if not matches:
-            return _original_fetch_all(self)
-
-        ref_counts = Counter(m.group("alias") or "core_storeproduct" for m in matches)
-
-        for ref, count in ref_counts.items():
-            filter_re = _active_filter_pattern(ref)
-            if len(filter_re.findall(sql)) < count:
-                raise ActiveFilterMissingError(sql=sql)
+        if not _query_has_active_filter_for_all_store_product_aliases(self.query):
+            raise ActiveFilterMissingError(sql=sql)
 
         return _original_fetch_all(self)
 
