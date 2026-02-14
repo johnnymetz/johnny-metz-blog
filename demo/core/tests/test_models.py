@@ -1,5 +1,10 @@
+import pytest
 from django.test import TestCase
 
+from core.active_filter_checks import (
+    ActiveFilterMissingError,
+    disable_active_filter_query_check,
+)
 from core.models import Product, Store, StoreProduct
 from core.tests.factories import ProductFactory, StoreFactory
 
@@ -29,6 +34,15 @@ class TestModels(TestCase):
         )
 
     def test_model_managers(self):
+        self.assertQuerySetEqual(StoreProduct.objects.all(), [self.x1])
+
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                StoreProduct.all_objects.all(),
+                [self.x1, self.x2, self.x3],
+                ordered=False,
+            )
+
         self.assertQuerySetEqual(self.store.storeproduct_set.all(), [self.x1])
         self.assertQuerySetEqual(self.product.storeproduct_set.all(), [self.x1])
 
@@ -86,10 +100,18 @@ class TestModels(TestCase):
             self.assertQuerySetEqual(store.storeproduct_set.all(), [self.x1])
             self.assertQuerySetEqual(product.storeproduct_set.all(), [self.x1])
 
+    def test_all_objects_without_active_filter_raises(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(StoreProduct.all_objects.all())
+
+    def test_nested_query_without_active_filter_raises(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(Store.objects.filter(storeproduct__product=self.product))
+
     def test_nested_query_includes_deactivated_objects(self):
-        # This shows the footgun!
-        self.assertQuerySetEqual(
-            Store.objects.filter(storeproduct__product=self.product),
-            [self.store, self.store2],
-            ordered=False,
-        )
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                Store.objects.filter(storeproduct__product=self.product),
+                [self.store, self.store2],
+                ordered=False,
+            )
