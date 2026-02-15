@@ -14,21 +14,27 @@ _active_filter_check_enabled = ContextVar("_active_filter_check_enabled", defaul
 
 def _get_model_aliases_in_query(query, model) -> set:
     """Return aliases that reference a model."""
+    table_name = model._meta.db_table.lower()  # noqa: SLF001
     return {
         alias
         for alias, obj in query.alias_map.items()
-        if obj.table_name == model._meta.db_table  # noqa: SLF001
+        if obj.table_name.lower() == table_name
     }
 
 
 def _collect_active_filter_aliases(node, result: set) -> None:
-    """Recursively find (alias, "active") column refs in the WHERE clause."""
+    """Recursively find (alias, "active") column refs in WHERE and annotations."""
     for child in getattr(node, "children", None) or []:
         _collect_active_filter_aliases(child, result)
     if lhs := getattr(node, "lhs", None):
         _collect_active_filter_aliases(lhs, result)
     if rhs := getattr(node, "rhs", None):
         _collect_active_filter_aliases(rhs, result)
+    getter = getattr(node, "get_source_expressions", None)
+    if getter is not None:
+        for expr in getter():
+            if expr is not None:
+                _collect_active_filter_aliases(expr, result)
     if (
         isinstance(node, Col)
         and getattr(node.target, "column", None) == "active"
@@ -37,16 +43,53 @@ def _collect_active_filter_aliases(node, result: set) -> None:
         result.add(alias)
 
 
+def _get_subqueries(node, result: list) -> None:
+    """Recursively find Subquery/Query nodes that need validation."""
+    inner_query = getattr(node, "query", None)
+    if inner_query is not None and hasattr(inner_query, "alias_map"):
+        result.append(inner_query)
+    elif hasattr(node, "alias_map") and hasattr(node, "where"):
+        result.append(node)
+    for child in getattr(node, "children", None) or []:
+        _get_subqueries(child, result)
+    if lhs := getattr(node, "lhs", None):
+        _get_subqueries(lhs, result)
+    if rhs := getattr(node, "rhs", None):
+        _get_subqueries(rhs, result)
+    getter = getattr(node, "get_source_expressions", None)
+    if getter is not None:
+        for expr in getter():
+            if expr is not None:
+                _get_subqueries(expr, result)
+
+
+def _collect_from_query(query, result: set) -> None:
+    """Collect active filter aliases from a query's WHERE and annotations."""
+    _collect_active_filter_aliases(query.where, result)
+    for annotation in getattr(query, "annotations", {}).values():
+        if annotation is not None:
+            _collect_active_filter_aliases(annotation, result)
+
+
 def _query_has_active_filter_for_all_store_product_aliases(query) -> bool:
     """Return True if every StoreProduct alias in the query has an active filter."""
     store_product_aliases = _get_model_aliases_in_query(query, StoreProduct)
-    if not store_product_aliases:
-        return True
+    if store_product_aliases:
+        active_filter_aliases: set[str] = set()
+        _collect_from_query(query, active_filter_aliases)
+        if not (store_product_aliases <= active_filter_aliases):
+            return False
 
-    active_filter_aliases: set[str] = set()
-    _collect_active_filter_aliases(query.where, active_filter_aliases)
+    subqueries: list = []
+    _get_subqueries(query.where, subqueries)
+    for annotation in getattr(query, "annotations", {}).values():
+        if annotation is not None:
+            _get_subqueries(annotation, subqueries)
+    for subquery in subqueries:
+        if not _query_has_active_filter_for_all_store_product_aliases(subquery):
+            return False
 
-    return store_product_aliases <= active_filter_aliases
+    return True
 
 
 class ActiveFilterMissingError(AssertionError):

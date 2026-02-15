@@ -1,4 +1,5 @@
 import pytest
+from django.db.models import Count, Q
 from django.test import TestCase
 
 from core.active_filter_checks import (
@@ -100,14 +101,6 @@ class TestModels(TestCase):
             self.assertQuerySetEqual(store.storeproduct_set.all(), [self.x1])
             self.assertQuerySetEqual(product.storeproduct_set.all(), [self.x1])
 
-    def test_all_objects_without_active_filter_raises(self):
-        with pytest.raises(ActiveFilterMissingError):
-            list(StoreProduct.all_objects.all())
-
-    def test_nested_query_without_active_filter_raises(self):
-        with pytest.raises(ActiveFilterMissingError):
-            list(Store.objects.filter(storeproduct__product=self.product))
-
     def test_nested_query_includes_deactivated_objects(self):
         with disable_active_filter_query_check():
             self.assertQuerySetEqual(
@@ -115,3 +108,181 @@ class TestModels(TestCase):
                 [self.store, self.store2],
                 ordered=False,
             )
+
+
+class TestActiveFilterQueryCheck(TestCase):
+    def setUp(self):
+        self.store = StoreFactory()
+        self.product = ProductFactory()
+        self.x1 = StoreProduct.objects.create(
+            store=self.store,
+            product=self.product,
+            active=True,
+        )
+        self.x2 = StoreProduct.objects.create(
+            store=self.store,
+            product=ProductFactory(),
+            active=False,
+        )
+
+    def test_raises_for_unfiltered_all_objects_queries(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(StoreProduct.all_objects.all())
+
+        with pytest.raises(ActiveFilterMissingError):
+            list(StoreProduct.all_objects.filter(product=self.product))
+
+    def test_raises_for_nested_join_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(Store.objects.filter(storeproduct__product=self.product))
+
+        # Should not raise
+        list(
+            Store.objects.filter(
+                storeproduct__product=self.product,
+                storeproduct__active=True,
+            )
+        )
+
+    def test_raises_for_annotation_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(Store.objects.annotate(cnt=Count("storeproduct")))
+
+        # Should not raise
+        list(
+            Store.objects.annotate(
+                cnt=Count(
+                    "storeproduct",
+                    filter=Q(storeproduct__active=True),
+                )
+            )
+        )
+
+    def test_raises_for_annotated_subquery_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                Store.objects.filter(
+                    id__in=Store.objects.for_product(self.product)
+                ).annotate(cnt=Count("storeproduct"))
+            )
+
+        # Should not raise
+        list(
+            Store.objects.filter(
+                id__in=Store.objects.for_product(self.product)
+            ).annotate(
+                cnt=Count(
+                    "storeproduct",
+                    filter=Q(storeproduct__active=True),
+                )
+            )
+        )
+
+    def test_raises_for_single_level_subquery_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(StoreProduct.objects.filter(id__in=StoreProduct.all_objects.all()))
+
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                StoreProduct.objects.filter(
+                    id__in=StoreProduct.all_objects.filter(product=self.product)
+                )
+            )
+
+        # Should not raise
+        list(StoreProduct.objects.filter(id__in=StoreProduct.objects.all()))
+
+    def test_raises_for_double_nested_subquery_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.all_objects.all()
+                    )
+                )
+            )
+
+        # Should not raise
+        list(
+            StoreProduct.objects.filter(
+                id__in=StoreProduct.objects.filter(id__in=StoreProduct.objects.all())
+            )
+        )
+
+    def test_raises_for_triple_nested_subquery_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.filter(
+                            id__in=StoreProduct.all_objects.all()
+                        )
+                    )
+                )
+            )
+
+        # Should not raise
+        list(
+            StoreProduct.objects.filter(
+                id__in=StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.all()
+                    )
+                )
+            )
+        )
+
+    def test_raises_for_deeply_nested_subquery_without_active_filter(self):
+        """
+        This test ensures two-letter Django-style SQL aliases (e.g., AA0)
+        are handled correctly.
+        """
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.filter(
+                            id__in=StoreProduct.objects.filter(
+                                id__in=StoreProduct.objects.filter(
+                                    id__in=StoreProduct.objects.filter(
+                                        id__in=StoreProduct.objects.filter(
+                                            id__in=StoreProduct.all_objects.all()
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+
+        # Should not raise
+        list(
+            StoreProduct.objects.filter(
+                id__in=StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.filter(
+                            id__in=StoreProduct.objects.filter(
+                                id__in=StoreProduct.objects.filter(
+                                    id__in=StoreProduct.objects.filter(
+                                        id__in=StoreProduct.objects.all()
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+    def test_disable_active_filter_query_check(self):
+        # Disabling the check allows unsafe queries
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                Store.objects.filter(storeproduct__product=self.product),
+                [self.store],
+            )
+
+        # The check is re-enabled after the context manager
+        with pytest.raises(ActiveFilterMissingError):
+            list(Store.objects.filter(storeproduct__product=self.product))
