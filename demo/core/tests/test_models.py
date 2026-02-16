@@ -1,6 +1,8 @@
 import pytest
 from django.db.models import Count, Q
 from django.test import TestCase
+from inline_snapshot import snapshot
+from inline_snapshot_django import snapshot_queries
 
 from core.active_filter_checks import (
     ActiveFilterMissingError,
@@ -35,13 +37,13 @@ class TestModels(TestCase):
         )
 
     def test_model_managers(self):
-        self.assertQuerySetEqual(StoreProduct.objects.all(), [self.x1])
+        with snapshot_queries() as snap:
+            self.assertQuerySetEqual(StoreProduct.objects.all(), [self.x1])
+        assert snap == snapshot(["SELECT ... FROM core_storeproduct WHERE ..."])
 
         with disable_active_filter_query_check():
             self.assertQuerySetEqual(
-                StoreProduct.all_objects.all(),
-                [self.x1, self.x2, self.x3],
-                ordered=False,
+                StoreProduct.all_objects.all(), [self.x1, self.x2, self.x3], ordered=False
             )
 
         self.assertQuerySetEqual(self.store.storeproduct_set.all(), [self.x1])
@@ -49,24 +51,25 @@ class TestModels(TestCase):
 
         # for_product() takes either a Product instance or ID
         self.assertQuerySetEqual(Store.objects.for_product(self.product), [self.store])
-        self.assertQuerySetEqual(
-            Store.objects.for_product(self.product.id),
-            [self.store],
+        with snapshot_queries() as snap:
+            self.assertQuerySetEqual(Store.objects.for_product(self.product.id), [self.store])
+        assert snap == snapshot(
+            ["SELECT ... FROM core_store INNER JOIN core_storeproduct ON ... WHERE ..."]
         )
+
         # Chain filter() before for_product() to ensure the queryset method works
         self.assertQuerySetEqual(
-            Store.objects.filter(name=self.store.name).for_product(self.product),
-            [self.store],
+            Store.objects.filter(name=self.store.name).for_product(self.product), [self.store]
         )
 
         self.assertQuerySetEqual(Product.objects.for_store(self.store), [self.product])
-        self.assertQuerySetEqual(
-            Product.objects.for_store(self.store.id),
-            [self.product],
+        with snapshot_queries() as snap:
+            self.assertQuerySetEqual(Product.objects.for_store(self.store.id), [self.product])
+        assert snap == snapshot(
+            ["SELECT ... FROM core_product INNER JOIN core_storeproduct ON ... WHERE ..."]
         )
         self.assertQuerySetEqual(
-            Product.objects.filter(name=self.product.name).for_store(self.store),
-            [self.product],
+            Product.objects.filter(name=self.product.name).for_store(self.store), [self.product]
         )
 
     def test_model_managers_after_deactivation(self):
@@ -81,9 +84,7 @@ class TestModels(TestCase):
         assert not Store.objects.filter(name=self.store.name).for_product(self.product)
         assert not Product.objects.for_store(self.store)
         assert not Product.objects.for_store(self.store.id)
-        assert not (
-            Product.objects.filter(name=self.product.name).for_store(self.store)
-        )
+        assert not (Product.objects.filter(name=self.product.name).for_store(self.store))
 
     def test_prefetch_excludes_soft_deleted_objects(self):
         with self.assertNumQueries(2):
@@ -161,16 +162,14 @@ class TestActiveFilterQueryCheck(TestCase):
     def test_raises_for_annotated_subquery_without_active_filter(self):
         with pytest.raises(ActiveFilterMissingError):
             list(
-                Store.objects.filter(
-                    id__in=Store.objects.for_product(self.product)
-                ).annotate(cnt=Count("storeproduct"))
+                Store.objects.filter(id__in=Store.objects.for_product(self.product)).annotate(
+                    cnt=Count("storeproduct")
+                )
             )
 
         # Should not raise
         list(
-            Store.objects.filter(
-                id__in=Store.objects.for_product(self.product)
-            ).annotate(
+            Store.objects.filter(id__in=Store.objects.for_product(self.product)).annotate(
                 cnt=Count(
                     "storeproduct",
                     filter=Q(storeproduct__active=True),
@@ -196,9 +195,7 @@ class TestActiveFilterQueryCheck(TestCase):
         with pytest.raises(ActiveFilterMissingError):
             list(
                 StoreProduct.objects.filter(
-                    id__in=StoreProduct.objects.filter(
-                        id__in=StoreProduct.all_objects.all()
-                    )
+                    id__in=StoreProduct.objects.filter(id__in=StoreProduct.all_objects.all())
                 )
             )
 
@@ -214,9 +211,7 @@ class TestActiveFilterQueryCheck(TestCase):
             list(
                 StoreProduct.objects.filter(
                     id__in=StoreProduct.objects.filter(
-                        id__in=StoreProduct.objects.filter(
-                            id__in=StoreProduct.all_objects.all()
-                        )
+                        id__in=StoreProduct.objects.filter(id__in=StoreProduct.all_objects.all())
                     )
                 )
             )
@@ -225,9 +220,7 @@ class TestActiveFilterQueryCheck(TestCase):
         list(
             StoreProduct.objects.filter(
                 id__in=StoreProduct.objects.filter(
-                    id__in=StoreProduct.objects.filter(
-                        id__in=StoreProduct.objects.all()
-                    )
+                    id__in=StoreProduct.objects.filter(id__in=StoreProduct.objects.all())
                 )
             )
         )
