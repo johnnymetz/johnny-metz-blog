@@ -67,7 +67,8 @@ class StoreProduct(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     active = models.BooleanField(default=True)
-    deactivated_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # deactivated_at = models.DateTimeField(null=True, blank=True)
 
     objects = StoreProductManager()
     all_objects = models.Manager()  # noqa: DJ012

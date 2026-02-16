@@ -1,5 +1,5 @@
 import pytest
-from django.db.models import Count, Q
+from django.db.models import Count, Min, Q
 from django.test import TestCase
 from inline_snapshot import snapshot
 from inline_snapshot_django import snapshot_queries
@@ -72,7 +72,7 @@ class TestModels(TestCase):
         assert not Store.objects.filter(name=self.store.name).for_product(self.product)
         assert not Product.objects.for_store(self.store)
         assert not Product.objects.for_store(self.store.id)
-        assert not (Product.objects.filter(name=self.product.name).for_store(self.store))
+        assert not Product.objects.filter(name=self.product.name).for_store(self.store)
 
     def test_prefetch_excludes_inactive_objects(self):
         with self.assertNumQueries(2):
@@ -90,22 +90,9 @@ class TestModels(TestCase):
             self.assertQuerySetEqual(store.storeproduct_set.all(), [self.x1])
             self.assertQuerySetEqual(product.storeproduct_set.all(), [self.x1])
 
-    def test_nested_query_includes_inactive_objects(self):
-        with disable_active_filter_query_check():
-            self.assertQuerySetEqual(
-                Store.objects.filter(storeproduct__product=self.product),
-                [self.store, self.store2],
-                ordered=False,
-            )
-
-
-class TestActiveFilterQueryCheck(TestCase):
-    def setUp(self):
-        self.store = StoreFactory()
-        self.product = ProductFactory()
-        product2 = ProductFactory()
-        self.x1 = StoreProduct.objects.create(store=self.store, product=self.product, active=True)
-        self.x2 = StoreProduct.objects.create(store=self.store, product=product2, active=False)
+    ############################################
+    # TEST QUERY CHECK
+    ############################################
 
     def test_raises_for_unfiltered_all_objects_queries(self):
         with pytest.raises(ActiveFilterMissingError):
@@ -121,12 +108,124 @@ class TestActiveFilterQueryCheck(TestCase):
         # Should not raise
         list(Store.objects.filter(storeproduct__product=self.product, storeproduct__active=True))
 
-    def test_raises_for_annotation_without_active_filter(self):
+    def test_raises_for_cnt_annotation_without_active_filter(self):
         with pytest.raises(ActiveFilterMissingError):
             list(Store.objects.annotate(cnt=Count("storeproduct")))
 
         # Should not raise
-        list(Store.objects.annotate(cnt=Count("storeproduct", filter=Q(storeproduct__active=True))))
+        self.assertQuerySetEqual(
+            Store.objects.annotate(
+                product_count=Count("storeproduct", filter=Q(storeproduct__active=True))
+            ).values_list("name", "product_count"),
+            [
+                (self.store.name, 1),
+                (self.store2.name, 0),
+            ],
+            ordered=False,
+        )
+
+        # Filtering before annotating is slightly different because it will exclude stores entirely
+        # if they have no active products, instead of showing them with a count of 0.
+        self.assertQuerySetEqual(
+            Store.objects.filter(storeproduct__active=True)
+            .annotate(product_count=Count("storeproduct"))
+            .values_list("name", "product_count"),
+            [
+                (self.store.name, 1),
+            ],
+            ordered=False,
+        )
+
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                Store.objects.annotate(product_count=Count("storeproduct")).values_list(
+                    "name", "product_count"
+                ),
+                [
+                    (self.store.name, 2),
+                    (self.store2.name, 1),
+                ],
+                ordered=False,
+            )
+
+    def test_raises_for_min_annotation_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(Store.objects.annotate(first_product_added=Min("storeproduct__created_at")))
+
+        # Should not raise
+        self.assertQuerySetEqual(
+            Store.objects.annotate(
+                first_product_added=Min(
+                    "storeproduct__created_at", filter=Q(storeproduct__active=True)
+                )
+            ).values_list("name", "first_product_added"),
+            [
+                (self.store.name, self.x1.created_at),
+                (self.store2.name, None),
+            ],
+            ordered=False,
+        )
+
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                Store.objects.annotate(
+                    first_product_added=Min("storeproduct__created_at")
+                ).values_list("name", "first_product_added"),
+                [
+                    (self.store.name, self.x1.created_at),
+                    (self.store2.name, self.x3.created_at),
+                ],
+                ordered=False,
+            )
+
+    def test_raises_for_cnt_and_min_annotation_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                Store.objects.annotate(
+                    product_count=Count("storeproduct"),
+                    first_product_added=Min("storeproduct__created_at"),
+                )
+            )
+
+        # Should not raise
+        self.assertQuerySetEqual(
+            Store.objects.annotate(
+                product_count=Count("storeproduct", filter=Q(storeproduct__active=True)),
+                first_product_added=Min(
+                    "storeproduct__created_at", filter=Q(storeproduct__active=True)
+                ),
+            ).values_list("name", "product_count", "first_product_added"),
+            [
+                (self.store.name, 1, self.x1.created_at),
+                (self.store2.name, 0, None),
+            ],
+            ordered=False,
+        )
+        self.assertQuerySetEqual(
+            Store.objects.filter(storeproduct__active=True)
+            .annotate(
+                product_count=Count("storeproduct"),
+                first_product_added=Min("storeproduct__created_at"),
+            )
+            .values_list("name", "product_count", "first_product_added"),
+            [
+                (self.store.name, 1, self.x1.created_at),
+            ],
+            ordered=False,
+        )
+
+        with disable_active_filter_query_check():
+            self.assertQuerySetEqual(
+                Store.objects.annotate(
+                    product_count=Count("storeproduct"),
+                    first_product_added=Min("storeproduct__created_at"),
+                ).values_list("name", "product_count", "first_product_added"),
+                [
+                    (self.store.name, 2, self.x1.created_at),
+                    (self.store2.name, 1, self.x3.created_at),
+                ],
+                ordered=False,
+            )
 
     def test_raises_for_annotated_subquery_without_active_filter(self):
         with pytest.raises(ActiveFilterMissingError):
@@ -246,7 +345,9 @@ class TestActiveFilterQueryCheck(TestCase):
         # Disabling the check allows unsafe queries
         with disable_active_filter_query_check():
             self.assertQuerySetEqual(
-                Store.objects.filter(storeproduct__product=self.product), [self.store]
+                Store.objects.filter(storeproduct__product=self.product),
+                [self.store, self.store2],
+                ordered=False,
             )
 
         # The check is re-enabled after the context manager
