@@ -1,5 +1,4 @@
-from contextlib import contextmanager
-from contextvars import ContextVar
+"""Query introspection-based active filter check. Walks Django's query AST."""
 
 from django.core.exceptions import EmptyResultSet
 from django.db.models.expressions import Col
@@ -7,9 +6,11 @@ from django.db.models.query import QuerySet
 
 from core.models import StoreProduct
 
-_original_fetch_all = QuerySet._fetch_all  # noqa: SLF001
-
-_active_filter_check_enabled = ContextVar("_active_filter_check_enabled", default=True)
+from .common import (
+    ActiveFilterMissingError,
+    _active_filter_check_enabled,
+    _original_fetch_all,
+)
 
 
 def _get_model_aliases_in_query(query, model) -> set:
@@ -92,33 +93,14 @@ def _query_has_active_filter_for_all_store_product_aliases(query) -> bool:
     return True
 
 
-class ActiveFilterMissingError(AssertionError):
+def enable_active_filter_query_check_inspection():
     """
-    Raised when a query joins StoreProduct without filtering on active.
-    Nested/reverse relation filters bypass the model's default manager,
-    so inactive rows can be included unless you filter explicitly.
-    """
-
-    def __init__(self, sql: str):
-        self.sql = sql.strip()
-        super().__init__(
-            "Unsafe ORM query: joined StoreProduct without active filter.\n"
-            "Add a filter like storeproduct__active=True (or the appropriate "
-            "relation prefix and active field).\n"
-            "To allow this query intentionally, wrap the code in "
-            "disable_active_filter_query_check().\n\n"
-            f"SQL:\n{self.sql}"
-        )
-
-
-def enable_active_filter_query_check():
-    """
-    Monkeypatch QuerySet._fetch_all so that any query joining StoreProduct
-    must include a filter on the active column; otherwise ActiveFilterMissingError
-    is raised before the query runs.
+    Monkeypatch QuerySet._fetch_all using query introspection to detect missing
+    active filters. Walks Django's query AST - database-agnostic and handles
+    annotations/subqueries.
     """
 
-    def _fetch_all_with_active_filter_check(self):
+    def _fetch_all_with_inspection_check(self):
         if not _active_filter_check_enabled.get():
             return _original_fetch_all(self)
 
@@ -132,17 +114,4 @@ def enable_active_filter_query_check():
 
         return _original_fetch_all(self)
 
-    QuerySet._fetch_all = _fetch_all_with_active_filter_check  # noqa: SLF001
-
-
-@contextmanager
-def disable_active_filter_query_check():
-    """
-    Temporarily disable the active-filter query check in this context.
-    Thread- and greenlet-safe (ContextVar).
-    """
-    token = _active_filter_check_enabled.set(False)
-    try:
-        yield
-    finally:
-        _active_filter_check_enabled.reset(token)
+    QuerySet._fetch_all = _fetch_all_with_inspection_check  # noqa: SLF001
