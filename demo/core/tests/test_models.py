@@ -20,21 +20,9 @@ class TestModels(TestCase):
         self.product = ProductFactory()
         self.product2 = ProductFactory()
 
-        self.x1 = StoreProduct.objects.create(
-            store=self.store,
-            product=self.product,
-            active=True,
-        )
-        self.x2 = StoreProduct.objects.create(
-            store=self.store,
-            product=self.product2,
-            active=False,
-        )
-        self.x3 = StoreProduct.objects.create(
-            store=self.store2,
-            product=self.product,
-            active=False,
-        )
+        self.x1 = StoreProduct.objects.create(store=self.store, product=self.product, active=True)
+        self.x2 = StoreProduct.objects.create(store=self.store, product=self.product2, active=False)
+        self.x3 = StoreProduct.objects.create(store=self.store2, product=self.product, active=False)
 
     def test_model_managers(self):
         with snapshot_queries() as snap:
@@ -86,7 +74,7 @@ class TestModels(TestCase):
         assert not Product.objects.for_store(self.store.id)
         assert not (Product.objects.filter(name=self.product.name).for_store(self.store))
 
-    def test_prefetch_excludes_soft_deleted_objects(self):
+    def test_prefetch_excludes_inactive_objects(self):
         with self.assertNumQueries(2):
             store = Store.objects.prefetch_related("storeproduct_set").get(
                 id=self.store.id,
@@ -102,7 +90,7 @@ class TestModels(TestCase):
             self.assertQuerySetEqual(store.storeproduct_set.all(), [self.x1])
             self.assertQuerySetEqual(product.storeproduct_set.all(), [self.x1])
 
-    def test_nested_query_includes_deactivated_objects(self):
+    def test_nested_query_includes_inactive_objects(self):
         with disable_active_filter_query_check():
             self.assertQuerySetEqual(
                 Store.objects.filter(storeproduct__product=self.product),
@@ -115,16 +103,9 @@ class TestActiveFilterQueryCheck(TestCase):
     def setUp(self):
         self.store = StoreFactory()
         self.product = ProductFactory()
-        self.x1 = StoreProduct.objects.create(
-            store=self.store,
-            product=self.product,
-            active=True,
-        )
-        self.x2 = StoreProduct.objects.create(
-            store=self.store,
-            product=ProductFactory(),
-            active=False,
-        )
+        product2 = ProductFactory()
+        self.x1 = StoreProduct.objects.create(store=self.store, product=self.product, active=True)
+        self.x2 = StoreProduct.objects.create(store=self.store, product=product2, active=False)
 
     def test_raises_for_unfiltered_all_objects_queries(self):
         with pytest.raises(ActiveFilterMissingError):
@@ -138,26 +119,14 @@ class TestActiveFilterQueryCheck(TestCase):
             list(Store.objects.filter(storeproduct__product=self.product))
 
         # Should not raise
-        list(
-            Store.objects.filter(
-                storeproduct__product=self.product,
-                storeproduct__active=True,
-            )
-        )
+        list(Store.objects.filter(storeproduct__product=self.product, storeproduct__active=True))
 
     def test_raises_for_annotation_without_active_filter(self):
         with pytest.raises(ActiveFilterMissingError):
             list(Store.objects.annotate(cnt=Count("storeproduct")))
 
         # Should not raise
-        list(
-            Store.objects.annotate(
-                cnt=Count(
-                    "storeproduct",
-                    filter=Q(storeproduct__active=True),
-                )
-            )
-        )
+        list(Store.objects.annotate(cnt=Count("storeproduct", filter=Q(storeproduct__active=True))))
 
     def test_raises_for_annotated_subquery_without_active_filter(self):
         with pytest.raises(ActiveFilterMissingError):
@@ -170,10 +139,7 @@ class TestActiveFilterQueryCheck(TestCase):
         # Should not raise
         list(
             Store.objects.filter(id__in=Store.objects.for_product(self.product)).annotate(
-                cnt=Count(
-                    "storeproduct",
-                    filter=Q(storeproduct__active=True),
-                )
+                cnt=Count("storeproduct", filter=Q(storeproduct__active=True))
             )
         )
 
@@ -195,23 +161,8 @@ class TestActiveFilterQueryCheck(TestCase):
         with pytest.raises(ActiveFilterMissingError):
             list(
                 StoreProduct.objects.filter(
-                    id__in=StoreProduct.objects.filter(id__in=StoreProduct.all_objects.all())
-                )
-            )
-
-        # Should not raise
-        list(
-            StoreProduct.objects.filter(
-                id__in=StoreProduct.objects.filter(id__in=StoreProduct.objects.all())
-            )
-        )
-
-    def test_raises_for_triple_nested_subquery_without_active_filter(self):
-        with pytest.raises(ActiveFilterMissingError):
-            list(
-                StoreProduct.objects.filter(
                     id__in=StoreProduct.objects.filter(
-                        id__in=StoreProduct.objects.filter(id__in=StoreProduct.all_objects.all())
+                        id__in=StoreProduct.all_objects.all(),
                     )
                 )
             )
@@ -220,7 +171,30 @@ class TestActiveFilterQueryCheck(TestCase):
         list(
             StoreProduct.objects.filter(
                 id__in=StoreProduct.objects.filter(
-                    id__in=StoreProduct.objects.filter(id__in=StoreProduct.objects.all())
+                    id__in=StoreProduct.objects.all(),
+                )
+            )
+        )
+
+    def test_raises_for_triple_nested_subquery_without_active_filter(self):
+        with pytest.raises(ActiveFilterMissingError):
+            list(
+                StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.filter(
+                            id__in=StoreProduct.all_objects.all(),
+                        )
+                    )
+                )
+            )
+
+        # Should not raise
+        list(
+            StoreProduct.objects.filter(
+                id__in=StoreProduct.objects.filter(
+                    id__in=StoreProduct.objects.filter(
+                        id__in=StoreProduct.objects.all(),
+                    )
                 )
             )
         )
@@ -239,7 +213,7 @@ class TestActiveFilterQueryCheck(TestCase):
                                 id__in=StoreProduct.objects.filter(
                                     id__in=StoreProduct.objects.filter(
                                         id__in=StoreProduct.objects.filter(
-                                            id__in=StoreProduct.all_objects.all()
+                                            id__in=StoreProduct.all_objects.all(),
                                         )
                                     )
                                 )
@@ -258,7 +232,7 @@ class TestActiveFilterQueryCheck(TestCase):
                             id__in=StoreProduct.objects.filter(
                                 id__in=StoreProduct.objects.filter(
                                     id__in=StoreProduct.objects.filter(
-                                        id__in=StoreProduct.objects.all()
+                                        id__in=StoreProduct.objects.all(),
                                     )
                                 )
                             )
@@ -272,8 +246,7 @@ class TestActiveFilterQueryCheck(TestCase):
         # Disabling the check allows unsafe queries
         with disable_active_filter_query_check():
             self.assertQuerySetEqual(
-                Store.objects.filter(storeproduct__product=self.product),
-                [self.store],
+                Store.objects.filter(storeproduct__product=self.product), [self.store]
             )
 
         # The check is re-enabled after the context manager
