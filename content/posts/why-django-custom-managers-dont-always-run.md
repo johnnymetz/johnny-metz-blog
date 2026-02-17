@@ -9,9 +9,9 @@ cover:
   image: 'covers/django.png'
 ---
 
-Django custom managers are a common way to exclude inactive or soft-deleted records by default. The catch: custom managers aren't used everywhere. Some query paths bypass them entirely, and inactive data can leak through when you least expect it. This post walks through where it happens and how to fix it.
+Django custom managers are a common way to [modify a manager's initial queryset](https://docs.djangoproject.com/en/6.0/topics/db/managers/#modifying-a-manager-s-initial-queryset), such as excluding inactive or soft-deleted records by default. But custom managers aren't used everywhere — some query paths bypass them entirely leading to unexpected data leaks. This post walks through where it happens and how to fix it.
 
-## The Setup — A Through Model With a Custom Manager
+## The Setup
 
 Suppose we have stores and products linked through a many-to-many style relationship. We use a through model `StoreProduct` with an `active` flag so we can deactivate links without deleting them:
 
@@ -31,37 +31,38 @@ class StoreProduct(models.Model):
     all_objects = models.Manager()
 ```
 
-The goal: exclude inactive records by default, and use `all_objects` only when we explicitly need them (analytics, admin, etc.).
+We want to exclude inactive records by default and use `all_objects` only when we explicitly need them (analytics, admin, etc.).
 
 We intentionally avoid `ManyToManyField(through="StoreProduct")`. That would bypass the through model and its manager when traversing the relationship. Instead, we use ForeignKeys so `store.storeproduct_set` and `product.storeproduct_set` go through `StoreProduct` and its default manager.
 
-## Where the Custom Manager Is Used
+## Queries that Use the Custom Manager
 
-Most common query patterns correctly use the custom manager:
+Most common query patterns correctly use the custom manager and exclude inactive records:
 
-- **Direct queries:** `StoreProduct.objects.all()` — uses `StoreProductManager`, so only active rows are returned.
-- **Reverse relations:** `store.storeproduct_set.all()` — the reverse FK uses the related model's default manager, so only active links appear.
-- **Prefetch:** `Store.objects.prefetch_related("storeproduct_set")` — prefetch uses the default manager, so inactive links are excluded.
+| Label           | Query                                                            |
+| --------------- | ---------------------------------------------------------------- |
+| Direct query    | `StoreProduct.objects.all()`                                     |
+| Relation access | `store.storeproduct_set.all()`, `product.storeproduct_set.all()` |
+| Prefetch        | `Store.objects.prefetch_related("storeproduct_set")`             |
 
-## The First Gap — Relation Lookups
+## Queries that Do Not Use the Custom Manager
 
-The problem appears when you filter across the relation from the other side:
+The problem appears when you query through the relation from the other side — filters, annotations, and aggregates that join to `StoreProduct` never invoke its custom manager. Django builds the join directly from the relationship.
+
+When you filter across the relation, `Store.objects.filter(storeproduct__product=product)` includes inactive rows because the join doesn't filter on `active`.
+
+Annotations and aggregates show the same bypass. When you annotate or aggregate through the relation:
 
 ```python
-Store.objects.filter(storeproduct__product=product)
+Store.objects.annotate(
+    product_count=Count("storeproduct"),
+    first_product_added=Min("storeproduct__created_at"),
+)
 ```
 
-This query does _not_ use `StoreProduct`'s manager. Django builds a join directly from the relationship; it never calls `StoreProduct.objects.get_queryset()`. Here's the SQL:
+The join for `Count` and `Min` includes inactive rows. Relation lookups are easier to spot; annotations are easy to miss.
 
-```sql
-SELECT * FROM store
-INNER JOIN storeproduct ON store.id = storeproduct.store_id
-WHERE storeproduct.product_id = 1;
-```
-
-There is no `AND storeproduct.active = true`. Inactive `StoreProduct` rows are included, so you can get stores you didn't intend.
-
-The fix: add a queryset method that explicitly filters on `active`:
+For relation lookups, add queryset methods that explicitly filter on `active`:
 
 ```python
 class StoreQuerySet(models.QuerySet):
@@ -74,43 +75,17 @@ class StoreQuerySet(models.QuerySet):
 # Usage: Store.objects.for_product(product)
 ```
 
-Same pattern for the other direction: `Product.objects.for_store(store)` with `storeproduct__active=True`. This is a [known Django limitation](https://code.djangoproject.com/ticket/26393) — the manager's queryset isn't used when filtering through relations. Others have hit it too ([example](https://stackoverflow.com/questions/65710627/is-it-possible-to-override-filter-lookup-with-predefined-values-with-custom-mana)).
+`Store.objects.for_product(product)` generates SQL that includes `AND storeproduct.active`:
 
-## More Gaps — Annotations and Aggregates
-
-Other query patterns also bypass the manager. Annotations that join through `StoreProduct` don't use its manager:
-
-```python
-Store.objects.annotate(
-    product_count=Count("storeproduct"),
-    first_product_added=Min("storeproduct__created_at"),
-)
+```sql
+SELECT * FROM store
+INNER JOIN storeproduct ON store.id = storeproduct.store_id
+WHERE storeproduct.product_id = 1 AND storeproduct.active;
 ```
 
-The join for `Count` and `Min` includes inactive rows. These are harder to spot than relation lookups.
+Same pattern for the other direction: `Product.objects.for_store(store)` with `storeproduct__active=True`.
 
-The most reliable way to catch them is a runtime check. You can either introspect the Django queryset or validate the generated SQL with regex. The SQL approach checks that whenever the `StoreProduct` table appears in a join, the query includes a filter on `active`:
-
-```python
-# Pattern 1: find table references (FROM/JOIN {table} [alias])
-TABLE_REF = re.compile(
-    rf"(?:FROM|JOIN)\s+{re.escape(TABLE_NAME)}(?:\s+(?:AS\s+)?(?P<alias>[A-Z]+\d+))?",
-    re.IGNORECASE,
-)
-
-# Pattern 2: find ref.active in filter context
-def active_filter_for(ref: str):
-    return re.compile(rf"\b{re.escape(ref)}\.active(?!,)\b", re.IGNORECASE)
-
-def check(self):
-    # ... for each table reference, require matching active filter ...
-    if len(matches) < count:
-        raise ActiveFilterMissingError(sql=sql)
-```
-
-I hook this into `QuerySet._fetch_all` and run it in my test suite. When a query joins `StoreProduct` without filtering on `active`, the tests fail. If excluding inactive data is critical, you can also enable this in production and log (or alert) instead of raising.
-
-The fix for the annotation query:
+For annotations, add the `filter` parameter to each aggregation:
 
 ```python
 from django.db.models import Count, Min, Q
@@ -121,7 +96,7 @@ Store.objects.annotate(
 )
 ```
 
-Or filter first when you only care about stores that have at least one active product:
+Or filter first when you only care about stores with at least one active product:
 
 ```python
 Store.objects.filter(storeproduct__active=True).annotate(
@@ -130,7 +105,71 @@ Store.objects.filter(storeproduct__active=True).annotate(
 )
 ```
 
-## When You _Want_ Inactive Records
+## Catching Leaks: An Automated Check
+
+Because these bypasses are easy to miss, I run an automated check in my test suite. Two approaches work: validate the generated SQL with regex, or introspect Django's query AST. The SQL regex approach is simpler but database-specific; the introspection approach walks `query.alias_map` and the WHERE tree and is database-agnostic but more complex. Below is the SQL regex implementation in a single file:
+
+```python
+import re
+from collections import Counter
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+from django.core.exceptions import EmptyResultSet
+from django.db.models.query import QuerySet
+
+from core.models import StoreProduct
+
+_original_fetch_all = QuerySet._fetch_all
+_active_filter_check_enabled = ContextVar("_active_filter_check_enabled", default=True)
+TABLE_NAME = StoreProduct._meta.db_table
+
+TABLE_REF = re.compile(
+    rf"(?:FROM|JOIN)\s+{re.escape(TABLE_NAME)}(?:\s+(?:AS\s+)?(?P<alias>[A-Z]+\d+))?",
+    re.IGNORECASE,
+)
+
+
+def active_filter_for(ref: str):
+    return re.compile(rf"\b{re.escape(ref)}\.active(?!,)\b", re.IGNORECASE)
+
+
+class ActiveFilterMissingError(AssertionError):
+    def __init__(self, sql: str):
+        self.sql = sql.strip()
+        super().__init__(f"Query joins StoreProduct without active filter.\n\n{self.sql}")
+
+
+@contextmanager
+def disable_active_filter_query_check():
+    token = _active_filter_check_enabled.set(False)
+    try:
+        yield
+    finally:
+        _active_filter_check_enabled.reset(token)
+
+
+def enable_active_filter_query_check():
+    def check(self):
+        if not _active_filter_check_enabled.get():
+            return _original_fetch_all(self)
+        try:
+            sql = str(self.query).replace('"', "").replace("'", "")
+        except EmptyResultSet:
+            return _original_fetch_all(self)
+        refs = Counter(m.group("alias") or TABLE_NAME for m in TABLE_REF.finditer(sql))
+        for ref, count in refs.items():
+            matches = active_filter_for(ref).findall(sql)
+            if len(matches) < count:
+                raise ActiveFilterMissingError(sql=sql)
+        return _original_fetch_all(self)
+
+    QuerySet._fetch_all = check
+```
+
+Call `enable_active_filter_query_check()` at test startup (e.g., in a pytest `conftest.py` autouse fixture). Any query that joins `StoreProduct` without filtering on `active` fails the test. If excluding inactive data is critical, you can enable this in production and log or alert instead of raising.
+
+## When You Want Inactive Records
 
 Sometimes you need inactive data: analytics, internal dashboards, auditing. Use `disable_active_filter_query_check` to opt out:
 
@@ -147,5 +186,6 @@ The context manager uses a `ContextVar`, so it's thread-safe and scoped to the b
 Django custom managers don't apply to relation lookups, annotations, or aggregates. To avoid leaks:
 
 1. Use queryset methods like `for_product()` and `for_store()` instead of raw relation filters.
-2. Add a runtime check (e.g. SQL regex) to catch annotations and other bypass cases.
-3. Use `all_objects` and `disable_active_filter_query_check()` when you intentionally need inactive records.
+2. Add the `filter` parameter to annotations that traverse the relation.
+3. Run an automated check in tests (or production) to catch leaks.
+4. Use `all_objects` and `disable_active_filter_query_check()` when you intentionally need inactive records.
