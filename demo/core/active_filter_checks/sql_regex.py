@@ -25,7 +25,7 @@ TABLE_REF = re.compile(
 
 # Pattern 2: find ref.active in filter context (exclude SELECT ref.active, via (?!,))
 def active_filter_for(ref: str):
-    return re.compile(rf"\b{re.escape(ref)}\.active(?!,)\b", re.IGNORECASE)
+    return re.compile(rf"\b{ref}\.active(?!,)\b", re.IGNORECASE)
 
 
 def enable_active_filter_query_check_sql_regex():
