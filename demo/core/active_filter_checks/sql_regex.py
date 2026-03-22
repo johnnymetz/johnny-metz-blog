@@ -8,11 +8,7 @@ from django.db.models.query import QuerySet
 
 from core.models import StoreProduct
 
-from .common import (
-    ActiveFilterMissingError,
-    _active_filter_check_enabled,
-    _original_fetch_all,
-)
+from .common import ActiveFilterMissingError, _active_filter_check_enabled, _original_fetch_all
 
 TABLE_NAME = StoreProduct._meta.db_table  # noqa: SLF001
 
@@ -35,8 +31,9 @@ def enable_active_filter_query_check_sql_regex():
         if not _active_filter_check_enabled.get():
             return _original_fetch_all(self)
         try:
-            # Remove all quotes to simplify regex matching
+            # Remove all quotes to simplify regex matching.
             sql = str(self.query).replace('"', "").replace("'", "")
+        # Queries guaranteed to return no rows (e.g., .none()) raise EmptyResultSet.
         except EmptyResultSet:
             return _original_fetch_all(self)
         refs = Counter(m.group("alias") or TABLE_NAME for m in TABLE_REF.finditer(sql))

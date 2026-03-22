@@ -1,5 +1,3 @@
-"""Shared state and utilities for active filter checks."""
-
 from contextlib import contextmanager
 from contextvars import ContextVar
 

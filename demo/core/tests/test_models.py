@@ -353,3 +353,6 @@ class TestModels(TestCase):
         # The check is re-enabled after the context manager
         with pytest.raises(ActiveFilterMissingError):
             list(Store.objects.filter(storeproduct__product=self.product))
+
+    def test_handle_empty_result_set(self):
+        self.assertQuerySetEqual(StoreProduct.objects.none(), [])

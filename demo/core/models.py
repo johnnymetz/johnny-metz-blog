@@ -80,6 +80,8 @@ class StoreProduct(models.Model):
                 name="store_product_uniq",
             ),
         ]
+        # default_manager_name = "all_objects"  # Breaks tests
+        # base_manager_name = "all_objects"  # No effect on tests
 
     def __str__(self):
         return f"{self.store.name} <-> {self.product.name}"
