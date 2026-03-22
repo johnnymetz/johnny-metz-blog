@@ -41,13 +41,17 @@ class StoreProduct(models.Model):
 
 We declare the custom manager first so it becomes the [default manager](https://docs.djangoproject.com/en/6.0/topics/db/managers/#default-managers). That feels like it should protect us everywhere, but it doesn't.
 
+## The Rule
+
+> Custom managers only apply to the model you're querying — not joined models.
+
+If the queryset is built from `StoreProduct`, the manager runs.
+
+If `StoreProduct` is only pulled in via a join, it doesn't.
+
 ## Queries That Work
 
-The rule is:
-
-> Custom managers are only applied to the target model — not across joins.
-
-These patterns correctly use the custom manager and exclude inactive rows because the target model is `StoreProduct`:
+These patterns correctly use the custom manager and exclude inactive rows because we're directly querying `StoreProduct`:
 
 | Pattern          | Example                                              |
 | ---------------- | ---------------------------------------------------- |
@@ -55,13 +59,13 @@ These patterns correctly use the custom manager and exclude inactive rows becaus
 | Reverse relation | `store.storeproduct_set.all()`                       |
 | Prefetch         | `Store.objects.prefetch_related("storeproduct_set")` |
 
-Prefetch issues a second query whose queryset is on `StoreProduct` (it loads related rows via that model's manager, not by joining StoreProduct into the main Store query), so the custom manager still applies.
+`prefetch_related` looks like a JOIN, but Django actually runs a separate query and merges the results in Python. Because that query is built from `StoreProduct`, the custom manager is applied.
 
 ## Queries That Break and How to Fix Them
 
-These patterns bypass the custom manager and include inactive rows because they do NOT target the `StoreProduct` model.
+These patterns bypass the custom manager and include inactive rows because they do NOT directly query the `StoreProduct` model.
 
-The fix is to explicitly exclude inactive rows (essentially duplicating what the custom manager does).
+The fix is to explicitly exclude inactive rows (i.e., duplicate the manager logic).
 
 ### ManyToManyField Access
 
@@ -74,7 +78,7 @@ class Store(models.Model):
 store.products.all()
 ```
 
-This query targets the `Product` model, so it never touches the through model's manager.
+This query is built from the `Product` model. Even though it goes through `StoreProduct`, that model is only used in a join so its custom manager is ignored.
 
 The best solution is to replace the `ManyToManyField` with custom queryset methods that explicitly filter on `active`:
 
@@ -111,7 +115,7 @@ Product.objects.for_store(store)
 Store.objects.filter(storeproduct__product=product)
 ```
 
-This query targets the `Store` model with a join to the through table for the condition.
+This query is built from `Store`, so the `StoreProduct` manager is never applied.
 
 Use the fix from the previous section:
 
@@ -130,7 +134,7 @@ Store.objects.annotate(
 )
 ```
 
-Same issue: The query targets the `Store` model.
+Same issue: The query is built from `Store`.
 
 We need to explicitly filter out inactive rows:
 
@@ -144,7 +148,7 @@ Store.objects.filter(storeproduct__active=True).annotate(
 
 ## Catching Leaks Automatically
 
-These bugs are easy to miss. The safest approach is to catch them programmatically.
+These bugs are easy to miss. The best approach is to catch them programmatically.
 
 Below is a lightweight runtime check that inspects SQL and ensures any query touching `StoreProduct` also filters on `active`.
 
@@ -206,11 +210,13 @@ Enable it in tests (e.g., pytest `conftest.py`), and any unsafe query will fail.
 
 ## When You Do Want Inactive Data
 
-For analytics, auditing, or admin flows, you may need full access:
+Sometimes you need full access (e.g., analytics, audits, admin flows).
+
+Make it explicit:
 
 ```python
 with disable_query_check():
     StoreProduct.all_objects.all()
 ```
 
-Make this explicit — it should never happen accidentally.
+Accessing inactive data should always be intentional.
