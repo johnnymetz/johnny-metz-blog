@@ -150,7 +150,7 @@ from contextvars import ContextVar
 from django.core.exceptions import EmptyResultSet
 from django.db.models.query import QuerySet
 
-_active_filter_check_enabled = ContextVar("_active_filter_check_enabled", default=True)
+_query_check_enabled = ContextVar("_query_check_enabled", default=True)
 _original_fetch_all = QuerySet._fetch_all
 
 TABLE_NAME = StoreProduct._meta.db_table
@@ -162,13 +162,13 @@ TABLE_REF = re.compile(
 def active_filter_for(ref: str):
     return re.compile(rf"\b{ref}\.active(?!,)\b", re.IGNORECASE)
 
-class ActiveFilterMissingError(AssertionError):
+class StoreProductQueryError(AssertionError):
     def __init__(self, sql: str):
-        super().__init__(f"Query joins StoreProduct without active filter.\n\n{sql}")
+        super().__init__(f"Query referenced StoreProduct without active filter: {sql}")
 
-def enable_active_filter_query_check():
+def enable_query_check():
     def check(self):
-        if not _active_filter_check_enabled.get():
+        if not _query_check_enabled.get():
             return _original_fetch_all(self)
         try:
             # Remove all quotes to simplify regex matching.
@@ -180,22 +180,29 @@ def enable_active_filter_query_check():
         for ref, count in refs.items():
             matches = active_filter_for(ref).findall(sql)
             if len(matches) < count:
-                raise ActiveFilterMissingError(sql=sql)
+                raise StoreProductQueryError(sql=sql)
         return _original_fetch_all(self)
 
     QuerySet._fetch_all = check
 
 @contextmanager
-def disable_active_filter_query_check():
-    token = _active_filter_check_enabled.set(False)
+def disable_query_check():
+    token = _query_check_enabled.set(False)
     try:
         yield
     finally:
-        _active_filter_check_enabled.reset(token)
+        _query_check_enabled.reset(token)
 ```
 
-I run the check in my test suite by calling `enable_active_filter_query_check()` at test startup (e.g., in a pytest
-`conftest.py` autouse fixture). You can also enable this in production by logging instead of raising and creating an
+I run the check in my test suite by calling `enable_query_check()` at test startup (e.g., in a pytest
+`conftest.py` autouse fixture). Now any query accessing the `StoreProduct` table without an `active` filter will raise an error:
+
+```python
+StoreProduct.all_objects.all()
+# StoreProductQueryError: Query referenced StoreProduct without active filter: SELECT * FROM storeproduct
+```
+
+You can also enable this in production by logging instead of raising and creating an
 alert on that.
 
 The SQL-regex approach inspects the compiled SQL string, so it stays aligned with what actually hits the database and is
@@ -206,7 +213,7 @@ Sometimes you need inactive data (analytics, internal dashboards, auditing). Use
 opt out:
 
 ```python
-with disable_active_filter_query_check():
+with disable_query_check():
     StoreProduct.all_objects.all()
 ```
 
