@@ -9,8 +9,7 @@ cover:
   image: 'covers/django.png'
 ---
 
-[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way
-to exclude records by default, such as inactive or soft-deleted records. However, they aren't applied consistently, which leads to unintended data exposure. This post covers where that happens and how to fix it.
+[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way to exclude records by default, such as inactive or soft-deleted records. However, they aren't applied consistently, which leads to unintended data exposure. This post covers where that happens and how to fix it.
 
 ## The Setup
 
@@ -44,23 +43,25 @@ We declare the custom manager first so it becomes the [default manager](https://
 
 ## Queries That Work
 
-These patterns correctly use the custom manager and exclude inactive rows:
-
-| Pattern          | Example                                              | Why it works          |
-| ---------------- | ---------------------------------------------------- | --------------------- |
-| Direct query     | `StoreProduct.objects.all()`                         | Uses explicit manager |
-| Reverse relation | `store.storeproduct_set.all()`                       | Uses default manager  |
-| Prefetch         | `Store.objects.prefetch_related("storeproduct_set")` | Uses default manager  |
-
 The rule is:
 
 > Custom managers are only applied to the target model — not across joins.
+
+These patterns correctly use the custom manager and exclude inactive rows because the target model is `StoreProduct`:
+
+| Pattern          | Example                                              |
+| ---------------- | ---------------------------------------------------- |
+| Direct query     | `StoreProduct.objects.all()`                         |
+| Reverse relation | `store.storeproduct_set.all()`                       |
+| Prefetch         | `Store.objects.prefetch_related("storeproduct_set")` |
 
 Prefetch issues a second query whose queryset is on `StoreProduct` (it loads related rows via that model's manager, not by joining StoreProduct into the main Store query), so the custom manager still applies.
 
 ## Queries That Break and How to Fix Them
 
-These patterns bypass the custom manager and include inactive rows.
+These patterns bypass the custom manager and include inactive rows because they do NOT target the `StoreProduct` model.
+
+The fix is to explicitly exclude inactive rows (essentially duplicating what the custom manager does).
 
 ### ManyToManyField Access
 
@@ -73,7 +74,7 @@ class Store(models.Model):
 store.products.all()
 ```
 
-Django generates this query directly from the relationship and never touches the through model's manager.
+This query targets the `Product` model, so it never touches the through model's manager.
 
 The best solution is to replace the `ManyToManyField` with custom queryset methods that explicitly filter on `active`:
 
@@ -110,7 +111,7 @@ Product.objects.for_store(store)
 Store.objects.filter(storeproduct__product=product)
 ```
 
-Django builds a `Store` queryset with a join to the through table for the condition. It never invokes the through table's manager.
+This query targets the `Store` model with a join to the through table for the condition.
 
 Use the fix from the previous section:
 
@@ -129,9 +130,7 @@ Store.objects.annotate(
 )
 ```
 
-Same issue: The `Store` queryset doesn't use the `StoreProduct` manager.
-
-Again, the Django ORM doesn't use the custom manager.
+Same issue: The query targets the `Store` model.
 
 We need to explicitly filter out inactive rows:
 
@@ -215,5 +214,3 @@ with disable_query_check():
 ```
 
 Make this explicit — it should never happen accidentally.
-
-May your queries always return the data you expect.
