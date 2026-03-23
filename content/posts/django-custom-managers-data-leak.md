@@ -1,6 +1,6 @@
 ---
 title: 'Django Custom Managers Are Silently Leaking Data'
-date: 2026-02-16T00:00:00-07:00
+date: 2026-03-22T00:12:00-07:00
 tags:
   - Python
   - Django
@@ -9,7 +9,7 @@ cover:
   image: 'covers/django.png'
 ---
 
-[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way to exclude rows by default, such as inactive or soft-deleted rows. However, they aren't applied consistently, which leads to unintended data exposure. This post covers where that happens and how to fix it.
+[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way to exclude rows by default, such as inactive or soft-deleted rows. However, they don't run everywhere you'd expect, which leads to unintended data exposure. This post covers where that happens and how to fix it.
 
 ## The Setup
 
@@ -39,6 +39,8 @@ class StoreProduct(models.Model):
 The custom manager is declared first, making it the [default manager](https://docs.djangoproject.com/en/6.0/topics/db/managers/#default-managers). That feels like it should protect us everywhere, but it doesn't.
 
 ## The Rule
+
+Here's the part Django doesn't make obvious:
 
 > Managers only run for the model you're querying — not joined models.
 
@@ -135,7 +137,7 @@ Store.objects.filter(storeproduct__active=True).annotate(
 
 ## Catching Leaks
 
-These bugs are easy to miss and nothing breaks loudly. Inactive records just quietly show up in your results.
+These bugs are silent and easy to miss — inactive records just slip into your results.
 
 The best safety net is to automatically surface unsafe queries. The following snippet is a lightweight runtime check that inspects SQL and raises an error if any query touches the `StoreProduct` table without filtering on `active`:
 
@@ -193,7 +195,7 @@ def disable_query_check():
         _query_check_enabled.reset(token)
 ```
 
-Enable it in your tests suite (e.g., pytest `conftest.py`) to detect leaks before they reach production.
+Enable it in your test suite (e.g., pytest `conftest.py`) to detect leaks before they reach production.
 
 ## When You Actually Want Inactive Data
 
@@ -204,6 +206,8 @@ with disable_query_check():
     StoreProduct.all_objects.all()
 ```
 
+Accessing inactive data should always be intentional.
+
 ---
 
-If you use custom managers to filter data, I'd bet this pitfall is affecting you. Understand the rule, add the runtime check, and fix the leaks. A manager that doesn't run isn't protecting anything.
+If you use custom managers to filter data, I'd bet this pitfall is affecting you. Understand the rule, add the runtime check, and fix the leaks. A manager that doesn't run isn't a safeguard — it's a false sense of security.
