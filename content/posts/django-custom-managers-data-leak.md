@@ -1,5 +1,5 @@
 ---
-title: 'Prevent Django Custom Managers from Leaking Data'
+title: 'Django Custom Managers Are Silently Leaking Data'
 date: 2026-02-16T00:00:00-07:00
 tags:
   - Python
@@ -9,7 +9,7 @@ cover:
   image: 'covers/django.png'
 ---
 
-[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way to exclude records by default, such as inactive or soft-deleted records. However, they aren't applied consistently, which leads to unintended data exposure. This post covers where that happens and how to fix it.
+[Django custom managers](https://docs.djangoproject.com/en/6.0/topics/db/managers/#custom-managers) are a common way to exclude rows by default, such as inactive or soft-deleted rows. However, they aren't applied consistently, which leads to unintended data exposure. This post covers where that happens and how to fix it.
 
 ## The Setup
 
@@ -32,26 +32,21 @@ class StoreProduct(models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Default: exclude inactive rows
-    objects = StoreProductManager()
-
-    # Escape hatch: include everything
-    all_objects = models.Manager()
+    objects = StoreProductManager()  # default: active only
+    all_objects = models.Manager()   # escape hatch: everything
 ```
 
-We declare the custom manager first so it becomes the [default manager](https://docs.djangoproject.com/en/6.0/topics/db/managers/#default-managers). That feels like it should protect us everywhere, but it doesn't.
+The custom manager is declared first, making it the [default manager](https://docs.djangoproject.com/en/6.0/topics/db/managers/#default-managers). That feels like it should protect us everywhere, but it doesn't.
 
 ## The Rule
 
-> Custom managers only apply to the model you're querying — not joined models.
+> Managers only run for the model you're querying — not joined models.
 
-If the queryset is built from `StoreProduct`, the manager runs.
-
-If `StoreProduct` is only pulled in via a join, it doesn't.
+If the queryset is rooted in `StoreProduct`, the manager runs. If `StoreProduct` is only pulled in via a join, it doesn't.
 
 ## Queries That Work
 
-These patterns correctly use the custom manager and exclude inactive rows because we're directly querying `StoreProduct`:
+Multiple core query patterns behave correctly and exclude inactive rows because Django is building the query from `StoreProduct`:
 
 | Pattern          | Example                                              |
 | ---------------- | ---------------------------------------------------- |
@@ -59,13 +54,9 @@ These patterns correctly use the custom manager and exclude inactive rows becaus
 | Reverse relation | `store.storeproduct_set.all()`                       |
 | Prefetch         | `Store.objects.prefetch_related("storeproduct_set")` |
 
-`prefetch_related` looks like a JOIN, but Django actually runs a separate query and merges the results in Python. Because that query is built from `StoreProduct`, the custom manager is applied.
+`prefetch_related` is the interesting one. It looks like a join, but Django actually runs a separate query and stitches the results together in Python. Since that separate query is rooted in `StoreProduct`, the manager fires.
 
 ## Queries That Break and How to Fix Them
-
-These patterns bypass the custom manager and include inactive rows because they do NOT directly query the `StoreProduct` model.
-
-The fix is to explicitly exclude inactive rows (i.e., duplicate the manager logic).
 
 ### ManyToManyField Access
 
@@ -74,13 +65,13 @@ class Store(models.Model):
     name = models.CharField(max_length=255)
     products = models.ManyToManyField("Product", through="StoreProduct")
 
-# ❌ Includes inactive records
+# ❌ Includes inactive rows
 store.products.all()
 ```
 
-This query is built from the `Product` model. Even though it goes through `StoreProduct`, that model is only used in a join so its custom manager is ignored.
+This query is built from the `Product` model. `StoreProduct` is used as a join condition, so its manager never runs.
 
-The best solution is to replace the `ManyToManyField` with custom queryset methods that explicitly filter on `active`:
+The fix is to replace the `ManyToManyField` with queryset methods that duplicate the manager logic (i.e., remove inactive records):
 
 ```python
 class StoreQuerySet(models.QuerySet):
@@ -103,7 +94,7 @@ class Store(models.Model):
 class Product(models.Model):
     objects = ProductQuerySet.as_manager()
 
-# ✅ Excludes inactive records
+# ✅ Excludes inactive rows
 Store.objects.for_product(product)
 Product.objects.for_store(store)
 ```
@@ -111,46 +102,42 @@ Product.objects.for_store(store)
 ### Filtering Across Relations
 
 ```python
-# ❌ Includes inactive records
+# ❌ Includes inactive rows
 Store.objects.filter(storeproduct__product=product)
 ```
 
-This query is built from `Store`, so the `StoreProduct` manager is never applied.
-
-Use the fix from the previous section:
+This query is rooted in `Store`. Same problem and same fix: use the queryset method.
 
 ```python
-# ✅ Excludes inactive records
+# ✅ Excludes inactive rows
 Store.objects.for_product(product)
 ```
 
-### Aggregations / Annotations
+### Aggregations & Annotations
 
 ```python
-# ❌ Includes inactive records
+# ❌ Includes inactive rows
 Store.objects.annotate(
     product_count=Count("storeproduct"),
     first_product_added=Min("storeproduct__created_at"),
 )
 ```
 
-Same issue: The query is built from `Store`.
-
-We need to explicitly filter out inactive rows:
+Again, the query targets `Store`. The fix is to explicitly filter out inactive records:
 
 ```python
-# ✅ Excludes inactive records
+# ✅ Excludes inactive rows
 Store.objects.filter(storeproduct__active=True).annotate(
     product_count=Count("storeproduct"),
     first_product_added=Min("storeproduct__created_at"),
 )
 ```
 
-## Catching Leaks Automatically
+## Catching Leaks
 
-These bugs are easy to miss. The best approach is to catch them programmatically.
+These bugs are easy to miss and nothing breaks loudly. Inactive records just quietly show up in your results.
 
-Below is a lightweight runtime check that inspects SQL and ensures any query touching `StoreProduct` also filters on `active`.
+The best safety net is to automatically surface unsafe queries. The following snippet is a lightweight runtime check that inspects SQL and raises an error if any query touches the `StoreProduct` table without filtering on `active`:
 
 ```python
 import re
@@ -206,17 +193,17 @@ def disable_query_check():
         _query_check_enabled.reset(token)
 ```
 
-Enable it in tests (e.g., pytest `conftest.py`), and any unsafe query will fail.
+Enable it in your tests suite (e.g., pytest `conftest.py`) to detect leaks before they reach production.
 
-## When You Do Want Inactive Data
+## When You Actually Want Inactive Data
 
-Sometimes you need full access (e.g., analytics, audits, admin flows).
-
-Make it explicit:
+Sometimes you need everything — analytics dashboards, admin tooling, audit logs. Make it explicit:
 
 ```python
 with disable_query_check():
     StoreProduct.all_objects.all()
 ```
 
-Accessing inactive data should always be intentional.
+---
+
+If you use custom managers to filter data, I'd bet this pitfall is affecting you. Understand the rule, add the runtime check, and fix the leaks. A manager that doesn't run isn't protecting anything.
