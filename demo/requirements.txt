@@ -4,35 +4,45 @@
 #
 #    pip-compile --strip-extras
 #
-asgiref==3.11.0
+asgiref==3.11.1
     # via django
+asttokens==3.0.1
+    # via inline-snapshot
 build==1.4.0
     # via pip-tools
 click==8.3.1
     # via pip-tools
-django==6.0.1
+django==6.0.2
     # via
     #   -r requirements.in
-    #   django-extensions
     #   django-zen-queries
-django-environ==0.12.0
-    # via -r requirements.in
-django-extensions==4.1
+    #   inline-snapshot-django
+django-environ==0.12.1
     # via -r requirements.in
 django-zen-queries==2.1.0
     # via -r requirements.in
+executing==2.2.1
+    # via inline-snapshot
 factory-boy==3.3.3
     # via -r requirements.in
-faker==40.1.2
+faker==40.4.0
     # via factory-boy
 iniconfig==2.3.0
     # via pytest
+inline-snapshot==0.32.0
+    # via inline-snapshot-django
+inline-snapshot-django==1.4.0
+    # via -r requirements.in
+markdown-it-py==4.0.0
+    # via rich
+mdurl==0.1.2
+    # via markdown-it-py
 packaging==26.0
     # via
     #   build
     #   pytest
     #   wheel
-pip-tools==7.5.2
+pip-tools==7.5.3
     # via -r requirements.in
 pluggy==1.6.0
     # via pytest
@@ -41,7 +51,9 @@ psycopg==3.3.2
 psycopg-binary==3.3.2
     # via psycopg
 pygments==2.19.2
-    # via pytest
+    # via
+    #   pytest
+    #   rich
 pyproject-hooks==1.2.0
     # via
     #   build
@@ -49,13 +61,20 @@ pyproject-hooks==1.2.0
 pytest==9.0.2
     # via
     #   -r requirements.in
+    #   inline-snapshot
     #   pytest-django
-pytest-django==4.11.1
+pytest-django==4.12.0
     # via -r requirements.in
-ruff==0.14.14
+rich==14.3.2
+    # via inline-snapshot
+ruff==0.15.1
     # via -r requirements.in
+sql-impressao==1.11.0
+    # via inline-snapshot-django
 sqlparse==0.5.5
     # via django
+typing-extensions==4.15.0
+    # via inline-snapshot
 wheel==0.46.3
     # via pip-tools
 

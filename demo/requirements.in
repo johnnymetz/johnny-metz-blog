@@ -4,8 +4,8 @@ ruff
 Django
 psycopg[binary]
 django-environ
-django-extensions
 django-zen-queries
+inline-snapshot-django
 
 pytest
 pytest-django

@@ -16,8 +16,8 @@ import environ
 
 env = environ.Env(
     # sqlite:///db.sqlite3
-    # postgres://postgres:postgres@localhost:5434/postgres
-    DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5434/postgres"),
+    # postgres://postgres:postgres@localhost:5433/postgres
+    DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5433/postgres"),
     DEBUG=(bool, True),
     SECRET_KEY=(bool, "5d$+ej4k7yodpiy6%8x+gto*)dqkdnw1x(o66o=h__@k#jh0xf"),
 )
@@ -50,8 +50,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party apps
-    "django_extensions",
     # Local apps
     "core.apps.CoreConfig",
 ]

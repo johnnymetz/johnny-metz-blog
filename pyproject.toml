@@ -2,6 +2,7 @@
 requires-python = "~=3.13.0"
 
 [tool.ruff]
+line-length = 100
 extend-exclude = [
     "*/migrations/*.py",
     "staticfiles/*",
@@ -11,13 +12,22 @@ extend-exclude = [
 select = ["ALL"]
 ignore = [
     "ANN",
+    "COM812",
     "D",
-    "EM101",
+    "ERA001",
+    "EM1",
+    "RUF012",
+    "S101",
     "TRY003",
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
+
+[tool.ruff.lint.isort]
+default-section = "third-party"
+known-first-party = ["core", "mysite"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "mysite.settings"
