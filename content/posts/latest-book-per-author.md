@@ -5,6 +5,7 @@ tags:
   - Python
   - Django
   - Query Optimization
+  - PostgreSQL
 ShowToc: true
 cover:
   image: 'covers/books-stacked.png'

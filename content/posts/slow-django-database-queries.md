@@ -6,6 +6,7 @@ tags:
   - Django
   - Pytest
   - Query Optimization
+  - PostgreSQL
 cover:
   image: 'covers/django-racecar.png'
 ShowToc: true

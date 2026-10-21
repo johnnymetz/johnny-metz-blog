@@ -3,6 +3,7 @@ title: '7 Heroku Features Every Developer Should Be Using'
 date: 2025-09-13T12:00:00-06:00
 tags:
   - Heroku
+  - PostgreSQL
 ShowToc: true
 cover:
   image: 'covers/heroku.png'

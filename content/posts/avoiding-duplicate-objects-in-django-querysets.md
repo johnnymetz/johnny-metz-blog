@@ -6,6 +6,7 @@ tags:
   - Django
   - SQL
   - Query Optimization
+  - PostgreSQL
 ShowToc: true
 cover:
   image: 'covers/django.png'
