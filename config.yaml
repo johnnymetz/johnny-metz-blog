@@ -29,8 +29,8 @@ params:
     disableHLJS: true # use Hugo's syntax highlighter "Chroma" instead of highlight.js
     # disableFingerprinting: true
     favicon: 'favicon/favicon.ico'
-    favicon16x16: 'favicon/favicon-16x16.ico'
-    favicon32x32: 'favicon/favicon-32x32.ico'
+    favicon16x16: 'favicon/favicon-16x16.png'
+    favicon32x32: 'favicon/favicon-32x32.png'
     apple_touch_icon: 'favicon/apple-touch-icon.png'
     safari_pinned_tab: 'favicon/safari-pinned-tab.svg'
 
