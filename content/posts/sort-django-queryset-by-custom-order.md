@@ -4,6 +4,7 @@ date: 2023-01-02T17:00:00-08:00
 tags:
   - Python
   - Django
+  - Query Optimization
 cover:
   image: 'covers/django-sorting.png'
 ---

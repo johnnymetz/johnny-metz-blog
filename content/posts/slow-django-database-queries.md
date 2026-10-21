@@ -5,6 +5,7 @@ tags:
   - Python
   - Django
   - Pytest
+  - Query Optimization
 cover:
   image: 'covers/django-racecar.png'
 ShowToc: true

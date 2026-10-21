@@ -5,6 +5,7 @@ tags:
   - Python
   - Django
   - SQL
+  - Query Optimization
 ShowToc: true
 cover:
   image: 'covers/django.png'

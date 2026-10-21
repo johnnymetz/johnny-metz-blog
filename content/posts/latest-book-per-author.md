@@ -4,6 +4,7 @@ date: 2024-11-14T12:00:00-07:00
 tags:
   - Python
   - Django
+  - Query Optimization
 ShowToc: true
 cover:
   image: 'covers/books-stacked.png'

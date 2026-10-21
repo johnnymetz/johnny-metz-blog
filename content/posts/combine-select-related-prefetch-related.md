@@ -4,6 +4,7 @@ date: 2023-05-13T15:48:39-04:00
 tags:
   - Python
   - Django
+  - Query Optimization
 cover:
   image: 'covers/django-sonic.png'
 ShowToc: true

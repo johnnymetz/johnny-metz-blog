@@ -6,6 +6,7 @@ tags:
   - Django
   - Pytest
   - SQL
+  - Query Optimization
 cover:
   image: 'covers/django-sql.png'
 ---
