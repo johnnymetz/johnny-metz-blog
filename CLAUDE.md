@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Hugo blog (PaperMod theme) at johnnymetz.com. Posts live in `content/posts/*.md`. `demo/` is a Django app with code backing the posts.
+Hugo blog (PaperMod theme) at johnnymetz.com. Posts live in `content/posts/*.md`. `demo/` is a Django app with code backing older posts. New posts don't need demo code: verify snippets ad hoc (e.g. a throwaway script in the scratchpad) instead of adding to `demo/`, unless asked.
 
 ## Commands
 
