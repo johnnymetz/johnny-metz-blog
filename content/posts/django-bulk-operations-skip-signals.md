@@ -6,7 +6,7 @@ tags:
   - Django
 ShowToc: true
 cover:
-  image: 'covers/django-alarm.png'
+  image: 'covers/django-runtime-error.png'
 ---
 
 Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals, so your receivers never fire. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly skips that critical work. This post shows how to make those calls fail loudly instead.
