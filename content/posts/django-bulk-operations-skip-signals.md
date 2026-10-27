@@ -96,12 +96,14 @@ class Book(models.Model):
         base_manager_name = "objects"
 ```
 
-The base manager matters because Django runs some writes through it instead of `objects`, and they skip signals too:
+The base manager matters because Django runs a few internal writes through it instead of `objects`, and they skip signals too:
 
-- `publisher.book_set.add(book)` sets the foreign key with `Book._base_manager.update()`.
-- Deleting a publisher nulls `Book.publisher` (`on_delete=models.SET_NULL`) the same way.
+- Deleting a publisher sets `publisher` to `NULL` on each of its books with `Book._base_manager.update()`.
+- `publisher.book_set.add(book)` moves the book the same way.
 
-By default the base manager is a plain `Manager`, so neither write is caught. Pointing it at `objects` makes both raise. [`m2m_changed`](https://docs.djangoproject.com/en/6.1/ref/signals/#m2m-changed) can't help here; it only fires for `ManyToManyField`.
+The base manager is a plain `Manager` by default, so neither write is caught. Pointing it at `objects` makes both raise, so deleting a publisher that still has books now needs `skip_signals()`.
+
+One rule: the base manager must not filter rows. Django's own `save()` runs its `UPDATE` through it, so a manager that hides rows (soft-deleted, archived) turns saves of those rows into duplicate-key `INSERT`s. If your `objects` filters, point `base_manager_name` at a second, unfiltered `SignalSafeQuerySet` manager.
 
 Now the bulk call fails the first time it runs, ideally in your test suite rather than in production:
 
