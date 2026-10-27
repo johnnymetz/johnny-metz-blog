@@ -10,7 +10,7 @@ cover:
 draft: true
 ---
 
-Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly leaves that data stale. This post shows how to make those calls fail loudly instead.
+Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly leaves that data stale. This post shows how to make those calls fail loudly instead.
 
 ## The Footgun
 
@@ -20,6 +20,7 @@ Say a receiver keeps a search index in sync whenever a book is saved:
 class Book(models.Model):
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
+    publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
 
 @receiver(post_save, sender=Book)
 def index_book(sender, instance, **kwargs):
@@ -84,13 +85,23 @@ class SignalSafeQuerySet(models.QuerySet):
             )
 ```
 
-Attach it to every model whose signals do real work:
+Attach it to every model whose signals do real work, as both the default and the [base manager](https://docs.djangoproject.com/en/6.1/topics/db/managers/#base-managers):
 
 ```python
 class Book(models.Model):
     ...
     objects = SignalSafeQuerySet.as_manager()
+
+    class Meta:
+        base_manager_name = "objects"
 ```
+
+The base manager matters because Django runs some writes through it instead of `objects`, and they skip signals too:
+
+- `publisher.book_set.add(book)` sets the foreign key with `Book._base_manager.update()`.
+- Deleting a publisher nulls `Book.publisher` (`on_delete=models.SET_NULL`) the same way.
+
+By default the base manager is a plain `Manager`, so neither write is caught. Pointing it at `objects` makes both raise. [`m2m_changed`](https://docs.djangoproject.com/en/6.1/ref/signals/#m2m-changed) can't help here; it only fires for `ManyToManyField`.
 
 Now the bulk call fails the first time it runs, ideally in your test suite rather than in production:
 
@@ -122,4 +133,4 @@ Use it sparingly. Every `skip_signals()` block is a place where search indexes, 
 
 ## What It Doesn't Cover
 
-This guards the ORM, not the database. Raw SQL, data migrations, and reverse foreign key `add()` (which uses `_base_manager`, [another place custom managers don't run](https://johnnymetz.com/posts/django-custom-managers-data-leak/)) still skip signals.
+This guards the ORM, not the database. Raw SQL and data migrations still skip signals.
