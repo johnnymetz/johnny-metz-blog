@@ -1,0 +1,16 @@
+{{- /* Render ```mermaid fenced code blocks as diagrams. The Mermaid script is
+emitted inline with the first diagram on a page (not in a footer partial,
+because PaperMod renders the footer with partialCached, so a per-page store flag
+is unreliable there). */ -}}
+<pre class="mermaid">
+  {{- .Inner | htmlEscape | safeHTML }}
+</pre>
+{{- if not (.Page.Store.Get "hasMermaid") }} {{- .Page.Store.Set "hasMermaid"
+true }}
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.esm.min.mjs';
+  // PaperMod toggles the "dark" class on <body>; match it at render time.
+  const isDark = document.body.classList.contains('dark');
+  mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'neutral' });
+</script>
+{{- end }}
