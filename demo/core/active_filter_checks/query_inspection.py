@@ -16,11 +16,7 @@ from .common import (
 def _get_model_aliases_in_query(query, model) -> set:
     """Return aliases that reference a model."""
     table_name = model._meta.db_table.lower()  # noqa: SLF001
-    return {
-        alias
-        for alias, obj in query.alias_map.items()
-        if obj.table_name.lower() == table_name
-    }
+    return {alias for alias, obj in query.alias_map.items() if obj.table_name.lower() == table_name}
 
 
 def _collect_active_filter_aliases(node, result: set) -> None:
