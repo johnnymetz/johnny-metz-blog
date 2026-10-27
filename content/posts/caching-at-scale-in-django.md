@@ -24,14 +24,14 @@ flowchart LR
   W --> RR[(Postgres read replica)]
 ```
 
-## When caching is needed, and where to start
+## Cache when nothing cheaper works
 
-Caching is the answer when database CPU is saturated and nothing cheaper will relieve it. For us, nothing cheaper did:
+Caching is the answer when database CPU is saturated and nothing simpler will relieve it. For us, each alternative fell short:
 
 - **[Query tuning]({{< relref "/tags/query-optimization" >}})** helped at first, but at some volume even a well-tuned query is too expensive to run thousands of times a second.
 - **Postgres's own cache** holds pages and indexes, not query results, so a hot read still burns CPU on every call even when everything it touches is in memory.
-- **Scaling out with read replicas** still runs every query and adds replication-lag bugs.
 - **Scaling up to a bigger primary** is a one-time, expensive bump in headroom that growth soon consumes.
+- **Scaling out with read replicas** still runs every query and adds replication-lag bugs.
 
 Rank queries by total database time, not per-query latency. A 2 ms query running thousands of times a second burns more database time than a 500 ms query running once a minute. A production CPU profile of our web processes agreed: the hot paths were the high-volume ones. Work the list top down. For us that meant whole endpoint responses first.
 
@@ -111,12 +111,12 @@ So invalidation has to be correct anyway. We invalidate immediately on writes wi
 
 More invalidation lessons, each learned the hard way:
 
+- **Block writes that skip Django signals.** `bulk_create` and `QuerySet.update` fire no Django signals, so a custom QuerySet on cached models raises on them unless the caller opts out. Raw SQL still slips through. Postgres triggers would catch it, but they move invalidation logic into SQL, far from the application code and harder to test, so we accepted the gap.
 - **Invalidate after commit** with [`transaction.on_commit`](https://docs.djangoproject.com/en/6.1/topics/db/transactions/#performing-actions-after-commit). Clear a key mid-transaction and a concurrent request re-caches the pre-commit rows.
 - **Rebuild from the primary.** A refill from the replica can store rows replication has not caught up to.
-- **Block writes that skip Django signals.** `bulk_create` and `QuerySet.update` fire no Django signals, so a custom QuerySet on cached models raises on them unless the caller opts out. Raw SQL still slips through. Postgres triggers would catch it, but they move invalidation logic into SQL, far from the application code and harder to test, so we accepted the gap.
 - **Keep bases flat.** The natural shape is a document base that embeds its owner, the way a nested DRF serializer would. But then a user changing their name must invalidate every document they own, and every nested model adds another edge for invalidation to follow. Store `owner_id` instead, cache owners under their own key, and join them at assembly. It costs one more Redis call per request to fetch all the owner payloads, and in return a write to any model clears only that model's keys.
 
-## Blast radius, the biggest liability
+## Limit the invalidation blast radius
 
 Some writes invalidate far more keys than they should, and every cleared key is a refill the database pays for on that user's next request. Early on, a large customer edited one row that thousands of its users read. Our Django signal handler cleared every key for every one of them, and the refill overloaded the database and degraded the API for several minutes.
 
@@ -142,6 +142,6 @@ Redis did stall on us once, when a maintenance process run by our cloud provider
 
 ## Results
 
-Over the main rollout window, throughput rose about 40%, average latency fell about 40%, database queries per second halved, and web CPU halved on fewer servers. Traffic has kept growing since, and database load has not.
+During the three-month rollout, traffic rose about 40% while average latency fell about 40%, database queries per second halved, and web CPU halved on fewer servers. Traffic has kept growing since, and database load has not. Redis comfortably absorbs the growth instead.
 
-The short version: cache the shared thing once, keep the per-user part small, and invalidate exactly what changed.
+The short version: cache the shared thing once, keep the per-user part small, invalidate exactly what changed, and treat Redis like the database it now protects.
