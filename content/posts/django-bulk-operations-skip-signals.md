@@ -1,16 +1,15 @@
 ---
 title: 'Stop Django Bulk Operations From Silently Skipping Signals'
-date: 2026-10-26T00:00:00-07:00
+date: 2026-10-27T12:00:00-07:00
 tags:
   - Python
   - Django
 ShowToc: true
 cover:
   image: 'covers/django.png'
-draft: true
 ---
 
-Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly skips that critical work. This post shows how to make those calls fail loudly instead.
+Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals, so your receivers never fire. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.1/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly skips that critical work. This post shows how to make those calls fail loudly instead.
 
 ## The Footgun
 
@@ -19,7 +18,6 @@ Say a receiver keeps a search index in sync whenever a book is saved:
 ```python
 class Book(models.Model):
     title = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=6, decimal_places=2)
     publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
 
 @receiver(post_save, sender=Book)
@@ -30,23 +28,23 @@ def index_book(sender, instance, **kwargs):
 Saving a single book works:
 
 ```python
-book.price = 10
+book.title = "Dune Messiah"
 book.save()  # ✅ Reindexed
 ```
 
 The bulk equivalents don't:
 
 ```python
-Book.objects.bulk_create(books)                   # ❌ New books not searchable
-Book.objects.bulk_update(books, ["price"])        # ❌ Search shows old prices
-Book.objects.filter(pk=book.pk).update(price=10)  # ❌ Search shows old price
+Book.objects.bulk_create(books)                               # ❌ New books not searchable
+Book.objects.bulk_update(books, ["title"])                    # ❌ Search shows old titles
+Book.objects.filter(pk=book.pk).update(title="Dune Messiah")  # ❌ Search shows old title
 ```
 
 There's no error and no warning. Search results drift from the database until something resyncs them. It's also easy to introduce: in code review, swapping a loop of `save()` calls for one `update()` looks like a performance win, not a bug.
 
 ## Make It Loud
 
-Override the three methods on a custom queryset and raise unless the caller explicitly opts out:
+Add a guardrail: override the three methods on a custom queryset and raise unless the caller explicitly opts out:
 
 ```python
 from contextlib import contextmanager
@@ -96,7 +94,7 @@ class Book(models.Model):
         base_manager_name = "objects"
 ```
 
-The base manager matters because Django runs a few internal writes through it instead of `objects` ([much like reads that skip custom managers](https://johnnymetz.com/posts/django-custom-managers-data-leak/)), and they skip `post_save` too:
+The base manager matters because Django runs a few internal writes through it instead of `objects` (the same kind of blind spot as [reads that skip custom managers](https://johnnymetz.com/posts/django-custom-managers-data-leak/)), and they skip `post_save` too:
 
 ```python
 publisher.book_set.add(book)  # ❌ Reverse foreign key add()
@@ -111,7 +109,7 @@ The base manager is a plain `Manager` by default, so neither write is caught. Po
 Now the bulk call fails loudly:
 
 ```python
->>> Book.objects.filter(pk=book.pk).update(price=10)
+>>> Book.objects.filter(pk=book.pk).update(title="Dune Messiah")
 RuntimeError: Book.update() skips signals. Use save() or wrap it in skip_signals().
 ```
 
@@ -126,14 +124,14 @@ The same goes for a custom many-to-many `through` model with its own receivers: 
 
 ## Opting Out
 
-Sometimes you need the bulk speed, like a backfill that touches a million rows. Wrap the call:
+Sometimes you need the bulk speed, like a backfill that trims whitespace from a million titles. Wrap the call:
 
 ```python
 with skip_signals():
-    Book.objects.filter(publisher=publisher).update(price=F("price") * 0.9)
+    Book.objects.update(title=Trim("title"))
 ```
 
-The two base manager writes are different. A reverse foreign key `add()` has a signal-safe mode, so it needs no bypass:
+The two base manager writes need different handling. A reverse foreign key `add()` has a signal-safe mode, so it needs no bypass:
 
 ```python
 publisher.book_set.add(book, bulk=False)  # ✅ Calls save() per book
