@@ -10,11 +10,11 @@ cover:
 draft: true
 ---
 
-Django's [`bulk_create()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#update) are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals. It's documented, but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly leaves that data stale. This post shows how to make those calls fail loudly instead.
+Django's `bulk_create()`, `bulk_update()`, and `update()` are fast because they skip `save()`. That also means they skip the `pre_save` and `post_save` signals. It's documented for [`bulk_create()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-create), [`bulk_update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-update), and [`update()`](https://docs.djangoproject.com/en/6.0/ref/models/querysets/#update), but nothing warns you at runtime. If a signal invalidates a cache, writes an audit log, or syncs a search index, one bulk call quietly leaves that data stale. This post shows how to make those calls fail loudly instead.
 
 ## The Footgun
 
-Say a receiver clears a book's cache entry whenever it's saved:
+Say a receiver keeps a search index in sync whenever a book is saved:
 
 ```python
 class Book(models.Model):
@@ -22,26 +22,26 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=6, decimal_places=2)
 
 @receiver(post_save, sender=Book)
-def invalidate_book_cache(sender, instance, **kwargs):
-    cache.delete(f"book:{instance.pk}")
+def index_book(sender, instance, **kwargs):
+    search_index.upsert(instance)
 ```
 
 Saving a single book works:
 
 ```python
 book.price = 10
-book.save()  # ✅ Cache cleared
+book.save()  # ✅ Reindexed
 ```
 
 The bulk equivalents don't:
 
 ```python
-Book.objects.filter(pk=book.pk).update(price=10)  # ❌ Stale cache
-Book.objects.bulk_create(books)                   # ❌ No post_save
-Book.objects.bulk_update(books, ["price"])        # ❌ No post_save
+Book.objects.filter(pk=book.pk).update(price=10)  # ❌ Search shows old price
+Book.objects.bulk_create(books)                   # ❌ New books not searchable
+Book.objects.bulk_update(books, ["price"])        # ❌ Search shows old prices
 ```
 
-There's no error and no warning. Readers see the old price until the cache expires. It's also easy to introduce: in code review, swapping a loop of `save()` calls for one `update()` looks like a performance win, not a bug.
+There's no error and no warning. Search results drift from the database until someone notices. It's also easy to introduce: in code review, swapping a loop of `save()` calls for one `update()` looks like a performance win, not a bug.
 
 ## Make It Loud
 
@@ -118,14 +118,8 @@ with skip_signals():
     Book.objects.filter(publisher=publisher).update(price=F("price") * 0.9)
 ```
 
-Why a context manager instead of a keyword argument? `bulk_update()` calls `update()` internally, so a flag passed to `bulk_update()` would never reach it. A context variable covers everything inside the block, including those internal calls.
-
-Use it sparingly. Every `skip_signals()` block is a place where caches, audit logs, or anything else driven by signals won't update. The upside is that each one is now an explicit, searchable decision that shows up in code review.
+Use it sparingly. Every `skip_signals()` block is a place where search indexes, caches, or anything else driven by signals won't update. The upside is that each one is now an explicit, searchable decision that shows up in code review.
 
 ## What It Doesn't Cover
 
 This guards the ORM, not the database. Raw SQL, data migrations, and reverse foreign key `add()` (which uses `_base_manager`, [another place custom managers don't run](https://johnnymetz.com/posts/django-custom-managers-data-leak/)) still skip signals.
-
----
-
-Bulk operations skipping signals is documented behavior, but documentation doesn't stop a one-line `update()` from shipping. If a model's signals matter, give it a `SignalSafeQuerySet` and make skipping them a choice instead of an accident.
