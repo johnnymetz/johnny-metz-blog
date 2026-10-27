@@ -21,7 +21,6 @@ class Book(models.Model):
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
-    tags = models.ManyToManyField(Tag, through="BookTag")
 
 @receiver(post_save, sender=Book)
 def index_book(sender, instance, **kwargs):
@@ -38,12 +37,12 @@ book.save()  # ✅ Reindexed
 The bulk equivalents don't:
 
 ```python
-Book.objects.filter(pk=book.pk).update(price=10)  # ❌ Search shows old price
 Book.objects.bulk_create(books)                   # ❌ New books not searchable
 Book.objects.bulk_update(books, ["price"])        # ❌ Search shows old prices
+Book.objects.filter(pk=book.pk).update(price=10)  # ❌ Search shows old price
 ```
 
-There's no error and no warning. Search results drift from the database until someone notices. It's also easy to introduce: in code review, swapping a loop of `save()` calls for one `update()` looks like a performance win, not a bug.
+There's no error and no warning. Search results drift from the database until something resyncs them. It's also easy to introduce: in code review, swapping a loop of `save()` calls for one `update()` looks like a performance win, not a bug.
 
 ## Make It Loud
 
@@ -119,36 +118,11 @@ RuntimeError: Book.update() skips signals. Use save() or wrap it in skip_signals
 Everything that fires signals keeps working:
 
 - `save()`, `create()`, `get_or_create()`, and `update_or_create()` all go through `save()`.
-- `delete()` already sends `pre_delete` and `post_delete` for each row.
+- `delete()`, on an instance or a queryset, already sends `pre_delete` and `post_delete` for each row.
 
 The async variants (`aupdate()`, `abulk_create()`, and `abulk_update()`) call their sync counterparts, so they're blocked for free.
 
-### Many-to-Many Fields
-
-Many-to-many fields with a custom `through` model have the same footgun. (Auto-created join tables never send `post_save`; their only hook is `m2m_changed`, which `add()` sends.) Each `book.tags` link is a `BookTag` row, and a receiver reindexes the book when one is saved:
-
-```python
-class BookTag(models.Model):
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-
-@receiver(post_save, sender=BookTag)
-def index_book_tags(sender, instance, **kwargs):
-    search_index.upsert([instance.book_id])
-
-book.tags.add(tag)  # ❌ No post_save, search misses the new tag
-```
-
-`add()` inserts `BookTag` rows with `bulk_create()`, so the receiver never runs (Django sends [`m2m_changed`](https://docs.djangoproject.com/en/6.1/ref/signals/#m2m-changed) instead). Give `BookTag` a `SignalSafeQuerySet` too:
-
-```python
-class BookTag(models.Model):
-    ...
-    objects = SignalSafeQuerySet.as_manager()
-
-book.tags.add(tag)                          # RuntimeError: BookTag.bulk_create() skips signals
-BookTag.objects.create(book=book, tag=tag)  # ✅ Reindexed
-```
+The same goes for a custom many-to-many `through` model with its own receivers: `book.tags.add(tag)` inserts its rows with `bulk_create()`, so giving the through model a `SignalSafeQuerySet` makes `add()` raise too.
 
 ## Opting Out
 
@@ -159,11 +133,15 @@ with skip_signals():
     Book.objects.filter(publisher=publisher).update(price=F("price") * 0.9)
 ```
 
-The two base manager writes are different. A reverse foreign key `add()` has a signal-safe mode, so it needs no bypass. Deletes do, every time: Django runs the `SET_NULL` update even when the publisher has no books. Run the receiver's logic for the affected books yourself:
+The two base manager writes are different. A reverse foreign key `add()` has a signal-safe mode, so it needs no bypass:
 
 ```python
 publisher.book_set.add(book, bulk=False)  # ✅ Calls save() per book
+```
 
+Deletes do, every time: Django runs the `SET_NULL` update even when the publisher has no books. Run the receiver's logic for the affected books yourself:
+
+```python
 book_ids = list(publisher.book_set.values_list("pk", flat=True))
 with skip_signals():
     publisher.delete()
