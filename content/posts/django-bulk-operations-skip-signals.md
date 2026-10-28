@@ -153,3 +153,5 @@ Bypass sparingly. Every `skip_signals()` block is a place where search indexes, 
 This guards the ORM, not the database. Raw SQL and data migrations (which use [historical models](https://docs.djangoproject.com/en/6.1/topics/migrations/#historical-models)) still skip signals.
 
 Covering every write path means moving the side effect into the database itself, such as a trigger that queues changed rows in an outbox table for a worker to process. Most databases support triggers, and on Postgres, [django-pgtrigger](https://github.com/AmbitionEng/django-pgtrigger) lets you define them alongside your models. However, that's more complex and lives far from your app code. If your bulk writes go through the ORM, the queryset guard is the better trade-off.
+
+Discuss: [Reddit](https://www.reddit.com/r/django/comments/1xhefcs/stop_django_bulk_operations_from_silently/)
