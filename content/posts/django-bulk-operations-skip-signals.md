@@ -52,15 +52,15 @@ from contextvars import ContextVar
 
 from django.db import models
 
-_skip_signals = ContextVar("skip_signals", default=False)
+_allow_signal_skipping = ContextVar("allow_signal_skipping", default=False)
 
 @contextmanager
-def skip_signals():
-    token = _skip_signals.set(True)
+def allow_signal_skipping():
+    token = _allow_signal_skipping.set(True)
     try:
         yield
     finally:
-        _skip_signals.reset(token)
+        _allow_signal_skipping.reset(token)
 
 class SignalSafeQuerySet(models.QuerySet):
     def bulk_create(self, *args, **kwargs):
@@ -76,10 +76,10 @@ class SignalSafeQuerySet(models.QuerySet):
         return super().update(**kwargs)
 
     def _check(self, method):
-        if not _skip_signals.get():
+        if not _allow_signal_skipping.get():
             raise RuntimeError(
                 f"{self.model.__name__}.{method}() skips signals. "
-                "Use save() or wrap it in skip_signals()."
+                "Use save() or wrap it in allow_signal_skipping()."
             )
 ```
 
@@ -110,7 +110,7 @@ Now the bulk call fails loudly:
 
 ```python
 >>> Book.objects.filter(pk=book.pk).update(title="Dune Messiah")
-RuntimeError: Book.update() skips signals. Use save() or wrap it in skip_signals().
+RuntimeError: Book.update() skips signals. Use save() or wrap it in allow_signal_skipping().
 ```
 
 Everything that fires signals keeps working:
@@ -127,7 +127,7 @@ The same goes for a custom many-to-many `through` model with its own receivers: 
 Sometimes you need the bulk speed, like a backfill that trims whitespace from a million titles. Wrap the call:
 
 ```python
-with skip_signals():
+with allow_signal_skipping():
     Book.objects.update(title=Trim("title"))
 ```
 
@@ -141,12 +141,12 @@ Deletes do, every time: Django runs the `SET_NULL` update even when the publishe
 
 ```python
 book_ids = list(publisher.book_set.values_list("pk", flat=True))
-with skip_signals():
+with allow_signal_skipping():
     publisher.delete()
 search_index.upsert(book_ids)
 ```
 
-Bypass sparingly. Every `skip_signals()` block is a place where search indexes, caches, or anything else driven by signals won't update. The upside is that each one is now an explicit, searchable decision that shows up in code review.
+Bypass sparingly. Every `allow_signal_skipping()` block is a place where search indexes, caches, or anything else driven by signals won't update. The upside is that each one is now an explicit, searchable decision that shows up in code review.
 
 ## What It Doesn't Cover
 
