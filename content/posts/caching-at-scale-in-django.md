@@ -1,6 +1,6 @@
 ---
 title: 'Caching at Scale in Django: Lessons from Production'
-date: 2026-10-25T12:00:00-04:00
+date: 2026-11-01T12:00:00-08:00
 tags:
   - Django
   - Redis
@@ -8,6 +8,8 @@ tags:
   - Performance
   - PostgreSQL
 ShowToc: true
+cover:
+  image: 'covers/django-caching-at-scale.png'
 draft: true
 ---
 
@@ -111,7 +113,7 @@ So invalidation has to be correct anyway. We invalidate immediately on writes wi
 
 More invalidation lessons, each learned the hard way:
 
-- **Block writes that skip Django signals.** `bulk_create` and `QuerySet.update` fire no Django signals, so a custom QuerySet on cached models raises on them unless the caller opts out. Raw SQL still slips through. Postgres triggers would catch it, but they move invalidation logic into SQL, far from the application code and harder to test, so we accepted the gap.
+- **Block writes that skip Django signals.** Covered in [its own post]({{< relref "posts/django-bulk-operations-skip-signals.md" >}}).
 - **Invalidate after commit** with [`transaction.on_commit`](https://docs.djangoproject.com/en/6.1/topics/db/transactions/#performing-actions-after-commit). Clear a key mid-transaction and a concurrent request re-caches the pre-commit rows.
 - **Rebuild from the primary.** A refill from the replica can store rows replication has not caught up to.
 - **Keep bases flat.** The natural shape is a document base that embeds its owner, the way a nested DRF serializer would. But then a user changing their name must invalidate every document they own, and every nested model adds another edge for invalidation to follow. Store `owner_id` instead, cache owners under their own key, and join them at assembly. It costs one more Redis call per request to fetch all the owner payloads, and in return a write to any model clears only that model's keys.
