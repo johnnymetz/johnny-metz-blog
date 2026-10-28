@@ -120,11 +120,13 @@ More invalidation lessons, each learned the hard way:
 
 ## Limit the invalidation blast radius
 
-Some writes invalidate far more keys than they should, and every cleared key is a refill the database pays for on that user's next request. Early on, a large customer edited one row that thousands of its users read. Our Django signal handler cleared every key for every one of them, and the refill overloaded the database and degraded the API for several minutes.
+Some writes invalidate far more keys than they should, and every cleared key is a refill the database pays for on that user's next request. Early on, a large customer edited one row that thousands of its users read. Our Django signal handler cleared every key for every one of them, and the thundering herd of refills overloaded the database and degraded the API for several minutes.
 
 The fix was discipline: invalidate only the keys that changed, skip writes that change nothing, and prefer global keys over per-user keys, which is what the two-tier design above buys.
 
 The exception is fleet-wide changes, like flipping a feature flag from nobody to everybody. Clearing one key per user, for every user, is exactly the storm we avoid, so those caches keep a short TTL (one hour for flags) instead. We accept the slow rollout and keep an admin "clear cache" button for when someone needs it now.
+
+We have no protection against cache stampedes, where concurrent misses all rebuild one hot key at once. It has happened and never hurt, so for now we monitor for it and will add locking if growth changes that.
 
 ## Cache the identity lookup
 
