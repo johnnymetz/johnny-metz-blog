@@ -1,5 +1,5 @@
 ---
-title: 'Zero-Downtime Django Deploys with a Static Asset CDN'
+title: 'Prevent Rolling Deploys From Breaking Your Django Frontend'
 date: 2026-11-15T12:00:00-08:00
 tags:
   - Django
@@ -7,6 +7,7 @@ tags:
   - Performance
   - Caching
 ShowToc: true
+summary: "During a rolling deploy, new HTML can ask an old server for files it doesn't have. Fix it in Django with shared storage and a CDN."
 draft: true
 ---
 
@@ -42,6 +43,8 @@ sequenceDiagram
 ```
 
 The reverse fails the same way: old HTML asks a new server for `main.old.js`.
+
+This isn't just an SPA problem. Django's `ManifestStaticFilesStorage`, which WhiteNoise builds on, gives your own CSS and JavaScript hashed names too. So server-rendered templates and [htmx](https://htmx.org/) apps get the same 404 when new HTML asks an old server for `styles.new.css`.
 
 Open tabs are the hardest case. With [code splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
 
