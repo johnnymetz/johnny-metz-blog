@@ -8,6 +8,8 @@ tags:
   - Caching
 ShowToc: true
 summary: "During a rolling deploy, new HTML can ask an old server for files it doesn't have. Fix it in Django with shared storage and a CDN for zero-downtime deploys."
+cover:
+  image: 'covers/django-rolling-deploys.png'
 draft: true
 ---
 
