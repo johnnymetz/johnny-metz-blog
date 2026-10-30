@@ -10,7 +10,7 @@ ShowToc: true
 draft: true
 ---
 
-My team's Django app serves a React single-page app. Django renders the HTML shell, and [WhiteNoise](https://whitenoise.readthedocs.io/en/stable/django.html) served the JavaScript and CSS from the same app servers:
+My team's Django app serves a React SPA. Django renders the HTML shell, and [WhiteNoise](https://whitenoise.readthedocs.io/en/stable/django.html) served the JavaScript and CSS from the same app servers:
 
 ```python
 STORAGES = {
@@ -21,13 +21,13 @@ STORAGES = {
 }
 ```
 
-That worked until our hosting platform moved us to rolling deploys. From then on, some users got a blank page during every deploy. The problem has a name, version skew, and the fix is to take static files out of the deploy entirely.
+That worked while our deploys switched all traffic to the new release at once. When we moved to rolling deploys, old and new releases overlapped for minutes instead of seconds, and some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/), and the fix is to take static files out of the deploy entirely.
 
 ## Version Skew in a Rolling Deploy
 
 A rolling deploy replaces servers a few at a time, so old and new releases serve traffic side by side for several minutes. The load balancer routes every request independently.
 
-Webpack gives each build's files content-hashed names, like `main.A.js` and `main.B.js`, so browsers can cache them forever. But each server only has its own release's files:
+Webpack names each file after a hash of its contents, like `main.3f9a1c.js`, so browsers can cache it forever and every build that changes a file gives it a new name. Call them `main.old.js` and `main.new.js`. Each server only has its own release's files:
 
 ```mermaid
 sequenceDiagram
@@ -35,23 +35,24 @@ sequenceDiagram
   participant New as New server
   participant Old as Old server
   Browser->>New: GET /app (load balancer picks a new server)
-  New-->>Browser: HTML that references main.B.js
-  Browser->>Old: GET main.B.js (load balancer picks an old server)
+  New-->>Browser: HTML that references main.new.js
+  Browser->>Old: GET main.new.js (load balancer picks an old server)
   Old-->>Browser: 404
   Note over Browser: ChunkLoadError, blank page
 ```
 
-The reverse fails the same way: old HTML asks a new server for `main.A.js`.
+The reverse fails the same way: old HTML asks a new server for `main.old.js`.
 
-Open tabs are the hardest case. With code splitting, the app loads chunks lazily as the user navigates, so a tab opened before the deploy requests `chunk.A.js` long after every old server is gone. Any app that lazy-loads code has to handle this, whatever its architecture.
+Open tabs are the hardest case. With [code splitting](https://webpack.js.org/guides/code-splitting/), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
+
+The problem is common enough that [Vercel](https://vercel.com/docs/skew-protection) and [Netlify](https://www.netlify.com/blog/introducing-netlify-skew-protection) built skew protection into their hosting: they route each user to the deployment that served their page. When Django serves your SPA, the fix is up to you.
 
 ## Fixes That Don't Work on Their Own
 
 - **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: the first request isn't pinned yet, a deploy replaces the server you're pinned to, and open tabs still ask new servers for old files.
-- **Blue-green deploys.** Start a full new fleet, then switch all traffic at once. The overlap almost disappears, but open tabs still break after the switch, and every deploy pays for two fleets, database connections included.
+- **Blue-green deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
 - **Reloading on `ChunkLoadError`.** Catch the error and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
-- **Deploying the frontend separately.** Moving the single-page app to a static host takes Django out of the picture, but the problem moves with it. The host still has to keep old files for open tabs, and [some hosts delete them on every deploy](https://answers.netlify.com/t/support-guide-handling-code-splitting-issues-on-netlify/113158). You also take on a second deploy pipeline.
-- **A CDN in front of the app servers.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it, and it gets close. But a cache miss for `main.B.js` still goes to whichever server the load balancer picks, and CloudFront [caches that 404](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html) for 10 seconds by default, for everyone at that edge.
+- **A CDN in front of the app servers.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it, and it gets close. But a cache miss for `main.new.js` still goes to whichever server the load balancer picks, and CloudFront [caches that 404](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html) for 10 seconds by default, for everyone at that edge.
 
 The CDN isn't the problem. Where the files live is.
 
@@ -60,7 +61,7 @@ The CDN isn't the problem. Where the files live is.
 Take static files out of the deploy. Every release uploads its files to shared storage: one bucket that every release writes to and every request reads from, which outlives any single release. A CDN serves the bucket. Two rules make it work:
 
 1. Upload in a release step that runs before any new server takes traffic, so new HTML never references a file that isn't there yet.
-2. Never delete old files, so old HTML and open tabs always find theirs.
+2. Keep old files as long as anything might still request them, so old HTML and open tabs always find theirs.
 
 ```mermaid
 flowchart LR
@@ -72,13 +73,14 @@ flowchart LR
 
 Content-hashed names pay off here. A file that didn't change keeps its name across releases, so it's never re-uploaded and browsers keep it cached. Per-release folders (`/static/<release>/main.js`) also work with shared storage, but every deploy changes every URL, so users re-download everything.
 
-Don't add an expiration rule. S3 [lifecycle rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html) expire objects by upload age, and an unchanged file is never re-uploaded, so an age-based rule would delete files the current build still uses. Keeping everything costs pennies a month.
+Deleting old files safely is harder than it looks. An S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html) expires objects by upload age, and an unchanged file is never re-uploaded, so it would delete files the current build still uses. A safe cleanup keeps every file that recent releases reference and deletes the rest after a grace period. We skipped that and keep everything. For us that costs pennies a month; a site with more or larger files will pay more, but storage is cheap.
 
 ## The Django Side
 
-`STATIC_URL` becomes the switch. An absolute URL means "upload to the bucket and serve from the CDN". A relative one keeps Django's defaults, so local development needs no bucket.
+`STATIC_URL` becomes the switch, and one small storage class handles the rest:
 
 ```python
+# settings.py
 import os
 from urllib.parse import urlparse
 
@@ -90,40 +92,38 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
+# An absolute STATIC_URL (one with a domain) turns on CDN mode: collectstatic
+# uploads to the bucket and templates link to the CDN. A relative one keeps
+# Django's defaults, so local development needs no bucket.
 if urlparse(STATIC_URL).netloc:
-    STORAGES["staticfiles"] = {"BACKEND": "config.storage.StaticStorage"}
-    INSTALLED_APPS.insert(0, "collectfasta")  # before django.contrib.staticfiles
-    COLLECTFASTA_STRATEGY = "collectfasta.strategies.boto3.Boto3ManifestMemoryStrategy"
-    COLLECTFASTA_THREADS = 10
-```
+    STORAGES["staticfiles"] = {
+        "BACKEND": "config.storage.StaticStorage",
+        "OPTIONS": {
+            "bucket_name": os.environ["STATIC_BUCKET_NAME"],
+            "custom_domain": urlparse(STATIC_URL).netloc,  # link to the CDN, not S3
+        },
+    }
 
-`StaticStorage` (below) builds on [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html)' `S3ManifestStaticStorage`. That ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
 
-Stock `collectstatic` is slow against a bucket. It decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. [collectfasta](https://github.com/jasongi/collectfasta) compares content hashes instead and uploads in parallel. A typical deploy now uploads only the files that changed, in seconds instead of over an hour. It replaces the `collectstatic` command, which is why it has to come before `django.contrib.staticfiles`.
-
-### The Manifest Is Shared Too
-
-One Django gotcha remains. [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) keeps its manifest, `staticfiles.json`, in the bucket, and every deploy overwrites it. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Webpack already hashes its files, so skip the manifest for them:
-
-```python
 # config/storage.py
-from urllib.parse import urlparse
-
-from django.conf import settings
 from storages.backends.s3 import S3ManifestStaticStorage
 
 
 class StaticStorage(S3ManifestStaticStorage):
-    bucket_name = settings.STATIC_BUCKET_NAME
-    custom_domain = urlparse(settings.STATIC_URL).netloc
-
     def stored_name(self, name):
-        if name.startswith("bundles/"):  # already hashed by webpack
+        # Webpack already hashed these files, so skip Django's manifest (see below)
+        if name.startswith("bundles/"):
             return name
         return super().stored_name(name)
 ```
 
-Django's own files still go through the manifest. That's safe, because they're looked up by names that don't change between releases.
+`S3ManifestStaticStorage` comes from [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html). It ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
+
+Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock `collectstatic` decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. Its README covers setup. Start with 10 threads: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
+
+### The Manifest Is Shared Too
+
+That `stored_name` override fixes one Django-specific gotcha. [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) keeps its manifest, `staticfiles.json`, in the bucket, and every deploy overwrites it. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Webpack's files are already hashed, so the override serves them by their own names and never asks the manifest. Django's own files still go through it, which is safe because they're looked up by names that don't change between releases.
 
 ## Serving It From CloudFront
 
@@ -136,10 +136,12 @@ We already ran CloudFront for another asset domain, so we reused it. Any CDN tha
 - **CORS for fonts.** Browsers fetch cross-origin fonts with CORS, so add the headers with a [managed response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html).
 - **No invalidations.** New content always gets a new name, so a deploy never has to purge the cache.
 
+## What This Doesn't Fix
+
+This fixes skew for static files, not for your API. Mid-rollout, new frontend code can still call an endpoint that old servers don't have yet. Keep API changes backward compatible across a release, for example by shipping a new endpoint one deploy before the frontend uses it.
+
 ## What's Next
 
-This fixes skew for static files, not for your API. Mid-rollout, new frontend code can still call an endpoint that old servers don't have yet, so keep API changes backward compatible across a release.
+Infrastructure as code. Defining the bucket, distribution, and DNS records in a tool like Terraform makes every environment identical and every change reviewable.
 
-Next for us is infrastructure as code. Defining the bucket, distribution, and DNS records in a tool like Terraform makes every environment identical and every change reviewable.
-
-The short version: upload every build's files to shared storage before the release takes traffic, never delete them, and let the CDN do the rest.
+The short version: upload every build's files to shared storage before the release takes traffic, keep them while anything might still need them, and let the CDN do the rest.
