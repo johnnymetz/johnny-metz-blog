@@ -9,8 +9,8 @@ is unreliable there). */ -}}
 true }}
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.esm.min.mjs';
-  // PaperMod toggles the "dark" class on <body>; match it at render time.
-  const isDark = document.body.classList.contains('dark');
+  // PaperMod sets data-theme on <html> before render; match it at render time.
+  const isDark = document.documentElement.dataset.theme === 'dark';
   mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'neutral' });
 </script>
 {{- end }}
