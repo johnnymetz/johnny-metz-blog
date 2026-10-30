@@ -33,7 +33,7 @@ sequenceDiagram
 
 The reverse fails the same way: old HTML asks a new server for `main.old.js`.
 
-This isn't just an SPA problem. If you use Django's `ManifestStaticFilesStorage` (WhiteNoise's storage builds on it), your own CSS and JavaScript get hashed names too. So server-rendered templates and [htmx](https://htmx.org/) apps get the same 404 when new HTML asks an old server for `styles.new.css`.
+This isn't just an SPA problem. If you use Django's [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage), directly or through WhiteNoise, your own CSS and JavaScript get hashed names too. So server-rendered templates and [htmx](https://htmx.org/) apps get the same 404 when new HTML asks an old server for `styles.new.css`.
 
 Open tabs are the hardest case. With [code splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
 
@@ -44,9 +44,9 @@ The problem is common enough that [Vercel](https://vercel.com/docs/skew-protecti
 - **Blue-green (atomic) deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
 - **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: when a deploy replaces your old server, your next request lands on a new one, and the page you already loaded still asks it for old files.
 - **Reloading when a chunk fails to load.** Catch the error (`ChunkLoadError` in webpack, `vite:preloadError` in Vite) and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
-- **A CDN that pulls from the app servers.** Point a CDN at your Django servers so it caches static files at the edge, as [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend. Files it has already cached survive a deploy, but a cache miss still goes to whichever server the load balancer picks, so new HTML can still get a 404 for `main.new.js`. Worse, the CDN can cache that 404 for everyone.
+- **WhiteNoise behind a CDN.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it: the CDN caches static files at the edge, so files it has already cached survive a deploy. But a cache miss for `main.new.js` can still land on an old server and get a 404. Worse, the CDN can cache that 404 for everyone.
 
-The CDN isn't the problem. Where the files live is.
+They all fall short for the same reason: each server only has its own release's files.
 
 ## Keep Every Build's Files in Shared Storage
 
@@ -69,7 +69,7 @@ Don't clean up with an S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/
 
 ## The Django Side
 
-A small storage class, plus `STATIC_URL` as the switch:
+A small [django-storages](https://django-storages.readthedocs.io/en/latest/index.html) class, plus `STATIC_URL` as the switch:
 
 ```python
 # config/storage.py
@@ -88,7 +88,10 @@ class StaticStorage(S3ManifestStaticStorage):
 import os
 from urllib.parse import urlparse
 
-STATIC_URL = os.environ["STATIC_URL"]  # CDN root "https://static.example.com/" or "/static/"
+# Production: "https://static.example.com/" (bucket + CDN)
+# Local: "/static/" (Django's defaults, no bucket)
+STATIC_URL = os.environ["STATIC_URL"]
+
 STATICFILES_DIRS = [("frontend", BASE_DIR / "frontend" / "dist")]  # bundler output
 
 STORAGES = {
@@ -96,31 +99,27 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
-# Absolute STATIC_URL: upload to the bucket and serve from the CDN.
-# Relative: Django's defaults, so local development needs no bucket.
 if cdn_domain := urlparse(STATIC_URL).netloc:
     STORAGES["staticfiles"] = {
         "BACKEND": "config.storage.StaticStorage",  # the class above
         "OPTIONS": {
             "bucket_name": os.environ["STATIC_BUCKET_NAME"],  # collectstatic uploads here
-            "custom_domain": cdn_domain,  # link to the CDN, not S3
+            "custom_domain": cdn_domain,  # link to the CDN, not the bucket
         },
     }
 ```
 
-`S3ManifestStaticStorage` comes from [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html). It ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
+The `stored_name` override fixes a Django-specific gotcha: the manifest, `staticfiles.json`, now lives in the bucket too, and every deploy overwrites it. Loaders like [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and [django-vite](https://github.com/MrBin99/django-vite) turn bundle names into URLs through that manifest. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Bundler output is already hashed, so the override serves it by its own names and never asks the manifest.
 
-The `stored_name` override fixes a Django-specific gotcha. With S3 storage, the [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) manifest, `staticfiles.json`, lives in the bucket too, and every deploy overwrites it. Loaders like [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and [django-vite](https://github.com/MrBin99/django-vite) turn bundle names into URLs through that manifest. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Bundler output is already hashed, so the override serves it by its own names and never asks the manifest. Django's own files still go through it, which is safe as long as a release doesn't delete a file that old templates still reference.
+Add [collectfasta](https://github.com/jasongi/collectfasta) as well. On a fresh CI build, stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) re-uploads every file one at a time, while collectfasta uploads only the changed files, in parallel. That cut our upload from over an hour to seconds.
 
-Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. Start with `COLLECTFASTA_THREADS = 10`: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
-
-## Serving It From CloudFront
+## Serving It From Amazon CloudFront
 
 We already ran CloudFront for another asset domain, so we reused it. Any CDN that can serve a bucket works, since Django only sees `STATIC_URL`. The settings worth getting right:
 
 - **Private bucket.** Block public access and let only the distribution read it, with [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
 - **Compression and edge caching.** Turn on compression and use the managed [`CachingOptimized`](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-caching-optimized) policy, which caches Brotli and gzip versions at the edge.
-- **Immutable browser caching.** Serve hashed files with `Cache-Control: public, max-age=31536000, immutable` so repeat visits skip revalidation. Keep unhashed files, like Vite's `public/` folder, on a short TTL. The cache policy only controls the edge, so set this header on the objects or with a [response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/modifying-response-headers.html).
+- **Immutable browser caching.** Give hashed files a long-lived [`immutable`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#immutable) `Cache-Control` header with a [response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/modifying-response-headers.html), so repeat visits skip revalidation. Keep unhashed files on a short TTL.
 - **No cache invalidations.** Changed content always gets a new hashed name, so a deploy never has to purge the cache.
 - **CORS.** Fonts and JavaScript modules from another domain need CORS headers. Add them with a response headers policy.
 
