@@ -21,7 +21,7 @@ STORAGES = {
 }
 ```
 
-That worked while our deploys switched all traffic to the new release at once. When we moved to rolling deploys, old and new releases overlapped for minutes instead of seconds, and some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/), and the fix is to take static files out of the deploy entirely.
+That worked while our deploys switched all traffic to the new release at once. When we moved to rolling deploys, old and new releases overlapped for minutes instead of seconds, and some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/): two releases running at once and disagreeing. It's the same problem behind [multistep database changes]({{< relref "multistep-database-changes" >}}), this time with static files. The fix is to take them out of the deploy entirely.
 
 ## Version Skew in a Rolling Deploy
 
@@ -45,12 +45,12 @@ The reverse fails the same way: old HTML asks a new server for `main.old.js`.
 
 Open tabs are the hardest case. With [code splitting](https://webpack.js.org/guides/code-splitting/), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
 
-The problem is common enough that [Vercel](https://vercel.com/docs/skew-protection) and [Netlify](https://www.netlify.com/blog/introducing-netlify-skew-protection) built skew protection into their hosting: they route each user to the deployment that served their page. When Django serves your SPA, the fix is up to you.
+The problem is common enough that Vercel built [Skew Protection](https://vercel.com/docs/skew-protection) into its hosting: it keeps old deployments alive and routes each page's requests to the deployment that served it. When Django serves your SPA, the fix is up to you.
 
 ## Fixes That Don't Work on Their Own
 
 - **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: the first request isn't pinned yet, a deploy replaces the server you're pinned to, and open tabs still ask new servers for old files.
-- **Blue-green deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
+- **Blue-green (atomic) deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
 - **Reloading on `ChunkLoadError`.** Catch the error and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
 - **A CDN in front of the app servers.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it, and it gets close. But a cache miss for `main.new.js` still goes to whichever server the load balancer picks, and CloudFront [caches that 404](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html) for 10 seconds by default, for everyone at that edge.
 
@@ -119,7 +119,7 @@ class StaticStorage(S3ManifestStaticStorage):
 
 `S3ManifestStaticStorage` comes from [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html). It ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
 
-Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock `collectstatic` decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. Its README covers setup. Start with 10 threads: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
+Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. Start with 10 threads: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
 
 ### The Manifest Is Shared Too
 
@@ -130,15 +130,10 @@ That `stored_name` override fixes one Django-specific gotcha. [`ManifestStaticFi
 We already ran CloudFront for another asset domain, so we reused it. Any CDN that can serve a bucket works, since Django only sees `STATIC_URL`. The settings worth getting right:
 
 - **Private bucket.** Block public access and let only the distribution read it, with [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
-- **HTTPS only.** Redirect HTTP to HTTPS and require TLS 1.2 or newer.
 - **Compression and edge caching.** Turn on compression and use the managed [`CachingOptimized`](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-caching-optimized) policy, which caches Brotli and gzip versions at the edge.
 - **Long browser caching.** Serve hashed files with `Cache-Control: public, max-age=31536000, immutable` so repeat visits skip revalidation. The cache policy only controls the edge, so set this header on the objects or with a response headers policy.
 - **CORS for fonts.** Browsers fetch cross-origin fonts with CORS, so add the headers with a [managed response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html).
 - **No invalidations.** New content always gets a new name, so a deploy never has to purge the cache.
-
-## What This Doesn't Fix
-
-This fixes skew for static files, not for your API. Mid-rollout, new frontend code can still call an endpoint that old servers don't have yet. Keep API changes backward compatible across a release, for example by shipping a new endpoint one deploy before the frontend uses it.
 
 ## What's Next
 
