@@ -65,7 +65,7 @@ flowchart LR
 
 Content-hashed names pay off here. A file that didn't change keeps its name across releases, so it doesn't need re-uploading and browsers keep it cached. Per-release folders (`/static/<release>/main.js`) also work with shared storage, but every deploy changes every URL, so users re-download everything.
 
-Don't clean up with an S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html). It expires objects by upload age, and with the setup below an unchanged file is uploaded only once, so the rule would eventually delete files the current build still uses. We keep everything, which costs us pennies a month.
+Don't expire old files by age, as an S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html) does. With the setup below, an unchanged file is uploaded only once, so an age-based rule would eventually delete files the current build still uses. We keep everything, which costs us pennies a month.
 
 ## The Django Side
 
@@ -113,9 +113,9 @@ The `stored_name` override fixes a Django-specific gotcha: the manifest, `static
 
 Add [collectfasta](https://github.com/jasongi/collectfasta) as well. On a fresh CI build, stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) re-uploads every file one at a time, while collectfasta uploads only the changed files, in parallel. That cut our upload from over an hour to seconds.
 
-## Serving It From Amazon CloudFront
+## Serving It From Amazon S3 and CloudFront
 
-We already ran CloudFront for another asset domain, so we reused it. Any CDN that can serve a bucket works, since Django only sees `STATIC_URL`. The settings worth getting right:
+We already used S3 and CloudFront for another asset domain, so we reused both. Any bucket and CDN work, since Django only sees `STATIC_URL`. The settings worth getting right:
 
 - **Private bucket.** Block public access and let only the distribution read it, with [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
 - **Compression and edge caching.** Turn on compression and use the managed [`CachingOptimized`](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-caching-optimized) policy, which caches Brotli and gzip versions at the edge.
@@ -123,8 +123,4 @@ We already ran CloudFront for another asset domain, so we reused it. Any CDN tha
 - **No cache invalidations.** Changed content always gets a new hashed name, so a deploy never has to purge the cache.
 - **CORS.** Fonts and JavaScript modules from another domain need CORS headers. Add them with a response headers policy.
 
-## What's Next
-
-Infrastructure as code. Defining the bucket, distribution, and DNS records in a tool like Terraform makes every environment identical and every change reviewable.
-
-The short version: upload every build's files to shared storage before the release takes traffic, keep them while anything might still need them, and let the CDN do the rest.
+Next, we're defining the bucket, distribution, and DNS records in Terraform, so every environment is identical and every change is reviewable.
