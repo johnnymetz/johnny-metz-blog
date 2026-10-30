@@ -5,6 +5,7 @@ tags:
   - Python
   - Django
 ShowToc: true
+summary: "Django's bulk_create(), bulk_update(), and update() silently skip save signals. Make them fail loudly with a custom QuerySet and an explicit opt-out."
 cover:
   image: 'covers/django-runtime-error.png'
 ---
