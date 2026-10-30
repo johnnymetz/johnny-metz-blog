@@ -7,28 +7,17 @@ tags:
   - Performance
   - Caching
 ShowToc: true
-summary: "During a rolling deploy, new HTML can ask an old server for files it doesn't have. Fix it in Django with shared storage and a CDN."
+summary: "During a rolling deploy, new HTML can ask an old server for files it doesn't have. Fix it in Django with shared storage and a CDN for zero-downtime deploys."
 draft: true
 ---
 
-My team's Django app serves a React SPA. Django renders the HTML shell, and [WhiteNoise](https://whitenoise.readthedocs.io/en/stable/django.html) served the JavaScript and CSS from the same app servers:
-
-```python
-STORAGES = {
-    # ...
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-```
-
-When we moved from blue-green to rolling deploys, some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/): the code in the browser and the code on the server come from different releases. To keep deploys zero-downtime, decouple static files from the app servers entirely.
+My team's Django app renders the HTML for a React SPA, and [WhiteNoise](https://whitenoise.readthedocs.io/en/stable/django.html) used to serve its JavaScript and CSS from the same app servers. When we moved from blue-green to rolling deploys, some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/): the code in the browser and the code on the server come from different releases. The fix is to decouple static files from the app servers: upload every build's files to shared storage and serve them from a CDN.
 
 ## Version Skew in a Rolling Deploy
 
-A rolling deploy replaces servers a few at a time, so old and new releases serve traffic side by side for several minutes. The load balancer routes every request independently.
+A rolling deploy is a common zero-downtime strategy: it replaces servers a few at a time, so old and new releases serve traffic side by side for several minutes. The load balancer routes every request independently.
 
-Bundlers like webpack and Vite name each file after a hash of its contents, like `main.3f9a1c.js`. That's cache busting for free: browsers can cache a file forever, and every build that changes it gives it a new name. Call them `main.old.js` and `main.new.js`. Each server only has its own release's files:
+Bundlers like webpack and Vite name each file after a hash of its contents, like `main.3f9a1c.js`, so every build that changes a file gives it a new name. Call them `main.old.js` and `main.new.js`. Each server only has its own release's files:
 
 ```mermaid
 sequenceDiagram
@@ -50,18 +39,18 @@ Open tabs are the hardest case. With [code splitting](https://developer.mozilla.
 
 The problem is common enough that [Vercel](https://vercel.com/docs/skew-protection) and [Netlify](https://www.netlify.com/blog/introducing-netlify-skew-protection) built skew protection into their hosting: they keep old deployments alive and route each page's requests to the deployment that served it. That only helps apps they host, so when Django serves your SPA, the fix is up to you.
 
-## Fixes That Don't Work on Their Own
+## Fixes That Fall Short
 
-- **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: a deploy replaces the server you're pinned to, so you get re-pinned to a server from the other release, and open tabs still ask new servers for old files.
 - **Blue-green (atomic) deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
+- **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: when a deploy replaces your old server, your next request lands on a new one, and the page you already loaded still asks it for old files.
 - **Reloading when a chunk fails to load.** Catch the error (`ChunkLoadError` in webpack, `vite:preloadError` in Vite) and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
-- **A CDN in front of the app servers.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it, and it gets close. But a cache miss for `main.new.js` still goes to whichever server the load balancer picks, and CloudFront [caches that 404](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html) for 10 seconds by default, for everyone behind that cache.
+- **A CDN that pulls from the app servers.** Point a CDN at your Django servers so it caches static files at the edge, as [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend. Files it has already cached survive a deploy, but a cache miss still goes to whichever server the load balancer picks, so new HTML can still get a 404 for `main.new.js`. Worse, the CDN can cache that 404 for everyone.
 
 The CDN isn't the problem. Where the files live is.
 
 ## Keep Every Build's Files in Shared Storage
 
-Take static files off the app servers. Every release uploads its files to shared storage: one bucket that every release writes to and the CDN reads from, which outlives any single release. Two rules make it work:
+Shared storage is one bucket that every release writes to and the CDN reads from, so it outlives any single release. Two rules make it work:
 
 1. Upload in a CI/CD release step that runs before any new server takes traffic, so new HTML never references a file that isn't there yet.
 2. Keep old files as long as anything might still request them, so old HTML and open tabs always find theirs.
