@@ -27,7 +27,7 @@ That worked while our deploys switched all traffic to the new release at once. W
 
 A rolling deploy replaces servers a few at a time, so old and new releases serve traffic side by side for several minutes. The load balancer routes every request independently.
 
-Webpack names each file after a hash of its contents, like `main.3f9a1c.js`, so browsers can cache it forever and every build that changes a file gives it a new name. Call them `main.old.js` and `main.new.js`. Each server only has its own release's files:
+Bundlers like webpack and Vite name each file after a hash of its contents, like `main.3f9a1c.js`, so browsers can cache it forever and every build that changes a file gives it a new name. Call them `main.old.js` and `main.new.js`. Each server only has its own release's files:
 
 ```mermaid
 sequenceDiagram
@@ -38,20 +38,20 @@ sequenceDiagram
   New-->>Browser: HTML that references main.new.js
   Browser->>Old: GET main.new.js (load balancer picks an old server)
   Old-->>Browser: 404
-  Note over Browser: ChunkLoadError, blank page
+  Note over Browser: Chunk fails to load, blank page
 ```
 
 The reverse fails the same way: old HTML asks a new server for `main.old.js`.
 
-Open tabs are the hardest case. With [code splitting](https://webpack.js.org/guides/code-splitting/), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
+Open tabs are the hardest case. With [code splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting), the app downloads parts of its code only when the user needs them, so a tab opened before the deploy requests `chunk.old.js` long after every old server is gone.
 
-The problem is common enough that Vercel built [Skew Protection](https://vercel.com/docs/skew-protection) into its hosting: it keeps old deployments alive and routes each page's requests to the deployment that served it. When Django serves your SPA, the fix is up to you.
+The problem is common enough that [Vercel](https://vercel.com/docs/skew-protection) and [Netlify](https://www.netlify.com/blog/introducing-netlify-skew-protection) built skew protection into their hosting: they keep old deployments alive and route each page's requests to the deployment that served it. That only helps apps they host, so when Django serves your SPA, the fix is up to you.
 
 ## Fixes That Don't Work on Their Own
 
 - **Sticky sessions.** The load balancer pins each browser to one server with a cookie. That makes the bug rarer, not gone: the first request isn't pinned yet, a deploy replaces the server you're pinned to, and open tabs still ask new servers for old files.
 - **Blue-green (atomic) deploys.** This is what we had before: start a full new fleet, then switch all traffic at once. Errors were rare, but open tabs still broke after the switch. And while both fleets ran, each held its own database connections, which pushed us up against our database's connection limit on every deploy.
-- **Reloading on `ChunkLoadError`.** Catch the error and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
+- **Reloading when a chunk fails to load.** Catch the error (`ChunkLoadError` in webpack, `vite:preloadError` in Vite) and reload the page. It's a good safety net for flaky networks, but it throws away the user's state, and mid-rollout the reload can land on the wrong server again.
 - **A CDN in front of the app servers.** [WhiteNoise's docs](https://whitenoise.readthedocs.io/en/stable/django.html#use-a-content-delivery-network) recommend it, and it gets close. But a cache miss for `main.new.js` still goes to whichever server the load balancer picks, and CloudFront [caches that 404](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html) for 10 seconds by default, for everyone at that edge.
 
 The CDN isn't the problem. Where the files live is.
@@ -77,44 +77,43 @@ Deleting old files safely is harder than it looks. An S3 [lifecycle rule](https:
 
 ## The Django Side
 
-`STATIC_URL` becomes the switch, and one small storage class handles the rest:
+A small storage class, plus `STATIC_URL` as the switch:
 
 ```python
-# settings.py
-import os
-from urllib.parse import urlparse
-
-STATIC_URL = os.environ["STATIC_URL"]  # "https://static.example.com/" or "/static/"
-STATICFILES_DIRS = [("bundles", BASE_DIR / "frontend" / "dist")]  # webpack output
-
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-
-# An absolute STATIC_URL (one with a domain) turns on CDN mode: collectstatic
-# uploads to the bucket and templates link to the CDN. A relative one keeps
-# Django's defaults, so local development needs no bucket.
-if urlparse(STATIC_URL).netloc:
-    STORAGES["staticfiles"] = {
-        "BACKEND": "config.storage.StaticStorage",
-        "OPTIONS": {
-            "bucket_name": os.environ["STATIC_BUCKET_NAME"],
-            "custom_domain": urlparse(STATIC_URL).netloc,  # link to the CDN, not S3
-        },
-    }
-
-
 # config/storage.py
 from storages.backends.s3 import S3ManifestStaticStorage
 
 
 class StaticStorage(S3ManifestStaticStorage):
     def stored_name(self, name):
-        # Webpack already hashed these files, so skip Django's manifest (see below)
-        if name.startswith("bundles/"):
+        # The bundler already hashed these files, so skip Django's manifest (see below)
+        if name.startswith("frontend/"):
             return name
         return super().stored_name(name)
+
+
+# settings.py
+import os
+from urllib.parse import urlparse
+
+STATIC_URL = os.environ["STATIC_URL"]  # "https://static.example.com/" or "/static/"
+STATICFILES_DIRS = [("frontend", BASE_DIR / "frontend" / "dist")]  # bundler output
+
+STORAGES = {  # Django's defaults
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+# Absolute STATIC_URL: upload to the bucket and serve from the CDN.
+# Relative: Django's defaults, so local development needs no bucket.
+if cdn_domain := urlparse(STATIC_URL).netloc:
+    STORAGES["staticfiles"] = {
+        "BACKEND": "config.storage.StaticStorage",  # the class above
+        "OPTIONS": {
+            "bucket_name": os.environ["STATIC_BUCKET_NAME"],  # collectstatic uploads here
+            "custom_domain": cdn_domain,  # link to the CDN, not S3
+        },
+    }
 ```
 
 `S3ManifestStaticStorage` comes from [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html). It ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
@@ -123,7 +122,7 @@ Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock [`col
 
 ### The Manifest Is Shared Too
 
-That `stored_name` override fixes one Django-specific gotcha. [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) keeps its manifest, `staticfiles.json`, in the bucket, and every deploy overwrites it. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Webpack's files are already hashed, so the override serves them by their own names and never asks the manifest. Django's own files still go through it, which is safe because they're looked up by names that don't change between releases.
+That `stored_name` override fixes one Django-specific gotcha. [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) keeps its manifest, `staticfiles.json`, in the bucket, and every deploy overwrites it. Loaders like [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and [django-vite](https://github.com/MrBin99/django-vite) look up bundle files through it. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Bundler output is already hashed, so the override serves it by its own names and never asks the manifest. Django's own files still go through it, which is safe because they're looked up by names that don't change between releases.
 
 ## Serving It From CloudFront
 
