@@ -22,7 +22,7 @@ STORAGES = {
 }
 ```
 
-That mostly worked while our deploys switched all traffic to the new release at once. When we moved to rolling deploys, old and new releases overlapped for minutes instead of seconds, and some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/): the code in the browser and the code on the server come from different releases. It's the same kind of problem [multistep database changes]({{< relref "multistep-database-changes" >}}) solve for your schema, this time with static files. The fix for zero-downtime deploys is to decouple static files from the app servers entirely.
+When we moved from blue-green to rolling deploys, some users got a blank page during every deploy. The problem is called [version skew](https://www.industrialempathy.com/posts/version-skew/): the code in the browser and the code on the server come from different releases. To keep deploys zero-downtime, decouple static files from the app servers entirely.
 
 ## Version Skew in a Rolling Deploy
 
@@ -68,15 +68,15 @@ Take static files off the app servers. Every release uploads its files to shared
 
 ```mermaid
 flowchart LR
+  Release[Release step: collectstatic] -->|before new servers take traffic| Bucket[(Storage bucket)]
   Browser -->|HTML + API| App[Django app servers]
   Browser -->|static files| CDN[CDN edge]
-  CDN -->|cache miss| Bucket[(Storage bucket)]
-  Release[Release step: collectstatic] -->|before new servers take traffic| Bucket
+  CDN -->|cache miss| Bucket
 ```
 
 Content-hashed names pay off here. A file that didn't change keeps its name across releases, so it doesn't need re-uploading and browsers keep it cached. Per-release folders (`/static/<release>/main.js`) also work with shared storage, but every deploy changes every URL, so users re-download everything.
 
-Deleting old files safely is harder than it looks. An S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html) expires objects by upload age. With the setup below, an unchanged file is uploaded once and never again, so an age-based rule would eventually delete files the current build still uses. A safe cleanup keeps every file that recent releases reference and deletes the rest after a grace period. We skipped that and keep everything. For us that costs pennies a month; a site with more or larger files will pay more, but storage is cheap.
+Don't clean up with an S3 [lifecycle rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html). It expires objects by upload age, and with the setup below an unchanged file is uploaded only once, so the rule would eventually delete files the current build still uses. We keep everything, which costs us pennies a month.
 
 ## The Django Side
 
@@ -102,7 +102,7 @@ from urllib.parse import urlparse
 STATIC_URL = os.environ["STATIC_URL"]  # CDN root "https://static.example.com/" or "/static/"
 STATICFILES_DIRS = [("frontend", BASE_DIR / "frontend" / "dist")]  # bundler output
 
-STORAGES = {  # Django's defaults
+STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
@@ -121,11 +121,9 @@ if cdn_domain := urlparse(STATIC_URL).netloc:
 
 `S3ManifestStaticStorage` comes from [django-storages](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html). It ties you to the S3 API, not to AWS: [S3-compatible storage](https://django-storages.readthedocs.io/en/latest/backends/s3_compatible/index.html) like Cloudflare R2 works too.
 
-Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. List it before `django.contrib.staticfiles` in `INSTALLED_APPS` (it replaces the `collectstatic` command) and use its `Boto3ManifestMemoryStrategy`. Start with `COLLECTFASTA_THREADS = 10`: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
+The `stored_name` override fixes a Django-specific gotcha. With S3 storage, the [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) manifest, `staticfiles.json`, lives in the bucket too, and every deploy overwrites it. Loaders like [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and [django-vite](https://github.com/MrBin99/django-vite) turn bundle names into URLs through that manifest. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Bundler output is already hashed, so the override serves it by its own names and never asks the manifest. Django's own files still go through it, which is safe as long as a release doesn't delete a file that old templates still reference.
 
-### The Manifest Is Shared Too
-
-That `stored_name` override fixes one Django-specific gotcha. With S3 storage, the [`ManifestStaticFilesStorage`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage) manifest, `staticfiles.json`, lives in the bucket too, and every deploy overwrites it. Loaders like [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader) and [django-vite](https://github.com/MrBin99/django-vite) turn bundle names into URLs through that manifest. If a worker on an old server restarts mid-deploy, it loads the new manifest, can't find its old bundle's name, and raises `Missing staticfiles manifest entry`: a 500. Bundler output is already hashed, so the override serves it by its own names and never asks the manifest. Django's own files still go through it, which is safe as long as a release doesn't delete a file that old templates still reference.
+Add [collectfasta](https://github.com/jasongi/collectfasta) as well. Stock [`collectstatic`](https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#collectstatic) decides what to upload by file modification time, and a fresh CI build gives every file a new one, so it re-uploads everything, one file at a time. collectfasta compares content hashes instead and uploads in parallel, so a typical deploy uploads only the files that changed, in seconds instead of over an hour. Start with `COLLECTFASTA_THREADS = 10`: that matches boto3's default connection pool and avoids "Connection pool is full" warnings.
 
 ## Serving It From CloudFront
 
@@ -133,9 +131,9 @@ We already ran CloudFront for another asset domain, so we reused it. Any CDN tha
 
 - **Private bucket.** Block public access and let only the distribution read it, with [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
 - **Compression and edge caching.** Turn on compression and use the managed [`CachingOptimized`](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-caching-optimized) policy, which caches Brotli and gzip versions at the edge.
-- **Immutable browser caching.** Serve hashed files with `Cache-Control: public, max-age=31536000, immutable` so repeat visits skip revalidation. Keep unhashed files, like Vite's `public/` folder, on a short TTL. The cache policy only controls the edge, so set this header on the objects or with a response headers policy.
-- **CORS.** Browsers fetch cross-origin fonts and JavaScript modules (Vite's output) with CORS, so add the headers with a [managed response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html).
-- **No invalidations.** Changed content always gets a new hashed name, so a deploy never has to purge the cache.
+- **Immutable browser caching.** Serve hashed files with `Cache-Control: public, max-age=31536000, immutable` so repeat visits skip revalidation. Keep unhashed files, like Vite's `public/` folder, on a short TTL. The cache policy only controls the edge, so set this header on the objects or with a [response headers policy](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/modifying-response-headers.html).
+- **No cache invalidations.** Changed content always gets a new hashed name, so a deploy never has to purge the cache.
+- **CORS.** Fonts and JavaScript modules from another domain need CORS headers. Add them with a response headers policy.
 
 ## What's Next
 
