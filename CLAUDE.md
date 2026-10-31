@@ -18,7 +18,9 @@ Demo app: `cd demo`, `docker compose up` (Postgres on 5433), `pytest`. Ruff/mypy
 - `dev` is the default branch and deploys to https://dev.johnnymetz.com (drafts and future posts are built).
 - `prod` deploys to https://johnnymetz.com.
 - Netlify builds on every push; config is in `netlify.toml`.
-- Promote dev to prod by rebasing `prod` onto `dev` (no merge commits), then push `prod`.
+- Posts, and any other multi-commit work whose history is worth keeping, go through a branch and a PR into `dev`, **squash merged** (the repo allows nothing else). `dev` gets one commit per PR; the draft commits stay on the PR (`git fetch origin pull/<N>/head` to get them locally).
+- Everything else (quick, single-commit changes) is committed and pushed straight to `dev`.
+- No merge commits anywhere. Promote dev to prod by rebasing `prod` onto `dev`, then push `prod`.
 - Hugo version is pinned in `netlify.toml` (`HUGO_VERSION`); bump it there.
 
 ## Conventions
