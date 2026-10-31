@@ -71,3 +71,5 @@ Great for scripting, backups, and syncing configs across environments.
 ---
 
 Heroku is simple out of the box, but these features are what make it powerful. Use them, and you'll spend less time fighting ops and more time shipping code.
+
+_Update: Heroku featured this post in their [PixieBrix customer story](https://www.heroku.com/customers/pixiebrix/)._
