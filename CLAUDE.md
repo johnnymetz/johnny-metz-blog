@@ -26,5 +26,4 @@ Demo app: `cd demo`, `docker compose up` (Postgres on 5433), `pytest`. Ruff/mypy
 - Posts use front matter like existing posts: quoted `title`, `date` with offset, `tags`, `ShowToc: true`, `cover.image` under `static/covers/`.
 - Don't commit `public/` or `resources/_gen/`; both are build output.
 - `themes/PaperMod` is a git submodule. Run `git submodule update --init --recursive` after a fresh clone.
-- Post ideas go in `ideas/README.md`.
 - Target the latest release of Django, Python, and every other package in posts, doc links, and verification scripts (e.g. a fresh `uv venv` in the scratchpad with the newest Python the package supports), unless told otherwise.
