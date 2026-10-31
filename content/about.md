@@ -4,7 +4,9 @@ hidemeta: true
 
 # About Me
 
-Full Stack Software Engineer located in San Francisco, CA. I specialize in web development with Python, Django, React, Docker, Kubernetes and AWS.
+Software Engineer and Tech Lead based in San Francisco, CA. I build scalable, cloud-native web platforms and AI-powered products end to end, with a focus on performance, reliability, and developer experience.
+
+Here I write deep dives on building production-grade software: performance tuning, databases, caching, CI/CD, and shipping safely at scale.
 
 ## Featured In
 
