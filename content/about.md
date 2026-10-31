@@ -23,9 +23,3 @@ Heroku customer story on how PixieBrix's 12-person team runs its platform on Her
 ---
 
 {{< youtube A20PY5RxdI8 >}}
-
-## Side Projects
-
-**[Notifire](https://notifire-app.netlify.app/)**
-
-Send yourself daily event notification emails (birthdays, holidays, etc.). Built with Django, PostgreSQL and React.js. Hosted on Netlify and Heroku.
