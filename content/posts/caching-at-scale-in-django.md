@@ -13,7 +13,7 @@ cover:
   image: 'covers/django-caching-at-scale.png'
 ---
 
-My team runs a multi-tenant Django API, and for years we scaled it the usual ways: a bigger Postgres primary, then a read replica, plus a few cautious caches with short TTLs and patchy invalidation. Then traffic grew about 20x in two years, and what carried that growth was caching deliberately and aggressively.
+My team runs a multi-tenant Django API, and for years we scaled it the usual ways: a bigger Postgres primary, then a read replica, plus a few cautious caches with short TTLs and patchy invalidation. Then traffic grew about 20x in two years, and what carried that load was caching deliberately and aggressively.
 
 ```mermaid
 flowchart LR
