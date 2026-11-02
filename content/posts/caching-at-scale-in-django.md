@@ -1,6 +1,6 @@
 ---
 title: 'Caching at Scale in Django: Lessons from Production'
-date: 2026-11-01T12:00:00-08:00
+date: 2026-11-02T09:00:00-08:00
 tags:
   - Django
   - Redis
@@ -11,7 +11,6 @@ ShowToc: true
 summary: 'What we learned caching a busy Django API in Redis: cache shared data once, invalidate exactly what changed, and treat Redis like critical infrastructure.'
 cover:
   image: 'covers/django-caching-at-scale.png'
-draft: true
 ---
 
 My team runs a multi-tenant Django API that serves browser extensions. Traffic arrives in waves: a company's employees all log on in the same minute, or a customer pushes an update to every user at once. Traffic grew about 20x in two years. The API peaks around 1,100 requests per second on a typical weekday. The busiest moment we have seen, a large customer pushing an update to all of its users at once, hit 2,000. Postgres sees about 0.3 queries per request. Redis serves the rest at a 97% hit rate. Caching was the biggest lever, and here is what we learned.
