@@ -13,9 +13,7 @@ cover:
   image: 'covers/django-caching-at-scale.png'
 ---
 
-My team runs a multi-tenant Django API whose traffic grew about 20x in two years. It peaks around 1,100 requests per second on a typical weekday and once hit 2,000 when a large customer pushed an update to all of its users at once. Postgres sees about 0.3 queries per request; Redis serves most reads at a 97% hit rate. Caching was the biggest lever, and here is what we learned.
-
-The stack: Django, Postgres with a read replica, and Redis.
+My team runs a multi-tenant Django API, and for years we scaled it the usual ways: a bigger Postgres primary, then a read replica, plus a few cautious caches with short TTLs and patchy invalidation. Then traffic grew about 20x in two years, and what carried that growth was caching deliberately and aggressively.
 
 ```mermaid
 flowchart LR
@@ -26,14 +24,16 @@ flowchart LR
   W --> RR[(Postgres read replica)]
 ```
 
-## Cache when nothing cheaper works
+## Why caching, and where to start
 
-Caching is the answer when database CPU is saturated and nothing simpler will relieve it. For us, each alternative fell short:
+Our database CPU kept running hot. Each fix we tried bought some time before the database was overloaded again:
 
 - **[Query tuning]({{< relref "/tags/query-optimization" >}})** helped at first, but at some volume even a well-tuned query is too expensive to run thousands of times a second.
-- **Postgres's own cache** holds pages and indexes, not query results, so a hot read still burns CPU on every call even when everything it touches is in memory.
 - **Scaling up to a bigger primary** is a one-time, expensive bump in headroom that growth soon consumes.
 - **Scaling out with read replicas** still runs every query and adds replication-lag bugs.
+- **Postgres's own cache** holds pages and indexes, not query results, so a hot read still burns CPU on every call even when everything it touches is in memory.
+
+Caching was different: it removes work instead of adding capacity.
 
 To find the worst offenders, rank queries by total database time, not per-query latency. A 2 ms query running thousands of times a second burns more database time than a 500 ms query running once a minute. A production CPU profile of our web processes agreed: the hot paths were the high-volume ones. Work the list top down. For us that meant whole endpoint responses first.
 
@@ -92,9 +92,9 @@ doc:A          -> {id: A, title: "Roadmap", owner_id: 1, editor_group_ids: [7]}
 doc:B          -> {id: B, title: "Budget", owner_id: 1, editor_group_ids: []}
 ```
 
-A warm cache never touches the database, and invalidation is proportional to what changed: renaming a document clears `doc:A`, one key instead of one per user.
+A warm cache never touches the database, and invalidation shrinks from thousands of keys to one: renaming a document clears `doc:A` instead of every user's copy.
 
-This trades one database query for three Redis calls, and that is a good trade: a Redis call is far cheaper than even a trivial Postgres query. Cheaper is not free, though, so keep the call count down: batch with `get_many` and `set_many`, and guard against cache N+1s with an [`assertNumQueries`]({{< relref "posts/slow-django-database-queries.md" >}}#sanity-check-query-counts-in-units-tests-with-assertnumqueries) equivalent for cache calls; we wrote one called `assertNumCacheCalls`.
+This trades one database query for three Redis calls, which is fine: a Redis call is far cheaper than even a trivial Postgres query. Cheaper is not free, though, so keep the call count down: batch with `get_many` and `set_many`, and guard against cache N+1s with an [`assertNumQueries`]({{< relref "posts/slow-django-database-queries.md" >}}#sanity-check-query-counts-in-units-tests-with-assertnumqueries) equivalent for cache calls; we wrote one called `assertNumCacheCalls`.
 
 One rule keeps this safe: **the shared base must not depend on who is asking.** The trap is a field like `can_edit`. Serialize it for the requesting user and the first user to warm the cache decides for everyone. Store the inputs instead (owner, editor group IDs) and compute `can_edit` at assembly from the user's cached groups.
 
@@ -102,7 +102,7 @@ One rule keeps this safe: **the shared base must not depend on who is asking.** 
 
 Short TTLs feel safe because the data refreshes often, so a missed invalidation heals on its own. Django's cache [defaults to five minutes](https://docs.djangoproject.com/en/6.1/ref/settings/#timeout). At scale, that is wrong in both directions:
 
-- **Too short for the hot path.** When a thousand users start a shift together, their entries all expired while they were away, and the refill overloads the database.
+- **Too short for the hot path.** Entries expire while users are away, so when a thousand users start a shift together, every request misses at once and the refill overloads the database.
 - **Too long for writes.** A user who creates a document expects to see it immediately, not five minutes later.
 
 So invalidation has to be correct anyway. We invalidate immediately on writes with [Django signals](https://docs.djangoproject.com/en/6.1/topics/signals/) and run seven-day TTLs. The exact number depends on your workload; seven days rather than thirty worked for us so that entries nobody reads anymore age out instead of bloating Redis. With a long TTL a missed invalidation lives for a week, so it is a bug, and we test for it like one:
@@ -144,4 +144,6 @@ Redis did stall on us once, when a maintenance process run by our cloud provider
 
 ## Results
 
-During the three-month rollout, traffic rose about 40% while average latency fell about 40%, database queries per second halved, and web CPU halved on fewer servers. Traffic has kept growing since, and database load has not. Redis comfortably absorbs the growth instead.
+During the three-month rollout, traffic rose about 40% while average latency fell about 40%, database queries per second halved, and web CPU halved on fewer servers.
+
+Today the API peaks around 1,100 requests per second on a typical weekday, and it once hit 2,000 when a large customer pushed an update to all of its users at once. Postgres sees about 0.3 queries per request, and Redis serves most reads at a 97% hit rate. Traffic has kept growing since the rollout and database load has not. Redis absorbs the growth instead.
