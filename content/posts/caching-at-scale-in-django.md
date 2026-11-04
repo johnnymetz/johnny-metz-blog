@@ -168,3 +168,5 @@ During the three-month rollout, traffic rose about 40% while average latency fel
 Today the API peaks around 1,100 requests per second on a typical weekday, and it once hit 2,300 when a large customer pushed an update to all of its users simultaneously. Postgres sees about 0.3 queries per request, and Redis serves most reads at a 97% hit rate. Traffic has kept growing since the rollout and database load has not. Redis absorbs the growth instead.
 
 If you can see growth coming, start caching deliberately before the database forces you to. We waited longer than we should have.
+
+Discuss: [Reddit](https://www.reddit.com/r/django/comments/1xn9tn9/caching_at_scale_in_django_lessons_from_production/)
