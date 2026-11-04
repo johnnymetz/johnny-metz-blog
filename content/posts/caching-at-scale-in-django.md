@@ -8,7 +8,7 @@ tags:
   - Performance
   - PostgreSQL
 ShowToc: true
-summary: 'What we learned caching a busy Django API in Redis: cache shared data once, invalidate exactly what changed, and plan for Redis going down.'
+summary: 'What we learned caching a busy Django API in Redis: cache shared data once, pair long TTLs with invalidation you can trust, and fail open when Redis fails.'
 cover:
   image: 'covers/django-caching-at-scale.png'
 ---
