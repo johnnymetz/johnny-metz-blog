@@ -4,6 +4,7 @@ date: 2024-10-27T12:00:00-07:00
 tags:
   - Django
   - DevOps
+  - Zero Downtime
 ShowToc: true
 TocOpen: true
 cover:
