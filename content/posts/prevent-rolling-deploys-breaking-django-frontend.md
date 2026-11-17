@@ -1,6 +1,6 @@
 ---
 title: 'Prevent Rolling Deploys From Breaking Your Django Frontend'
-date: 2026-11-15T12:00:00-08:00
+date: 2026-12-01T12:00:00-08:00
 tags:
   - Django
   - DevOps
